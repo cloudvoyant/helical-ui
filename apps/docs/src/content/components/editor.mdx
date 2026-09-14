@@ -1,0 +1,116 @@
+---
+title: Editor
+description: A Tiptap-based rich text editor and read-only reader with slash commands, a bubble menu, mentions, link editing, image blocks, and code blocks — for React and Svelte.
+order: 10
+group: rich-text
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`Editor` is a full rich text writing surface built on [Tiptap](https://tiptap.dev). It emits and accepts Tiptap JSON for autosave and server prepopulation, enforces an H1 title, and exposes slash commands, a selection bubble menu, `@` mentions, link editing, image blocks, notices, quotes, YouTube embeds, bookmark cards, and syntax-highlighted code. `Reader` renders the same JSON read-only.
+
+App-specific behaviour is **injected**, never hardcoded — mention search, internal-link hrefs, image upload, and bookmark metadata loading are all props, so the component stays app-agnostic.
+
+<Demo component="editor" example="default" />
+
+## Examples
+
+<Examples component="editor" exclude={['default', 'client-persistence', 'server-prepopulation', 'server-reader']} />
+
+## Guide
+
+### Heading levels
+
+When `enforceTitle` is enabled, the first editor block is the document H1. Body headings start at H2. Typing `#` or `##` therefore creates an H2; deeper Markdown markers keep their normal HTML level. Slash-menu **Heading 1** through **Heading 4** create H2 through H5. When `enforceTitle` is disabled, render the page H1 outside the editor.
+
+### Pasting links
+
+Pasting a bare HTTP or HTTPS URL inserts a normal text link immediately. Use the Bookmark slash command when you want a bookmark card; pasting does not open a representation-choice menu.
+
+### Bookmark metadata
+
+Pass `fetchLinkPreview` to load Open Graph or search metadata for bookmark cards. The function can call your server or a CORS-enabled metadata service and must return the bookmark title, description, image, favicon, and provider. Without it, the editor inserts a bookmark that uses the URL as its title.
+
+Browsers cannot usually read metadata directly from arbitrary sites because cross-origin rules block the request. Use a server endpoint for general URLs. A browser-only function is suitable only when the target site permits cross-origin requests.
+
+### Client-side persistence
+
+Use `onChange` or `onchange` to save each serialized Tiptap JSON update. This example writes to a versioned `localStorage` key and restores the saved draft after the page reloads:
+
+<Demo component="editor" example="client-persistence" />
+
+Browser storage is client-only. Use a cookie, database, or server-side store when multiple devices or server rendering must share the saved document.
+
+### Server-side pre-population
+
+Fetch serialized Tiptap JSON on the server and pass the same `content` to both `Reader` and `Editor`. This example sends populated `Reader` HTML first, then replaces it with an interactive editor during hydration:
+
+<Demo component="editor" example="server-prepopulation" />
+
+### Read-only server rendering
+
+`Reader` converts saved Tiptap JSON to HTML without creating a browser editor instance. This demo is rendered by Astro on the server with no client directive:
+
+<Demo component="editor" example="server-reader" />
+
+### Astro or TanStack Start with React
+
+In Astro, load the JSON in frontmatter and pass it to a hydrated React island:
+
+```astro
+---
+import { Reader } from '@cloudvoyant/vortex-react';
+import EditorIsland from './EditorIsland.tsx';
+const content = await loadSavedTiptapJson();
+---
+<Reader content={content} />
+<EditorIsland content={content} client:load />
+```
+
+In TanStack Start, load the JSON through a server function and return it from the route loader:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
+import { Editor } from '@cloudvoyant/vortex-react';
+
+const loadContent = createServerFn({ method: 'GET' })
+  .inputValidator((data: { documentId: string }) => data)
+  .handler(async ({ data }) => {
+    const { loadSavedTiptapJson } = await import('~/server/documents');
+    return loadSavedTiptapJson(data.documentId);
+  });
+
+export const Route = createFileRoute('/edit/$documentId')({
+  loader: ({ params }) => loadContent({ data: { documentId: params.documentId } }),
+  component: EditDocument,
+});
+
+function EditDocument() {
+  const content = Route.useLoaderData();
+  return <Editor content={content} />;
+}
+```
+
+### Astro or SvelteKit with Svelte
+
+```svelte
+<script lang="ts">
+  import { Editor, Reader } from '@cloudvoyant/vortex-svelte';
+  let { data } = $props(); // `data.content` was loaded on the server.
+</script>
+
+<Reader content={data.content} />
+<Editor content={data.content} />
+```
+
+In SvelteKit, put the editor in a client-only boundary when its parent is server-rendered. Do not construct a Tiptap `Editor` instance in a server load function or module scope.
+
+## API Reference
+
+`Editor` — `content` (Tiptap JSON string), `editable` (default `true`), `enforceTitle` (default `true`; set `false` for compact inputs), `onChange` / `onchange` (`({ content, title }) => void`), and four optional seams: `mentionSource` (`(query) => Promise<MentionItem[]>`), `hrefBuilder` (`(item) => string`), `onUpload` (`(file) => Promise<{ src; srcset? }>`), and `fetchLinkPreview` (`(url) => Promise<{ title; description; image; favicon; provider }>`). Without `onUpload`, the image form inserts a local data URL for demos and offline editing. Without `fetchLinkPreview`, a bookmark uses its URL as the title.
+
+Imperative: `focus()`, `updateContent(json)`, `getCounts(): EditorCounts` — React via `ref`, Svelte via bound exports. `EditorCounts` reports `wordCount`, `charCount`, `pageCount` (300 words/page) and `readDuration` (250 words/minute).
+
+`Reader` — `content` (Tiptap JSON string). Renders static HTML from the same schema, with anchor-linkable heading ids.

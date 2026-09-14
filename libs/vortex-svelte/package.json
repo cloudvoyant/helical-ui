@@ -45,7 +45,12 @@
   "dependencies": {
     "@ark-ui/svelte": "catalog:",
     "@cloudvoyant/vortex-ui": "workspace:*",
-    "@tanstack/charts": "catalog:"
+    "@tanstack/charts": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/suggestion": "catalog:",
+    "lucide-svelte": "catalog:",
+    "lowlight": "catalog:",
+    "svelte-tiptap": "catalog:"
   },
   "devDependencies": {
     "@sveltejs/package": "catalog:",

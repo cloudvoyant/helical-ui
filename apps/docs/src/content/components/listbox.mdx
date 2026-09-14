@@ -1,0 +1,43 @@
+---
+title: Listbox
+description: A filterable single- or multi-select option list, for React and Svelte.
+order: 15
+group: forms
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`Listbox` renders a selectable list of options. Built on [Ark UI `listbox`](https://ark-ui.com/docs/components/listbox). It is a thin pass-through, like `Select`: `Listbox` owns the collection, and you render the `Listbox*` parts as children. Filtering is **your** job — filter the `items` array, then pass the _same_ array to `Listbox` and render from it, so the collection and the children can never disagree.
+
+<Demo component="listbox" example="default" />
+
+## Composing the parts
+
+**`ListboxContent` is required.** It is the only element carrying `role="listbox"`, `tabIndex`, `aria-activedescendant`, `aria-multiselectable`, and the keyboard map. A `ListboxItem` rendered outside it still emits `role="option"` but is orphaned — no keyboard navigation, no active-option tracking, and no warning. Always nest items in `ListboxContent`.
+
+The filter input (`ListboxInput`) must be a **sibling** of `ListboxContent`, never nested inside it — a text input inside `role="listbox"` is invalid ARIA. `ListboxInput` wraps Ark's listbox input, which owns the list linkage (arrow keys move the active option; `aria-activedescendant` stays current). It is a _typeahead_ input: it does not filter. The query stays yours — pass `value` / `onChange` (`oninput` in Svelte) and filter `items` yourself. Add `autoHighlight` so the first match is selected as you type.
+
+`ListboxInput` and `ListboxContent` are both focusable, so Tab lands twice within one control; that is Ark's design.
+
+## Examples
+
+<Examples component="listbox" exclude="default" />
+
+## API Reference
+
+`Listbox` — `items` (`ListboxItemData[]`) or `collection`, `value` / `defaultValue` (`string[]`), `onValueChange`, `selectionMode` (`single` | `multiple`).
+
+`ListboxInput` — Ark's typeahead input. It is a plain `<input>` under the hood, so **you** own the query with `value` / `onChange` (`oninput` in Svelte) and filter `items` yourself. Must be a sibling of `ListboxContent`.
+
+`ListboxContent` — the scrollable option surface; `ListboxItem`s and `ListboxEmpty` go inside.
+
+`ListboxItem` — `item` (`ListboxItemData`, required). `children` are the row's content: compose `ListboxItemText` and `ListboxItemIndicator`.
+
+`ListboxItemText` / `ListboxItemIndicator` — the row label and the selected-state icon (consumer-provided).
+
+`ListboxEmpty` — empty state; defaults to "No results."
+
+`ListboxLabel` — an accessible label for the list.
+
+`defaultListboxFilter` (from `@cloudvoyant/vortex-ui`) — a convenience predicate: case-insensitive substring match on `label`.

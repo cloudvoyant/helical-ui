@@ -49,7 +49,11 @@
   "dependencies": {
     "@ark-ui/react": "catalog:",
     "@cloudvoyant/vortex-ui": "workspace:*",
-    "@tanstack/charts": "catalog:"
+    "@tanstack/charts": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/react": "catalog:",
+    "@tiptap/suggestion": "catalog:",
+    "lucide-react": "catalog:"
   },
   "devDependencies": {
     "@types/katex": "catalog:",

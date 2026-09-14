@@ -287,3 +287,25 @@ export {
   type NumericQuestionProps,
   type QuizProps,
 } from './questions';
+export { Prose, type ProseProps } from './prose';
+export { ToggleGroup, ToggleGroupItem, type ToggleGroupProps, type ToggleGroupItemProps } from './toggle-group';
+export {
+  Listbox,
+  ListboxContent,
+  ListboxItem,
+  ListboxItemText,
+  ListboxItemIndicator,
+  ListboxInput,
+  ListboxEmpty,
+  ListboxLabel,
+  useListbox,
+  type ListboxProps,
+  type ListboxContentProps,
+  type ListboxItemProps,
+  type ListboxItemTextProps,
+  type ListboxItemIndicatorProps,
+  type ListboxInputProps,
+  type ListboxEmptyProps,
+  type ListboxLabelProps,
+} from './listbox';
+export * from './editor';

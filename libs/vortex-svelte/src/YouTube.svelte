@@ -2,7 +2,8 @@
 <!-- Closely based on: diffbook YouTube, mirrored from @cloudvoyant/vortex-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
-  import { getContext, setContext } from 'svelte';
+  import { Play } from 'lucide-svelte';
+  import { setContext } from 'svelte';
   import {
     youtubeRootBase,
     youtubeTitleBase,
@@ -10,20 +11,9 @@
     youtubePlayButtonBase,
     youtubePlayButtonInnerBase,
     youtubeDescriptionBase,
-    youtubeChaptersBase,
-    youtubeChaptersSummaryBase,
-    youtubeChaptersChevronBase,
-    youtubeChaptersListBase,
-    youtubeChapterButtonBase,
-    youtubeChapterTimeBase,
-    youtubeChapterLabelBase,
     extractYouTubeId,
-    formatTime,
-    parseYouTubeChapters,
-    fetchYouTubeMetadata,
     cn,
   } from '@cloudvoyant/vortex-ui';
-  import type { YouTubeChapter } from '@cloudvoyant/vortex-ui';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
 
@@ -49,7 +39,15 @@
     playing = true;
   };
 
-  setContext('vortex-ui-youtube', { url, videoId, seek });
+  setContext('vortex-ui-youtube', {
+    get url() {
+      return url;
+    },
+    get videoId() {
+      return videoId;
+    },
+    seek,
+  });
 
   const src = $derived(
     `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1${startAt != null ? `&start=${startAt}` : ''}`,
@@ -73,9 +71,7 @@
       <Ark as="img" src={posterUrl} alt={title ?? `YouTube video ${videoId}`} loading="lazy" class="h-full w-full object-cover" />
       <Ark as="span" class={youtubePlayButtonBase} aria-hidden="true">
         <Ark as="span" class={youtubePlayButtonInnerBase}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-8 w-8" aria-hidden="true">
-            <path d="M8 5v14l11-7z"></path>
-          </svg>
+          <Play class="size-8 fill-current" aria-hidden="true" data-youtube-logo />
         </Ark>
       </Ark>
     </Ark>

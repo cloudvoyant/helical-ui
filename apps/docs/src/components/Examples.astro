@@ -7,10 +7,11 @@ import Demo from './Demo.astro';
 interface Props {
   component?: string;
   /** The example already shown in the intro — skip it here. */
-  exclude?: string;
+  exclude?: string | string[];
 }
 
 const { component = 'button', exclude } = Astro.props;
+const excludedExamples = new Set(Array.isArray(exclude) ? exclude : exclude ? [exclude] : []);
 
 // Lazy glob over the example dirs — we only use the matched paths to derive
 // each example's id and title; the modules are never imported here.
@@ -27,7 +28,7 @@ const entries = Object.keys(examplePaths)
   .filter((m): m is RegExpExecArray => m !== null)
   .filter((m) => m[1] === component)
   .map((m) => ({ id: m[2], title: titleFromId(m[2]) }))
-  .filter((e) => e.id !== exclude);
+  .filter((e) => !excludedExamples.has(e.id));
 ---
 
 <div class="flex flex-col gap-10">

@@ -335,3 +335,18 @@ export {
   type NumericQuestionData,
   type Question,
 } from './question';
+export { proseVariants, type ProseProps, type ProseVariants } from './prose';
+export { toggleGroupRootVariants, type ToggleGroupProps, type ToggleGroupRootVariants } from './toggle-group';
+export {
+  defaultListboxFilter,
+  listboxRootBase,
+  listboxContentBase,
+  listboxItemBase,
+  listboxItemTextBase,
+  listboxItemIndicatorBase,
+  listboxInputBase,
+  listboxEmptyBase,
+  listboxLabelBase,
+  type ListboxItemData,
+} from './listbox';
+export * from './editor';

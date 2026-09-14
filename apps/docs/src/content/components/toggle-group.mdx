@@ -1,0 +1,23 @@
+---
+title: Toggle Group
+description: A set of two-state buttons that can be single- or multi-select, for React and Svelte.
+order: 3
+group: buttons
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`ToggleGroup` groups related `ToggleGroupItem` toggles with shared selection state. Built on [Ark UI `toggle-group`](https://ark-ui.com/docs/components/toggle-group), sourced from [Shark UI](https://shark.vini.one/docs/components/toggle-group). Pass `multiple` for multi-select and `attached` for a segmented look.
+
+<Demo component="toggle-group" example="default" />
+
+## Examples
+
+<Examples component="toggle-group" exclude="default" />
+
+## API Reference
+
+`ToggleGroup` — `value` / `defaultValue` (`string[]`), `onValueChange`, `multiple`, `disabled`, `orientation` (`horizontal` | `vertical`), `attached`.
+
+`ToggleGroupItem` — `value` (required), `variant` (`default` | `outline`), `size` (`default` | `sm` | `lg`), `disabled`.

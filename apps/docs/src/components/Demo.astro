@@ -36,11 +36,13 @@ const SSR_EXAMPLES = new Set([
   'mermaid/prerendered',
   'latex/prerendered',
   'code-block/prerendered',
-  'chart/prerendered'
+  'chart/prerendered',
+  'editor/server-reader'
 ]);
 const isSsr = SSR_EXAMPLES.has(`${component}/${example}`);
 
 const isClientOnly = component === 'navbar';
+const isScrollableEditor = component === 'editor';
 
 // Full-bleed demos render flush to the card edges (no ExampleScreen padding).
 const FULLSCREEN_EXAMPLES = new Set([
@@ -70,6 +72,7 @@ const isFullscreen = FULLSCREEN_EXAMPLES.has(`${component}/${example}`);
     svelteCode={svelteCode || ''}
     fullscreen={isFullscreen}
   >
+    <div class:list={[isScrollableEditor && 'max-h-96 overflow-y-auto overscroll-contain']} data-editor-demo-scroll={isScrollableEditor || undefined}>
     {isSsr ? (
       <SsrRouter component={component} example={example} />
     ) : isPreviewFrame ? (
@@ -93,5 +96,6 @@ const isFullscreen = FULLSCREEN_EXAMPLES.has(`${component}/${example}`);
         </div>
       </>
     )}
+    </div>
   </Example>
 </div>

@@ -1,0 +1,21 @@
+---
+title: Prose
+description: Scoped long-form typography for a subtree, driven by theme vars — no global prose stylesheet import required. For React and Svelte.
+order: 9
+group: rich-text
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`Prose` applies article-style typography (headings, paragraphs, lists, links, code, blockquotes) to everything inside it, scoped to the subtree and themed via CSS vars. Wrap rendered rich text — including the editor's `Reader` output — in `Prose` instead of importing a global prose stylesheet.
+
+<Demo component="prose" example="default" />
+
+## Sizes
+
+<Examples component="prose" exclude="default" />
+
+## API Reference
+
+`Prose` — `size` (`sm` | `base` | `lg`, default `base`); React also takes `as` (element tag, default `div`), Svelte takes `element`. Forwards `className`/`class`.
