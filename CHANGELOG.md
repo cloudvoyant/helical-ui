@@ -1,3 +1,10 @@
+# [0.18.0](https://github.com/cloudvoyant/vortex-ui/compare/v0.17.0...v0.18.0) (2026-09-14)
+
+
+### Features
+
+* add React and Svelte rich text editor ([d908a2e](https://github.com/cloudvoyant/vortex-ui/commit/d908a2efe21862e6f1a0f4d39f0a48623903f720))
+
 # [0.17.0](https://github.com/cloudvoyant/helix/compare/v0.16.0...v0.17.0) (2026-09-01)
 
 

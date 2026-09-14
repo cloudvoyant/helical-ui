@@ -1,6 +1,6 @@
 {
   "name": "@cloudvoyant/vortex-react",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "vortex-ui React UI components",
   "license": "MIT",
   "type": "module",
