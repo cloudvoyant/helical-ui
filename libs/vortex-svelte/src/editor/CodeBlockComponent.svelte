@@ -1,20 +1,20 @@
 <script lang="ts">
   import type { NodeViewProps } from '@tiptap/core';
   import { NodeViewWrapper, NodeViewContent } from 'svelte-tiptap';
-  import { tick } from 'svelte';
   // Intra-package imports stay relative: importing '@cloudvoyant/vortex-svelte' from inside the
   // package is fragile during the svelte-package build.
-  import { Popover, PopoverTrigger, PopoverContent } from '../popover';
   import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockCopyButton } from '../code-block';
   import {
-    Listbox,
-    ListboxInput,
-    ListboxContent,
-    ListboxItem,
-    ListboxItemText,
-    ListboxItemIndicator,
-  } from '../listbox';
-  import { cn, codeBlockBodyBase, codeBlockContentBase, defaultListboxFilter } from '@cloudvoyant/vortex-ui';
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectIndicator,
+    SelectContent,
+    SelectItem,
+    SelectItemText,
+    SelectItemIndicator,
+  } from '../select';
+  import { cn, codeBlockBodyBase, codeBlockContentBase } from '@cloudvoyant/vortex-ui';
   import { ChevronsUpDown, Check } from 'lucide-svelte';
 
   let { node, editor, updateAttributes }: NodeViewProps = $props();
@@ -38,11 +38,6 @@
     { value: 'plaintext', label: 'Plain Text' },
   ];
 
-  let open = $state(false);
-  let triggerRef = $state<HTMLButtonElement>(null!);
-  let languageQuery = $state('');
-
-  const filteredLanguages = $derived(languages.filter((l) => defaultListboxFilter(l, languageQuery)));
 
   function getDefaultLanguage(): string {
     if (typeof window !== 'undefined') {
@@ -61,15 +56,6 @@
     if (typeof window !== 'undefined') {
       localStorage.setItem('codeblock-last-language', newLanguage);
     }
-    closeAndFocusTrigger();
-  }
-
-  function closeAndFocusTrigger() {
-    open = false;
-    languageQuery = '';
-    tick().then(() => {
-      triggerRef?.focus();
-    });
   }
 
   // Initialize with default language from localStorage
@@ -89,53 +75,41 @@
       <CodeBlockTitle>{currentLanguageLabel}</CodeBlockTitle>
       <div class="ml-auto flex items-center gap-2" contenteditable={false}>
         {#if editable}
-          <Popover
-            {open}
-            onOpenChange={(details) => {
-              open = details.open;
-              if (!details.open) languageQuery = '';
+          <Select
+            items={languages}
+            value={[language]}
+            onValueChange={(details) => {
+              const next = details.value[0];
+              if (next) changeLanguage(next);
             }}
+            aria-label="Code language"
           >
-            <PopoverTrigger
-              class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm hover:bg-accent"
-            >
-              Change language
-              <ChevronsUpDown class="h-3 w-3 shrink-0 opacity-50" />
-            </PopoverTrigger>
-            <PopoverContent class="w-[200px] p-0">
-              <Listbox
-                items={filteredLanguages}
-                value={[language]}
-                onValueChange={(details) => {
-                  const next = details.value[0];
-                  if (next) changeLanguage(next);
-                }}
-              >
-                <ListboxInput
-                  placeholder="Search language..."
-                  value={languageQuery}
-                  oninput={(event) => (languageQuery = (event.currentTarget as HTMLInputElement).value)}
-                  autoHighlight
-                />
-                <ListboxContent>
-                  {#each filteredLanguages as lang}
-                    <ListboxItem item={lang}>
-                      <ListboxItemText>{lang.label}</ListboxItemText>
-                      <ListboxItemIndicator class={cn(language !== lang.value && 'text-transparent')}>
-                        <Check class="mr-2 h-4 w-4" />
-                      </ListboxItemIndicator>
-                    </ListboxItem>
-                  {/each}
-                </ListboxContent>
-              </Listbox>
-            </PopoverContent>
-          </Popover>
+            <SelectTrigger size="sm" class="min-w-36 justify-between font-mono text-xs">
+              <SelectValue />
+              <SelectIndicator>
+                <ChevronsUpDown class="size-3 opacity-50" />
+              </SelectIndicator>
+            </SelectTrigger>
+            <SelectContent>
+              {#each languages as lang (lang.value)}
+                <SelectItem item={lang}>
+                  <SelectItemText>{lang.label}</SelectItemText>
+                  <SelectItemIndicator><Check class="size-4" /></SelectItemIndicator>
+                </SelectItem>
+              {/each}
+            </SelectContent>
+          </Select>
         {/if}
         <CodeBlockCopyButton />
       </div>
     </CodeBlockHeader>
     <div class={codeBlockBodyBase}>
-      <pre class={cn(codeBlockContentBase, 'm-0 p-4 font-mono [&_code]:bg-transparent [&_code]:p-0')}>
+      <pre
+        class={cn(
+          codeBlockContentBase,
+          'editor-code-content m-0 rounded-none border-0 bg-transparent p-4 font-mono [&_code]:bg-transparent [&_code]:p-0',
+        )}
+      >
         <NodeViewContent as="code" />
       </pre>
     </div>

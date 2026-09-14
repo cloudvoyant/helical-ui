@@ -12,7 +12,7 @@ export const youtubeFacadeBase =
 export const youtubePlayButtonBase = 'absolute inset-0 flex items-center justify-center';
 
 export const youtubePlayButtonInnerBase =
-  'flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-white shadow-lg transition-transform group-hover:scale-105';
+  'flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-white drop-shadow-lg transition-transform group-hover:scale-105';
 
 export const youtubeDescriptionBase = 'mt-2 text-sm text-muted-foreground';
 

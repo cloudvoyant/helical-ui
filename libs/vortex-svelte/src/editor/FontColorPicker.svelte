@@ -1,3 +1,4 @@
+<!-- libs/vortex-svelte/src/editor/FontColorPicker.svelte -->
 <script lang="ts">
   import type { Editor } from '@tiptap/core';
 

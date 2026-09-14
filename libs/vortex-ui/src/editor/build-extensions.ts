@@ -4,7 +4,6 @@
 //
 // Substitutions per the port's dependency decision:
 //   - text-color  -> @tiptap/extension-color  (was a hand-rolled mark)
-//   - emoji-mention -> @tiptap/extension-emoji (was a hand-maintained ~120-emoji list)
 //   - @weiruo/tiptap-extension-indent -> DROPPED (StarterKit's ListItem handles list nesting)
 //
 // This module also loads StarterKit, which brings the whole bundled extension graph (and its
@@ -21,15 +20,14 @@ import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import { TableKit } from '@tiptap/extension-table';
 import CharacterCount from '@tiptap/extension-character-count';
-import Emoji, { emojis } from '@tiptap/extension-emoji';
 import { common, createLowlight } from 'lowlight';
 import type { Extensions } from '@tiptap/core';
 
 import { TitleHeading } from './extensions/title-heading';
 import { ExitHeading } from './extensions/exit-heading';
 import { HeadingWithId } from './extensions/heading-with-id';
+import { EditorHeading } from './extensions/editor-heading';
 import { slashCommands } from './extensions/slash-commands';
 import { createCodeBlockCustom } from './extensions/code-block-custom';
 import { createImageNode } from './extensions/image-node';
@@ -37,11 +35,12 @@ import { createUrlMention } from './extensions/url-mention';
 import { createLinkPreview } from './extensions/link-preview';
 import { createInternalMention } from './extensions/internal-mention';
 import { createNoticeNode } from './extensions/notice-node';
-import { createMermaidNode } from './extensions/mermaid-node';
+import { CurrentEmptyBlock } from './extensions/current-empty-block';
 import type { BuildExtensionsOptions } from './types';
 
 export function buildExtensions(options: BuildExtensionsOptions): Extensions {
-  const { nodeViews, mentionSource, hrefBuilder, mentionRender, slashRender, emojiRender, headingWithId } = options;
+  const { nodeViews, mentionSource, hrefBuilder, mentionRender, slashRender, headingWithId } = options;
+  const enforceTitle = options.enforceTitle ?? true;
   const lowlight = createLowlight(common);
 
   return [
@@ -49,19 +48,24 @@ export function buildExtensions(options: BuildExtensionsOptions): Extensions {
       codeBlock: false, // we use CodeBlockCustom
       link: false, // we configure Link explicitly below
       underline: false, // we configure Underline explicitly below
-      heading: headingWithId ? false : undefined, // HeadingWithId replaces it for the Reader
+      heading: false, // Reader and editor install their own heading variants below.
     }),
-    ...(headingWithId ? [HeadingWithId.configure({ levels: [1, 2, 3, 4, 5, 6] })] : []),
-    TitleHeading,
-    ExitHeading,
+    ...(headingWithId
+      ? [HeadingWithId.configure({ levels: [1, 2, 3, 4, 5, 6] })]
+      : [EditorHeading.configure({ levels: [1, 2, 3, 4, 5, 6] })]),
+    ...(enforceTitle ? [TitleHeading, ExitHeading] : []),
     Placeholder.configure({
+      showOnlyCurrent: false,
       placeholder: ({ node }) =>
-        options.placeholder
-          ? options.placeholder(node.type.name, node.attrs.level)
-          : node.type.name === 'heading' && node.attrs.level === 1
-            ? 'Untitled'
-            : "Type '/' for commands",
+        node.type.name === 'codeBlock'
+          ? ''
+          : options.placeholder
+            ? options.placeholder(node.type.name, node.attrs.level)
+            : node.type.name === 'heading' && node.attrs.level === 1
+              ? 'Untitled'
+              : "Type '/' for commands",
     }),
+    CurrentEmptyBlock,
     Highlight.configure({ multicolor: true }),
     Link.configure({
       openOnClick: false,
@@ -84,27 +88,13 @@ export function buildExtensions(options: BuildExtensionsOptions): Extensions {
     CharacterCount.configure({ mode: 'textSize' }),
     TaskList,
     TaskItem.configure({ nested: true }),
-    TableKit.configure({
-      table: {
-        resizable: true,
-        HTMLAttributes: { class: 'editor-table' },
-      },
-    }),
     createNoticeNode(nodeViews.notice),
-    createMermaidNode(nodeViews.mermaid),
     createInternalMention({
       mentionSource,
       hrefBuilder,
       // Without a framework-supplied render the suggestion is inert, so fall back to a no-op
       // rather than throwing when a consumer builds extensions headlessly (e.g. unit tests).
       render: mentionRender ?? (() => ({})),
-    }),
-    // `Emoji` needs a suggestion render or typing ':' silently does nothing (the picker never
-    // opens). Fall back to a no-op so headless callers still build.
-    Emoji.configure({
-      emojis,
-      enableEmoticons: false,
-      suggestion: { render: emojiRender ?? (() => ({})) },
     }),
     createLinkPreview(nodeViews.linkPreview),
     createImageNode(nodeViews.image),

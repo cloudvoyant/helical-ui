@@ -2,6 +2,16 @@
 <script lang="ts">
   import { Editor, Prose } from '@cloudvoyant/vortex-svelte';
 
+  const editorProps = {
+    fetchLinkPreview: async (url: string) => ({
+      title: 'Vortex bookmark',
+      description: 'Metadata returned by the app-owned preview function.',
+      image: null,
+      favicon: null,
+      provider: new URL(url).hostname,
+    }),
+  };
+
   const seed = JSON.stringify({
     type: 'doc',
     content: [
@@ -18,5 +28,5 @@
 </script>
 
 <Prose>
-  <Editor content={seed} />
+  <Editor content={seed} {...editorProps} />
 </Prose>

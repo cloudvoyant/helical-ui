@@ -2,6 +2,7 @@
 // Editable Notice block. Framework node views render the existing vortex Notice component;
 // renderHTML keeps the same content available to the static Reader.
 import { Node, mergeAttributes } from '@tiptap/core';
+import { Plugin } from '@tiptap/pm/state';
 import type { NodeViewFactory } from '../types';
 
 export type NoticeVariant = 'info' | 'success' | 'warning' | 'error';
@@ -29,29 +30,70 @@ export const createNoticeNode = (nodeView?: NodeViewFactory) =>
     addAttributes() {
       return {
         variant: { default: 'info' },
-        title: { default: 'Note' },
+        title: {
+          default: 'Note',
+          parseHTML: (element) => element.querySelector('[data-notice-title]')?.textContent ?? 'Note',
+        },
       };
     },
 
     parseHTML() {
-      return [{ tag: 'aside[data-type="notice"]' }];
+      return [{ tag: 'aside[data-type="notice"]', contentElement: '[data-notice-body]' }];
     },
 
     renderHTML({ HTMLAttributes }) {
-      const variant = (HTMLAttributes.variant as NoticeVariant | undefined) ?? 'info';
+      const { title = 'Note', variant: rawVariant = 'info', ...attributes } = HTMLAttributes as Record<string, unknown>;
+      const variant = rawVariant as NoticeVariant;
       return [
         'aside',
-        mergeAttributes(HTMLAttributes, {
+        mergeAttributes(attributes, {
           'data-type': 'notice',
           'data-variant': variant,
           class: 'editor-notice my-4 rounded-lg border border-border bg-muted/40 p-4',
         }),
-        0,
+        ['div', { 'data-notice-title': '', class: 'font-semibold tracking-tight' }, String(title)],
+        ['div', { 'data-notice-body': '' }, 0],
       ];
     },
 
     addNodeView() {
       return nodeView ? nodeView() : null;
+    },
+
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          props: {
+            handleKeyDown: (view, event) => {
+              if (event.key !== 'ArrowUp') return false;
+              const { selection } = view.state;
+              const { $from } = selection;
+              if (!selection.empty) return false;
+
+              let noticeDepth = -1;
+              for (let depth = $from.depth; depth > 0; depth -= 1) {
+                if ($from.node(depth).type.name === this.name) {
+                  noticeDepth = depth;
+                  break;
+                }
+              }
+              if (noticeDepth < 0 || $from.index(noticeDepth) !== 0) return false;
+
+              const cursorCoords = view.coordsAtPos(selection.from);
+              const firstLineCoords = view.coordsAtPos($from.start());
+              if (cursorCoords.top > firstLineCoords.top + 2) return false;
+
+              const dom = view.nodeDOM($from.before(noticeDepth));
+              if (!(dom instanceof HTMLElement)) return false;
+              const titleInput = dom.querySelector<HTMLInputElement>('input[aria-label="Notice title"]');
+              if (!titleInput) return false;
+
+              titleInput.focus();
+              return true;
+            },
+          },
+        }),
+      ];
     },
 
     addCommands() {

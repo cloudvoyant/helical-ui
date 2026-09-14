@@ -6,40 +6,43 @@
     buildExtensions,
     registerImageInsertCallback,
     unregisterImageInsertCallback,
+    insertPastedUrlAsLink,
     type SlashCommandItem,
     type MentionItem,
     type MentionListElement,
-    type EmojiItem,
     type EditorCounts,
     type ImageUploadResult,
+    type LinkPreviewAttributes,
   } from '@cloudvoyant/vortex-ui';
   import BubbleMenuContent from './BubbleMenu.svelte';
   import SlashMenu from './SlashMenu.svelte';
   import BookmarkInput from './BookmarkInput.svelte';
   import ImageInput from './ImageInput.svelte';
   import YouTubeInput from './YouTubeInput.svelte';
-  import PasteMenu from './PasteMenu.svelte';
   import ImageNodeView from './ImageNodeView.svelte';
   import UrlMentionPill from './UrlMentionPill.svelte';
   import LinkPreviewCard from './LinkPreviewCard.svelte';
   import CodeBlockComponent from './CodeBlockComponent.svelte';
   import NoticeNodeView from './NoticeNodeView.svelte';
-  import MermaidNodeView from './MermaidNodeView.svelte';
   import MentionList from './MentionList.svelte';
-  import EmojiList from './EmojiList.svelte';
+  import CursorOverlay from './CursorOverlay.svelte';
   import type { SuggestionProps } from '@tiptap/suggestion';
   import type { JSONContent } from '@tiptap/core';
 
   let {
     content = '',
     editable = true,
+    enforceTitle = true,
     onchange,
     mentionSource,
     hrefBuilder,
     onUpload,
+    fetchLinkPreview,
   }: {
     content?: string;
     editable?: boolean;
+    /** Keep the required first H1 title. Disable for compact inputs such as mentions. */
+    enforceTitle?: boolean;
     onchange?: (data: { content: string; title: string }) => void;
     /** Seam: replaces the source editor's hardcoded internal-search endpoint. */
     mentionSource?: (query: string) => Promise<MentionItem[]>;
@@ -47,6 +50,8 @@
     hrefBuilder?: (item: MentionItem) => string;
     /** Seam: replaces the source editor's app-specific image upload. */
     onUpload?: (file: File) => Promise<ImageUploadResult>;
+    /** Resolve Open Graph or SEO metadata for bookmark cards. */
+    fetchLinkPreview?: (url: string) => Promise<Omit<LinkPreviewAttributes, 'url' | 'type'>>;
   } = $props();
 
   let editor = $state<Editor | null>(null);
@@ -58,24 +63,14 @@
   let mentionMenuProps = $state<SuggestionProps<MentionItem> | null>(null);
   let mentionMenuCoords = $state({ left: 0, top: 0 });
   let mentionMenuEl = $state<HTMLElement | null>(null);
-  // Emoji picker: same template-render pattern. Without a render, `:` silently does nothing.
-  let emojiMenuProps = $state<SuggestionProps<EmojiItem> | null>(null);
-  let emojiMenuCoords = $state({ left: 0, top: 0 });
-  let emojiMenuEl = $state<HTMLElement | null>(null);
   let slashMenuCoords = $state({ left: 0, top: 0 });
+  let slashMenuSurface = $state<HTMLDivElement | null>(null);
   let bookmarkInputActive = $state(false);
   let bookmarkInputPosition = $state(0);
-  let bookmarkInputCoords = $state({ left: 0, top: 0 });
   let imageInputActive = $state(false);
   let imageInputPosition = $state(0);
-  let imageInputCoords = $state({ left: 0, top: 0 });
   let youTubeInputActive = $state(false);
   let youTubeInputPosition = $state(0);
-  let youTubeInputCoords = $state({ left: 0, top: 0 });
-  let pasteMenuActive = $state(false);
-  let pasteMenuUrl = $state('');
-  let pasteMenuPosition = $state(0);
-  let pasteMenuCoords = $state({ left: 0, top: 0 });
 
   type SlashCommandInsertStorage = {
     slashCommands: { onInsertYouTube?: (position: number) => void };
@@ -92,8 +87,32 @@
     (editorInstance.storage as unknown as SlashCommandInsertStorage).slashCommands.onInsertYouTube = undefined;
   }
 
-  function findScrollableAncestor(element: HTMLElement): HTMLElement | null {
-    let current = element.parentElement;
+  type OverlayPlacementOptions = { width: number; height: number; gap?: number; viewportGap?: number };
+
+  // Mirror vortex-ui's placement helpers locally because this package's editor source is checked
+  // before newly-built vortex-ui declarations are always available in workspace tooling.
+  function placeEditorOverlay(
+    rect: Pick<DOMRect, 'left' | 'top' | 'bottom'>,
+    { width, height, gap = 8, viewportGap = 16 }: OverlayPlacementOptions,
+  ) {
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const preferredTop =
+      spaceBelow < height && spaceAbove > spaceBelow ? rect.top - height - gap : rect.bottom + gap;
+    return {
+      left: Math.min(
+        Math.max(rect.left, viewportGap),
+        Math.max(window.innerWidth - width - viewportGap, viewportGap),
+      ),
+      top: Math.min(
+        Math.max(preferredTop, viewportGap),
+        Math.max(window.innerHeight - height - viewportGap, viewportGap),
+      ),
+    };
+  }
+
+  function findEditorScrollContainer(editorElement: HTMLElement): HTMLElement | null {
+    let current = editorElement.parentElement;
     while (current && current !== document.body) {
       const overflowY = window.getComputedStyle(current).overflowY;
       if (/(auto|scroll)/.test(overflowY) && current.scrollHeight > current.clientHeight) return current;
@@ -102,17 +121,22 @@
     return null;
   }
 
+  const SLASH_OVERLAY = { width: 288, height: 288 };
+  const IMAGE_OVERLAY = { width: 320, height: 480, gap: 4 };
+  const BOOKMARK_OVERLAY = { width: 320, height: 240, gap: 4 };
+  const YOUTUBE_OVERLAY = { width: 320, height: 220, gap: 4 };
+
   function updateSlashMenuPosition() {
     const props = slashMenuProps;
     if (!props) return;
-    const rect = props.clientRect?.();
-    if (!rect || rect.left === undefined || rect.top === undefined) return;
-
+    const rect = props.editor.view.coordsAtPos(props.range.to);
     const itemCount = props.items?.length || 0;
-    const menuHeight = Math.min(itemCount * 36 + 8, 320);
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const top = spaceBelow < menuHeight && rect.top > spaceBelow ? rect.top - menuHeight - 8 : rect.bottom + 8;
-    slashMenuCoords = { left: rect.left, top };
+    slashMenuCoords = placeEditorOverlay(rect, {
+      width: slashMenuSurface?.offsetWidth || SLASH_OVERLAY.width,
+      height:
+        slashMenuSurface?.offsetHeight || Math.min(Math.max(itemCount, 1) * 32 + 8, SLASH_OVERLAY.height),
+      gap: 4,
+    });
   }
 
   // Reposition on every suggestion update and while any ancestor scrolls, so a fixed menu remains
@@ -123,23 +147,32 @@
 
   $effect(() => {
     if (!slashMenuProps) return;
+    const surface = slashMenuSurface;
+    const observer = surface ? new ResizeObserver(updateSlashMenuPosition) : null;
+    if (surface) observer?.observe(surface);
+    updateSlashMenuPosition();
     window.addEventListener('scroll', updateSlashMenuPosition, true);
     window.addEventListener('resize', updateSlashMenuPosition);
     return () => {
+      observer?.disconnect();
       window.removeEventListener('scroll', updateSlashMenuPosition, true);
       window.removeEventListener('resize', updateSlashMenuPosition);
     };
   });
 
-  // Lock only the editor's nearest scroll viewport while the slash menu is open. Page scrolling
-  // remains available outside that viewport.
+  // The slash suggestion is not a cursor-overlay component, so keep its equivalent lock here.
+  // Insertion forms use CursorOverlay below.
   $effect(() => {
     const activeMenu = slashMenuProps;
     const editorInstance = editor;
     if (!activeMenu || !editorInstance) return;
-    const container = findScrollableAncestor(editorInstance.view.dom);
+    const container = findEditorScrollContainer(editorInstance.view.dom);
     if (!container) return;
-    const preventWheel = (event: WheelEvent) => event.preventDefault();
+    const preventWheel = (event: WheelEvent) => {
+      const target = event.target;
+      if (target instanceof Node && slashMenuSurface?.contains(target)) return;
+      event.preventDefault();
+    };
     container.addEventListener('wheel', preventWheel, { passive: false });
     return () => container.removeEventListener('wheel', preventWheel);
   });
@@ -165,7 +198,6 @@
       linkPreview: () => SvelteNodeViewRenderer(LinkPreviewCard),
       codeBlock: () => SvelteNodeViewRenderer(CodeBlockComponent),
       notice: () => SvelteNodeViewRenderer(NoticeNodeView),
-      mermaid: () => SvelteNodeViewRenderer(MermaidNodeView),
     };
 
     editor = new Editor({
@@ -174,6 +206,7 @@
       extensions: buildExtensions({
         mentionSource,
         hrefBuilder,
+        enforceTitle,
         nodeViews,
         mentionRender: () => ({
           onStart: (props: SuggestionProps<MentionItem>) => {
@@ -201,30 +234,6 @@
           },
         }),
         // The slash menu is rendered from this component's template (see `slashMenuProps`).
-        emojiRender: () => ({
-          onStart: (props: SuggestionProps<EmojiItem>) => {
-            emojiMenuProps = props;
-            const rect = props.clientRect?.();
-            if (rect) emojiMenuCoords = { left: rect.left, top: rect.bottom + 8 };
-          },
-          onUpdate: (props: SuggestionProps<EmojiItem>) => {
-            emojiMenuProps = props;
-            const rect = props.clientRect?.();
-            if (rect) emojiMenuCoords = { left: rect.left, top: rect.bottom + 8 };
-          },
-          onKeyDown: (props: { event: KeyboardEvent }) => {
-            if (props.event.key === 'Escape') {
-              props.event.preventDefault();
-              props.event.stopPropagation();
-              return true;
-            }
-            const child = emojiMenuEl?.firstElementChild as MentionListElement | null;
-            return child?.__mentionListKeyDown?.(props.event) ?? false;
-          },
-          onExit: () => {
-            emojiMenuProps = null;
-          },
-        }),
         slashRender: () => ({
           onStart: (props: SuggestionProps<SlashCommandItem>) => {
             slashMenuProps = props;
@@ -241,17 +250,24 @@
         ? JSON.parse(content)
         : {
             type: 'doc',
-            content: [
-              {
-                type: 'heading',
-                attrs: { level: 1 },
-                content: [],
-              },
-              {
-                type: 'paragraph',
-                content: [],
-              },
-            ],
+            content: enforceTitle
+              ? [
+                  {
+                    type: 'heading',
+                    attrs: { level: 1 },
+                    content: [],
+                  },
+                  {
+                    type: 'paragraph',
+                    content: [],
+                  },
+                ]
+              : [
+                  {
+                    type: 'paragraph',
+                    content: [],
+                  },
+                ],
           },
       editable,
       onUpdate: ({ editor }) => {
@@ -264,74 +280,22 @@
         attributes: {
           class: 'prose prose-lg focus:outline-none max-w-none min-h-[500px]',
         },
-        handlePaste: (view, event) => {
-          // Get pasted text
-          const text = event.clipboardData?.getData('text/plain') || '';
-
-          // Check if it's a URL
-          const urlRegex = /^https?:\/\/.+/i;
-          if (!urlRegex.test(text.trim())) {
-            return false; // Let default paste behavior handle it
-          }
-
-          // Prevent default paste
-          event.preventDefault();
-
-          // Get current position
-          const { from } = view.state.selection;
-
-          // Insert URL text temporarily
-          editor?.chain().focus().insertContent(text).run();
-
-          // Calculate position for paste menu with flip logic
-          const coords = view.coordsAtPos(from);
-          const menuHeight = 150; // approximate height of paste menu
-          const spaceBelow = window.innerHeight - coords.bottom;
-          const spaceAbove = coords.top;
-
-          const top =
-            spaceBelow < menuHeight && spaceAbove > spaceBelow ? coords.top - menuHeight - 8 : coords.bottom + 8;
-
-          pasteMenuCoords = {
-            left: coords.left,
-            top,
-          };
-
-          // Show paste menu
-          pasteMenuUrl = text.trim();
-          pasteMenuPosition = from;
-          pasteMenuActive = true;
-
-          return true; // Handled
-        },
+        handlePaste: insertPastedUrlAsLink,
       },
     });
 
     // Register callback so the image slash command can directly set Svelte state
     // (editor.storage mutations are not tracked by Svelte 5 $effect)
     registerImageInsertCallback(editor!, (position) => {
-      const coords = editor!.view.coordsAtPos(position);
-      const panelHeight = 480;
-      const viewportGap = 16;
-      const spaceBelow = window.innerHeight - coords.bottom;
-      const spaceAbove = coords.top;
-      const preferredTop =
-        spaceBelow < panelHeight && spaceAbove > spaceBelow ? coords.top - panelHeight - 8 : coords.bottom + 8;
-      const top = Math.min(
-        Math.max(preferredTop, viewportGap),
-        Math.max(window.innerHeight - panelHeight - viewportGap, viewportGap),
-      );
-      imageInputCoords = { left: coords.left, top };
       imageInputPosition = position;
       imageInputActive = true;
     });
 
     registerYouTubeInsert(editor!, (position: number) => {
-      const coords = editor!.view.coordsAtPos(position);
-      youTubeInputCoords = { left: coords.left, top: coords.bottom + 8 };
       youTubeInputPosition = position;
       youTubeInputActive = true;
     });
+    editor!.on('transaction', syncBookmarkInput);
   });
 
   interface BookmarkInputState {
@@ -343,34 +307,24 @@
     return typeof v === 'object' && v !== null && 'active' in v;
   }
 
-  // Watch for bookmark input trigger
-  $effect(() => {
+  // Tiptap storage is not reactive, so observe transactions just like the React editor.
+  function syncBookmarkInput() {
     if (!editor?.view) return;
 
     const storage = editor.storage as unknown as Record<string, unknown>;
     const bookmarkInput = storage['bookmarkInput'];
     if (isBookmarkInputState(bookmarkInput) && bookmarkInput.active) {
-      const pos = bookmarkInput.position;
-      bookmarkInputPosition = pos;
-
-      // Calculate position using coordsAtPos
-      const coords = editor.view.coordsAtPos(pos);
-      bookmarkInputCoords = {
-        left: coords.left,
-        top: coords.bottom + 8,
-      };
-
+      bookmarkInputPosition = bookmarkInput.position;
       bookmarkInputActive = true;
-
-      // Reset the trigger
       storage['bookmarkInput'] = { active: false };
     }
-  });
+  }
 
   onDestroy(() => {
     if (editor) {
       unregisterImageInsertCallback(editor);
       unregisterYouTubeInsert(editor);
+      editor.off('transaction', syncBookmarkInput);
       editor.destroy();
     }
   });
@@ -421,7 +375,12 @@
   {#if editor}
     <BubbleMenuContent {editor} />
     {#if slashMenuProps}
-      <div class="fixed z-50" style="left: {slashMenuCoords.left}px; top: {slashMenuCoords.top}px;">
+      <div
+        bind:this={slashMenuSurface}
+        data-slash-menu-surface
+        class="fixed z-50"
+        style="left: {slashMenuCoords.left}px; top: {slashMenuCoords.top}px;"
+      >
         <SlashMenu items={slashMenuProps.items || []} command={(item) => slashMenuProps?.command?.(item)} />
       </div>
     {/if}
@@ -438,32 +397,32 @@
         />
       </div>
     {/if}
-    {#if emojiMenuProps}
-      <div
-        bind:this={emojiMenuEl}
-        class="fixed z-50"
-        style="left: {emojiMenuCoords.left}px; top: {emojiMenuCoords.top}px;"
-      >
-        <EmojiList
-          items={emojiMenuProps.items || []}
-          command={(item) => emojiMenuProps?.command?.(item)}
-          clientRect={emojiMenuProps.clientRect ?? null}
-        />
-      </div>
-    {/if}
     {#if bookmarkInputActive}
-      <div class="fixed z-50" style="left: {bookmarkInputCoords.left}px; top: {bookmarkInputCoords.top}px;">
+      <CursorOverlay
+        {editor}
+        position={bookmarkInputPosition}
+        width={BOOKMARK_OVERLAY.width}
+        height={BOOKMARK_OVERLAY.height}
+        gap={BOOKMARK_OVERLAY.gap}
+      >
         <BookmarkInput
           {editor}
+          {fetchLinkPreview}
           position={bookmarkInputPosition}
           onClose={() => {
             bookmarkInputActive = false;
           }}
         />
-      </div>
+      </CursorOverlay>
     {/if}
     {#if imageInputActive}
-      <div class="fixed z-50" style="left: {imageInputCoords.left}px; top: {imageInputCoords.top}px;">
+      <CursorOverlay
+        {editor}
+        position={imageInputPosition}
+        width={IMAGE_OVERLAY.width}
+        height={IMAGE_OVERLAY.height}
+        gap={IMAGE_OVERLAY.gap}
+      >
         <ImageInput
           {editor}
           {onUpload}
@@ -472,10 +431,16 @@
             imageInputActive = false;
           }}
         />
-      </div>
+      </CursorOverlay>
     {/if}
     {#if youTubeInputActive}
-      <div class="fixed z-50" style="left: {youTubeInputCoords.left}px; top: {youTubeInputCoords.top}px;">
+      <CursorOverlay
+        {editor}
+        position={youTubeInputPosition}
+        width={YOUTUBE_OVERLAY.width}
+        height={YOUTUBE_OVERLAY.height}
+        gap={YOUTUBE_OVERLAY.gap}
+      >
         <YouTubeInput
           {editor}
           position={youTubeInputPosition}
@@ -483,19 +448,7 @@
             youTubeInputActive = false;
           }}
         />
-      </div>
-    {/if}
-    {#if pasteMenuActive}
-      <div class="fixed z-50" style="left: {pasteMenuCoords.left}px; top: {pasteMenuCoords.top}px;">
-        <PasteMenu
-          {editor}
-          url={pasteMenuUrl}
-          position={pasteMenuPosition}
-          onClose={() => {
-            pasteMenuActive = false;
-          }}
-        />
-      </div>
+      </CursorOverlay>
     {/if}
   {/if}
 </div>

@@ -20,6 +20,8 @@ describe('toggleGroupRootVariants', () => {
     // element and Tailwind's emission order (.gap-1 after .gap-0) defeated the variant.
     expect(classes).not.toContain('gap-1');
     expect(classes).toContain('[&>*]:rounded-none');
+    expect(classes).toContain('[&>*]:shadow-none');
+    expect(classes).toContain('[&>*[data-state=on]]:border-primary');
     expect(classes).toContain('[&>*:first-child]:rounded-s-md');
     expect(classes).toContain('[&>*:last-child]:rounded-e-md');
   });

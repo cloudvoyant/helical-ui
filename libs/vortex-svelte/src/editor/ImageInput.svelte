@@ -8,7 +8,6 @@
     editor: Editor;
     position: number;
     onClose: () => void;
-    /** Seam: replaces the source editor's app-specific uploader (was @readership/ui). */
     onUpload?: (file: File) => Promise<ImageUploadResult>;
   }
 
@@ -137,7 +136,7 @@
     </div>
 
     {#if activeTab === 'upload'}
-      <div class="space-y-2">
+      <div class="space-y-1">
         <ImageFileUpload
           file={selectedFile}
           disabled={uploading}
@@ -150,11 +149,11 @@
           <p class="text-xs text-muted-foreground">Uploading…</p>
         {/if}
         {#if uploadError}
-          <p class="text-xs text-destructive">{uploadError}</p>
+          <div role="alert" class="text-xs leading-tight text-destructive">{uploadError}</div>
         {/if}
       </div>
     {:else}
-      <div class="space-y-2">
+      <div class="space-y-1">
         <input
           type="url"
           bind:this={urlInputEl}
@@ -164,10 +163,11 @@
             urlError = '';
           }}
           placeholder="https://example.com/image.jpg"
+          aria-invalid={Boolean(urlError)}
           class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
         />
         {#if urlError}
-          <p class="text-xs text-destructive">{urlError}</p>
+          <div role="alert" class="text-xs leading-tight text-destructive">{urlError}</div>
         {/if}
       </div>
     {/if}

@@ -4,10 +4,20 @@
 // svelte or react.
 export * from './types';
 export { buildExtensions } from './build-extensions';
+export { insertPastedUrlAsLink } from './paste-url';
+export {
+  findEditorScrollContainer,
+  lockEditorOverlayScroll,
+  placeEditorOverlay,
+  placeEditorOverlayAt,
+  type OverlayPlacementOptions,
+  type OverlayPosition,
+} from './overlay-position';
 
 export { TitleHeading } from './extensions/title-heading';
 export { ExitHeading } from './extensions/exit-heading';
 export { HeadingWithId } from './extensions/heading-with-id';
+export { EditorHeading } from './extensions/editor-heading';
 export {
   slashCommands,
   registerImageInsertCallback,
@@ -21,4 +31,3 @@ export { createUrlMention } from './extensions/url-mention';
 export { createLinkPreview } from './extensions/link-preview';
 export { createInternalMention } from './extensions/internal-mention';
 export { createNoticeNode, type NoticeAttributes, type NoticeVariant } from './extensions/notice-node';
-export { createMermaidNode, type MermaidAttributes } from './extensions/mermaid-node';

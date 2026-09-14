@@ -32,12 +32,6 @@ export interface MentionListElement extends HTMLElement {
   __mentionListKeyDown?: (event: KeyboardEvent) => boolean;
 }
 
-/** One emoji suggestion entry (matches @tiptap/extension-emoji's item shape). */
-export interface EmojiItem {
-  name: string;
-  emoji: string;
-}
-
 export interface UrlMentionAttributes {
   url: string;
   title: string;
@@ -53,6 +47,9 @@ export interface LinkPreviewAttributes {
   provider: string;
   type: 'bookmark' | 'embed';
 }
+
+/** Resolve bookmark metadata through an app-owned server or a CORS-enabled metadata service. */
+export type LinkPreviewFetcher = (url: string) => Promise<Omit<LinkPreviewAttributes, 'url' | 'type'>>;
 
 export interface ImageUploadResult {
   src: string;
@@ -82,13 +79,12 @@ export interface EditorNodeViews {
   linkPreview: NodeViewFactory;
   codeBlock: NodeViewFactory;
   notice?: NodeViewFactory;
-  mermaid?: NodeViewFactory;
 }
 
 /**
  * App-specific seams. These replace behaviour the source editor hardcoded, so the component
- * stays app-agnostic: mention search (was a fixed `/api/search/internal` fetch), internal-link
- * hrefs (were fixed `/read/...` paths), and image upload (was an app-specific endpoint).
+ * stays app-agnostic: mention search, internal-link hrefs, image upload, and bookmark metadata
+ * loading.
  */
 export interface EditorSeams {
   /** Replaces the source editor's hardcoded internal-search fetch. */
@@ -97,18 +93,20 @@ export interface EditorSeams {
   hrefBuilder?: (item: MentionItem) => string;
   /** Replaces the app-specific image upload. */
   onUpload?: (file: File) => Promise<ImageUploadResult>;
+  /** Resolves Open Graph or SEO metadata for bookmark cards. */
+  fetchLinkPreview?: LinkPreviewFetcher;
 }
 
 export interface BuildExtensionsOptions extends EditorSeams {
   nodeViews: EditorNodeViews;
-  /** Placeholder resolver; defaults to "Untitled" for the H1 and "Type '/' for commands". */
+  /** Placeholder resolver; defaults to "Untitled" for the H1 and "Type '/' for commands" outside code blocks. */
   placeholder?: (nodeName: string, level?: number) => string;
   /** Mounts the framework's mention suggestion menu. */
   mentionRender?: SuggestionOptions<MentionItem>['render'];
   /** Mounts the framework's slash-command menu. */
   slashRender?: SuggestionOptions<SlashCommandItem>['render'];
-  /** Mounts the framework's emoji (`:`) picker menu. */
-  emojiRender?: SuggestionOptions<EmojiItem>['render'];
+  /** Keep the editor's required first H1 and title navigation. Defaults to true. */
+  enforceTitle?: boolean;
   /**
    * The read-only Reader uses heading ids so headings are anchor-linkable; the editor uses the
    * plain heading. When true, StarterKit's heading is disabled and HeadingWithId is used.

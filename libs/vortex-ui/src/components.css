@@ -35,62 +35,95 @@
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-/* Tiptap placeholders are attributes until the consuming surface renders the pseudo-element. */
+/* Tiptap decorates every empty block so the title can keep guidance while inactive. Body hints
+ * stay hidden except on the active block; the title does the inverse. */
 .ProseMirror [data-placeholder].is-empty::before {
   height: 0;
   float: left;
   pointer-events: none;
   color: var(--color-muted-foreground);
+  content: none;
+}
+
+.ProseMirror [data-placeholder].is-empty.is-current-empty:not(h1)::before {
   content: attr(data-placeholder);
 }
 
-/* Tiptap tables share one surface in React, Svelte, and static Reader output. */
-.ProseMirror .tableWrapper,
-.reader-content .tableWrapper {
-  margin-block: 1rem;
-  overflow-x: auto;
+.ProseMirror h1[data-placeholder='Untitled'].is-empty:not(.is-current-empty)::before {
+  color: color-mix(in srgb, var(--color-muted-foreground) 55%, transparent);
+  content: attr(data-placeholder);
 }
 
-.editor-table {
-  width: 100%;
-  margin-block: 1rem;
-  table-layout: fixed;
-  border-collapse: collapse;
+/* Editor Notice node views are denser than standalone Notices. Explicitly beat the editor-wide
+ * prose paragraph rhythm at this semantic boundary. */
+.ProseMirror .editor-notice-node [data-node-view-content] p {
+  margin-block: 0 !important;
+  line-height: 1.5 !important;
 }
 
-.editor-table th,
-.editor-table td {
-  position: relative;
-  min-width: 6rem;
-  border: 1px solid var(--color-border);
-  padding: 0.5rem 0.75rem;
-  vertical-align: top;
+/* The shared CodeBlock owns the only visible border. Reset prose styles on its editable body
+ * so the nested <pre> does not render as a second box. */
+.ProseMirror [data-code-block] .editor-code-content {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 1rem !important;
 }
 
-.editor-table th {
-  background: var(--color-muted);
-  font-weight: 600;
-  text-align: start;
+.ProseMirror [data-code-block] .editor-code-content code {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
-.ProseMirror .editor-table .selectedCell::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  content: '';
-  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+/* Lowlight decorates editable code with highlight.js token classes. Keep these shared so
+ * React and Svelte show the same syntax colors while ProseMirror remains editable. */
+.ProseMirror [data-code-block] :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in) {
+  color: #cf222e;
 }
 
-.ProseMirror .column-resize-handle {
-  position: absolute;
-  top: 0;
-  right: -2px;
-  bottom: 0;
-  width: 4px;
-  pointer-events: none;
-  background: var(--color-primary);
+.ProseMirror [data-code-block] :is(.hljs-string, .hljs-doctag) {
+  color: #0a3069;
 }
 
-.ProseMirror.resize-cursor {
-  cursor: col-resize;
+.ProseMirror [data-code-block] :is(.hljs-title, .hljs-section, .hljs-type) {
+  color: #8250df;
+}
+
+.ProseMirror [data-code-block] :is(.hljs-comment, .hljs-quote) {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.ProseMirror [data-code-block] :is(.hljs-number, .hljs-attr) {
+  color: #0550ae;
+}
+
+.ProseMirror [data-code-block] :is(.hljs-variable, .hljs-template-variable) {
+  color: #953800;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in) {
+  color: #ff7b72;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-string, .hljs-doctag) {
+  color: #a5d6ff;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-title, .hljs-section, .hljs-type) {
+  color: #d2a8ff;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-comment, .hljs-quote) {
+  color: #8b949e;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-number, .hljs-attr) {
+  color: #79c0ff;
+}
+
+:root.dark .ProseMirror [data-code-block] :is(.hljs-variable, .hljs-template-variable) {
+  color: #ffa657;
 }

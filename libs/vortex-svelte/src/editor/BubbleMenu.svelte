@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import type { Editor } from '@tiptap/core';
-  import ColorPicker from './ColorPicker.svelte';
+  import FontColorPicker from './FontColorPicker.svelte';
   import LinkEditPopover from './LinkEditPopover.svelte';
   import {
     AlignLeft,
@@ -20,7 +20,7 @@
   let menu: HTMLDivElement = $state() as HTMLDivElement;
   let showLinkInput = $state(false);
   let linkUrl = $state('');
-  let showColorPicker = $state(false);
+  let showFontColorPicker = $state(false);
   let showHighlightPicker = $state(false);
   let isVisible = $state(false);
   let currentTextColor = $state<string | null>(null);
@@ -30,10 +30,29 @@
   // Reset picker states when menu closes
   $effect(() => {
     if (!isVisible) {
-      showColorPicker = false;
+      showFontColorPicker = false;
       showHighlightPicker = false;
       showLinkInput = false;
     }
+  });
+
+  function findEditorScrollContainer(editorElement: HTMLElement): HTMLElement | null {
+    let current = editorElement.parentElement;
+    while (current && current !== document.body) {
+      const overflowY = window.getComputedStyle(current).overflowY;
+      if (/(auto|scroll)/.test(overflowY) && current.scrollHeight > current.clientHeight) return current;
+      current = current.parentElement;
+    }
+    return null;
+  }
+
+  $effect(() => {
+    if (!showLinkInput) return;
+    const container = findEditorScrollContainer(props.editor.view.dom);
+    if (!container) return;
+    const preventWheel = (event: WheelEvent) => event.preventDefault();
+    container.addEventListener('wheel', preventWheel, { passive: false });
+    return () => container.removeEventListener('wheel', preventWheel);
   });
 
   function updateColors() {
@@ -62,7 +81,7 @@
     }
 
     // Hide if the editor is blurred or there is no text selection.
-    if (!props.editor.isFocused || empty || from === to) {
+    if ((!props.editor.isFocused && !showLinkInput) || empty || from === to) {
       isVisible = false;
       showLinkInput = false;
       return;
@@ -79,11 +98,6 @@
       showLinkInput = true;
       const { href } = props.editor.getAttributes('link');
       linkUrl = href || '';
-    } else {
-      if (showLinkInput && !isLinkActive) {
-        showLinkInput = false;
-        linkUrl = '';
-      }
     }
 
     // Defer positioning so the browser has time to finalize the native
@@ -207,7 +221,11 @@
 
 <div
   bind:this={menu}
-  onmousedown={(event) => event.preventDefault()}
+  onmousedown={(event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-link-editor]')) return;
+    event.preventDefault();
+  }}
   role="toolbar"
   aria-label="Text formatting"
   tabindex="-1"
@@ -285,7 +303,7 @@
         {/if}
       </span>
     </button>
-    <ColorPicker editor={props.editor} bind:visible={showHighlightPicker} mode="highlight" />
+    <FontColorPicker editor={props.editor} bind:visible={showHighlightPicker} mode="highlight" />
   </div>
   <div class="relative">
     <button
@@ -293,7 +311,7 @@
       class="rounded px-3 py-1 hover:bg-accent hover:text-accent-foreground {props.editor.isActive('textColor')
         ? 'bg-accent text-accent-foreground'
         : ''}"
-      onclick={() => (showColorPicker = !showColorPicker)}
+      onclick={() => (showFontColorPicker = !showFontColorPicker)}
       aria-label="Text Color"
       title="Text Color"
     >
@@ -307,21 +325,33 @@
         {/if}
       </span>
     </button>
-    <ColorPicker editor={props.editor} bind:visible={showColorPicker} mode="color" />
+    <FontColorPicker editor={props.editor} bind:visible={showFontColorPicker} mode="color" />
   </div>
 
   <!-- Link -->
-  <button
-    type="button"
-    class="rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground {props.editor.isActive('link')
-      ? 'bg-accent text-accent-foreground'
-      : ''}"
-    onclick={toggleLink}
-    aria-label="Link"
-    title="Link"
-  >
-    <Link2 size={16} />
-  </button>
+  <div class="relative">
+    <button
+      type="button"
+      class="rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground {props.editor.isActive('link')
+        ? 'bg-accent text-accent-foreground'
+        : ''}"
+      onclick={toggleLink}
+      aria-label="Link"
+      title="Link"
+    >
+      <Link2 size={16} />
+    </button>
+    {#if showLinkInput}
+      <LinkEditPopover
+        editor={props.editor}
+        initialUrl={linkUrl}
+        onClose={() => {
+          showLinkInput = false;
+          linkUrl = '';
+        }}
+      />
+    {/if}
+  </div>
 
   <!-- Divider -->
   <div class="w-px h-6 bg-border mx-1"></div>
@@ -379,22 +409,4 @@
   >
     <AlignJustify size={16} />
   </button>
-
 </div>
-
-{#if showLinkInput && menu && props.editor}
-  {#if props.editor.state.selection.from !== props.editor.state.selection.to}
-    {@const { to } = props.editor.state.selection}
-    {@const coords = props.editor.view.coordsAtPos(to)}
-    <div style="position: fixed; left: {menu.style.left}; top: {coords.bottom + 8}px; z-index: 60;">
-      <LinkEditPopover
-        editor={props.editor}
-        initialUrl={linkUrl}
-        onClose={() => {
-          showLinkInput = false;
-          linkUrl = '';
-        }}
-      />
-    </div>
-  {/if}
-{/if}

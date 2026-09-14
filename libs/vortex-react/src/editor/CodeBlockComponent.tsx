@@ -1,7 +1,6 @@
 // libs/vortex-react/src/editor/CodeBlockComponent.tsx
-// React parity of CodeBlockComponent.svelte. The source's local `./ui/command` palette is
-// replaced by vortex Popover + the Listbox parts (a command palette is what Listbox is).
-import { useMemo, useState } from 'react';
+// React parity of CodeBlockComponent.svelte. Language selection reuses the same shared Select
+// control as the static multi-language CodeBlock.
 import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from '@tiptap/react';
 import { ChevronsUpDown, Check } from 'lucide-react';
 import {
@@ -9,25 +8,18 @@ import {
   CodeBlockHeader,
   CodeBlockTitle,
   CodeBlockCopyButton,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Listbox,
-  ListboxContent,
-  ListboxInput,
-  ListboxItem,
-  ListboxItemText,
-  ListboxItemIndicator,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectIndicator,
+  SelectContent,
+  SelectItem,
+  SelectItemText,
+  SelectItemIndicator,
 } from '..';
-import {
-  cn,
-  codeBlockBodyBase,
-  codeBlockContentBase,
-  defaultListboxFilter,
-  type ListboxItemData,
-} from '@cloudvoyant/vortex-ui';
+import { cn, codeBlockBodyBase, codeBlockContentBase, type SelectItemData } from '@cloudvoyant/vortex-ui';
 
-const LANGUAGES: ListboxItemData[] = [
+const LANGUAGES: SelectItemData[] = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'typescript', label: 'TypeScript' },
   { value: 'python', label: 'Python' },
@@ -47,13 +39,9 @@ const LANGUAGES: ListboxItemData[] = [
 ];
 
 export function CodeBlockComponent({ node, editor, updateAttributes }: NodeViewProps) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-
   const language = (node.attrs.language as string) || 'javascript';
   const editable = editor.isEditable;
 
-  const filtered = useMemo(() => LANGUAGES.filter((item) => defaultListboxFilter(item, query)), [query]);
   const currentLabel = LANGUAGES.find((item) => item.value === language)?.label ?? 'JavaScript';
 
   return (
@@ -63,54 +51,43 @@ export function CodeBlockComponent({ node, editor, updateAttributes }: NodeViewP
           <CodeBlockTitle>{currentLabel}</CodeBlockTitle>
           <div className="ml-auto flex items-center gap-2" contentEditable={false}>
             {editable ? (
-              <Popover
-                open={open}
-                onOpenChange={(details) => {
-                  setOpen(details.open);
-                  if (!details.open) setQuery('');
+              <Select
+                items={LANGUAGES}
+                value={[language]}
+                onValueChange={(details) => {
+                  const next = details.value[0];
+                  if (next) updateAttributes({ language: next });
                 }}
+                aria-label="Code language"
               >
-                <PopoverTrigger className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm hover:bg-accent">
-                  Change language
-                  <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Listbox
-                    items={filtered}
-                    value={[language]}
-                    onValueChange={(details) => {
-                      const next = details.value[0];
-                      if (next) {
-                        updateAttributes({ language: next });
-                        setOpen(false);
-                      }
-                    }}
-                  >
-                    <ListboxInput
-                      placeholder="Search language…"
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      autoHighlight
-                    />
-                    <ListboxContent>
-                      {filtered.map((item) => (
-                        <ListboxItem key={item.value} item={item}>
-                          <ListboxItemText>{item.label}</ListboxItemText>
-                          <ListboxItemIndicator className={cn(language !== item.value && 'text-transparent')}>
-                            <Check className="mr-2 h-4 w-4" />
-                          </ListboxItemIndicator>
-                        </ListboxItem>
-                      ))}
-                    </ListboxContent>
-                  </Listbox>
-                </PopoverContent>
-              </Popover>
+                <SelectTrigger size="sm" className="min-w-36 justify-between font-mono text-xs">
+                  <SelectValue />
+                  <SelectIndicator>
+                    <ChevronsUpDown className="size-3 opacity-50" />
+                  </SelectIndicator>
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((item) => (
+                    <SelectItem key={item.value} item={item}>
+                      <SelectItemText>{item.label}</SelectItemText>
+                      <SelectItemIndicator>
+                        <Check className="size-4" />
+                      </SelectItemIndicator>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : null}
             <CodeBlockCopyButton />
           </div>
         </CodeBlockHeader>
         <div className={codeBlockBodyBase}>
-          <pre className={cn(codeBlockContentBase, 'm-0 p-4 font-mono [&_code]:bg-transparent [&_code]:p-0')}>
+          <pre
+            className={cn(
+              codeBlockContentBase,
+              'editor-code-content m-0 rounded-none border-0 bg-transparent p-4 font-mono [&_code]:bg-transparent [&_code]:p-0',
+            )}
+          >
             {/* NodeViewContent is generic with NoInfer<T>, so the element type must be explicit. */}
             <NodeViewContent<'code'> as="code" />
           </pre>

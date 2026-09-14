@@ -2,9 +2,11 @@
 // React parity of ImageNodeView.svelte. Must render the exact classes the vortex-ui ProseMirror
 // plugins target: figure[data-type="image-node"], .caption-input, and it must tolerate the
 // .image-node-pending-delete decoration added by the two-step backspace plugin.
+import { useState } from 'react';
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 
 export function ImageNodeView({ node, updateAttributes, selected, editor, getPos }: NodeViewProps) {
+  const [captionFocused, setCaptionFocused] = useState(false);
   const { src, srcset, alt, caption } = node.attrs as {
     src: string;
     srcset?: string;
@@ -24,8 +26,10 @@ export function ImageNodeView({ node, updateAttributes, selected, editor, getPos
       />
       <input
         className="caption-input mt-2 w-full bg-transparent text-center text-sm italic text-muted-foreground outline-none"
-        placeholder="Add a caption…"
+        placeholder={captionFocused ? '' : 'Add a caption…'}
         value={caption || ''}
+        onFocus={() => setCaptionFocused(true)}
+        onBlur={() => setCaptionFocused(false)}
         onChange={(event) => updateAttributes({ caption: event.target.value })}
         onKeyDown={(event) => {
           if (typeof getPos !== 'function') return;

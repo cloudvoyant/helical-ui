@@ -18,7 +18,7 @@ async function mentionSource(query: string): Promise<MentionItem[]> {
 export default function ReactEditorMentions() {
   return (
     <div className="rounded-lg border border-input p-3">
-      <Editor content="" mentionSource={mentionSource} />
+      <Editor content="" enforceTitle={false} mentionSource={mentionSource} />
     </div>
   );
 }

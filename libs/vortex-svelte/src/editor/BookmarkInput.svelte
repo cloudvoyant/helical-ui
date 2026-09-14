@@ -1,180 +1,107 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Editor } from '@tiptap/core';
+  import type { LinkPreviewAttributes } from '@cloudvoyant/vortex-ui';
+
+  type LinkPreviewFetcher = (url: string) => Promise<Omit<LinkPreviewAttributes, 'url' | 'type'>>;
 
   interface Props {
     editor: Editor;
     position: number;
     onClose: () => void;
+    /** Optional metadata fetcher; without it a bare bookmark is inserted. */
+    fetchLinkPreview?: LinkPreviewFetcher;
   }
 
-  let { editor, position, onClose }: Props = $props();
-
+  let { editor, position, onClose, fetchLinkPreview }: Props = $props();
   let url = $state('');
   let isLoading = $state(false);
   let error = $state('');
-  let preview = $state<{
-    url: string;
-    title: string;
-    description: string;
-    image?: string;
-    favicon?: string;
-  } | null>(null);
-  let inputElement: HTMLInputElement = $state() as HTMLInputElement;
-  let debounceTimeout: ReturnType<typeof setTimeout>;
+  let inputElement = $state<HTMLInputElement>();
 
-  onMount(() => {
-    inputElement?.focus();
-  });
+  onMount(() => inputElement?.focus());
 
-  function isValidUrl(str: string): boolean {
-    try {
-      const url = new URL(str);
-      return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  }
-
-  async function fetchPreview(urlToFetch: string) {
-    if (!isValidUrl(urlToFetch)) {
-      error = 'Please enter a valid URL';
-      preview = null;
+  async function submit() {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      error = 'Please enter a URL';
       return;
     }
 
-    error = '';
-    isLoading = true;
-
     try {
-      const response = await fetch(`/api/link-preview?url=${encodeURIComponent(urlToFetch)}`);
-      if (!response.ok) throw new Error('Failed to fetch metadata');
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('Unsupported URL protocol');
+    } catch {
+      error = 'Please enter a valid URL';
+      return;
+    }
 
-      const metadata = await response.json();
-      preview = metadata;
-    } catch (err) {
-      console.error('Failed to fetch preview:', err);
-      error = 'Failed to load preview. Please check the URL and try again.';
-      preview = null;
+    isLoading = true;
+    error = '';
+    try {
+      const metadata = fetchLinkPreview
+        ? await fetchLinkPreview(trimmed)
+        : {
+            title: trimmed,
+            description: '',
+            image: null,
+            favicon: null,
+            provider: '',
+          };
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(position)
+        .insertLinkPreview({ url: trimmed, type: 'bookmark', ...metadata })
+        .run();
+      onClose();
+    } catch {
+      error = 'Could not load link details. Please try again.';
     } finally {
       isLoading = false;
-    }
-  }
-
-  function handleInput() {
-    error = '';
-    clearTimeout(debounceTimeout);
-
-    if (!url.trim()) {
-      preview = null;
-      return;
-    }
-
-    debounceTimeout = setTimeout(() => {
-      fetchPreview(url.trim());
-    }, 500);
-  }
-
-  function handleCreate() {
-    if (!preview) return;
-
-    editor
-      .chain()
-      .focus()
-      .setTextSelection(position)
-      .insertLinkPreview({
-        url: preview.url,
-        title: preview.title,
-        description: preview.description,
-        image: preview.image ?? null,
-        favicon: preview.favicon ?? null,
-        provider: new URL(preview.url).hostname,
-        type: 'bookmark',
-      })
-      .run();
-
-    onClose();
-  }
-
-  function handleCancel() {
-    onClose();
-  }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      handleCancel();
-    } else if (event.key === 'Enter' && preview && !isLoading) {
-      event.preventDefault();
-      handleCreate();
     }
   }
 </script>
 
 <div
-  class="w-96 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl"
   role="dialog"
-  aria-label="Create bookmark"
+  aria-label="Insert bookmark"
+  tabindex="-1"
+  onkeydown={(event) => {
+    if (event.key === 'Escape') onClose();
+  }}
+  class="w-80 space-y-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl"
 >
-  <div class="space-y-3">
-    <div>
-      <label for="bookmark-url" class="text-sm font-medium block mb-2"> Enter URL </label>
-      <input
-        id="bookmark-url"
-        bind:this={inputElement}
-        bind:value={url}
-        oninput={handleInput}
-        onkeydown={handleKeydown}
-        type="text"
-        placeholder="Paste in https://..."
-        class="w-full px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-      />
-    </div>
-
+  <p class="text-sm font-semibold">Insert Bookmark</p>
+  <div class="space-y-1">
+    <input
+      bind:this={inputElement}
+      type="url"
+      bind:value={url}
+      oninput={() => (error = '')}
+      onkeydown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          void submit();
+        }
+      }}
+      placeholder="https://example.com"
+      aria-invalid={Boolean(error)}
+      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+    />
     {#if error}
-      <div class="text-sm text-red-500">{error}</div>
+      <div role="alert" class="text-xs leading-tight text-destructive">{error}</div>
     {/if}
-
-    {#if isLoading}
-      <div class="flex items-center gap-2 text-sm text-muted-foreground">
-        <div class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-        Loading preview...
-      </div>
-    {/if}
-
-    {#if preview}
-      <div class="rounded-md border border-border bg-muted/50 p-3">
-        <div class="flex gap-3">
-          {#if preview.favicon}
-            <img src={preview.favicon} alt="" class="w-4 h-4 flex-shrink-0 mt-0.5" />
-          {/if}
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm truncate">{preview.title}</div>
-            {#if preview.description}
-              <div class="text-xs text-muted-foreground line-clamp-2 mt-1">
-                {preview.description}
-              </div>
-            {/if}
-          </div>
-        </div>
-      </div>
-    {/if}
-
-    <div class="flex gap-2 justify-end">
-      <button
-        type="button"
-        onclick={handleCancel}
-        class="px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onclick={handleCreate}
-        disabled={!preview || isLoading}
-        class="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Create bookmark
-      </button>
-    </div>
+  </div>
+  <div class="flex justify-end gap-2">
+    <button type="button" onclick={onClose} class="rounded-md px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
+    <button
+      type="button"
+      onclick={() => void submit()}
+      disabled={isLoading}
+      class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+    >
+      {isLoading ? 'Loading…' : 'Insert'}
+    </button>
   </div>
 </div>

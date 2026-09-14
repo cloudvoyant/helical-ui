@@ -26,25 +26,20 @@ describe('editor extension layer', () => {
     expect(extensions.length).toBeGreaterThan(10);
   });
 
-  it('wires title enforcement and the complete rich-block schema', () => {
+  it('wires title enforcement and the supported rich-block schema', () => {
     const extensions = buildExtensions({ nodeViews });
     const extensionNames = extensions.map((extension) => extension.name);
-    expect(extensionNames).toEqual(
-      expect.arrayContaining(['titleHeading', 'exitHeading', 'tableKit', 'notice', 'mermaidDiagram']),
-    );
+    expect(extensionNames).toEqual(expect.arrayContaining(['heading', 'titleHeading', 'exitHeading', 'notice']));
+    expect(extensionNames).not.toEqual(expect.arrayContaining(['tableKit', 'mermaidDiagram', 'emoji']));
 
     const schema = getSchema(extensions);
-    expect(Object.keys(schema.nodes)).toEqual(
-      expect.arrayContaining([
-        'blockquote',
-        'table',
-        'tableRow',
-        'tableHeader',
-        'tableCell',
-        'notice',
-        'mermaidDiagram',
-      ]),
-    );
+    expect(Object.keys(schema.nodes)).toEqual(expect.arrayContaining(['blockquote', 'notice']));
+    expect(Object.keys(schema.nodes)).not.toEqual(expect.arrayContaining(['table', 'mermaidDiagram']));
+  });
+
+  it('allows compact editors to disable the required title', () => {
+    const extensionNames = buildExtensions({ nodeViews, enforceTitle: false }).map((extension) => extension.name);
+    expect(extensionNames).not.toEqual(expect.arrayContaining(['titleHeading', 'exitHeading']));
   });
 
   // NOTE: H1 *enforcement* is not asserted here. titleHeading works via ProseMirror's
@@ -65,19 +60,11 @@ describe('editor extension layer', () => {
     ).suggestion;
     const commands = suggestion.items({ query: '' });
     expect(commands.map((command) => command.title)).toEqual(
-      expect.arrayContaining([
-        'Heading 1',
-        'Heading 2',
-        'Heading 3',
-        'Heading 4',
-        'Quote',
-        'Notice',
-        'Table',
-        'YouTube',
-        'Mermaid',
-      ]),
+      expect.arrayContaining(['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Quote', 'Notice', 'YouTube']),
     );
-    expect(commands.map((command) => command.title)).not.toContain('Link Post/Series');
+    expect(commands.map((command) => command.title)).not.toEqual(
+      expect.arrayContaining(['Link Post/Series', 'Table', 'Mermaid']),
+    );
 
     const levels: number[] = [];
     const chain = {

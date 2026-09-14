@@ -1,7 +1,7 @@
 // libs/vortex-react/src/editor/BubbleMenu.tsx
 // React parity of BubbleMenu.svelte: the selection toolbar. Renders through Tiptap's React
-// BubbleMenu and composes vortex ToggleGroup + ColorPicker with matching mark and alignment
-// actions in each framework.
+// BubbleMenu and composes vortex ToggleGroup + FontColorPicker with matching mark and
+// alignment actions in each framework.
 import { useEffect, useState } from 'react';
 import { BubbleMenu as TiptapBubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/react';
@@ -17,8 +17,9 @@ import {
   AlignJustify,
 } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '..';
-import { ColorPicker } from './ColorPicker';
+import { FontColorPicker } from './FontColorPicker';
 import { LinkEditPopover } from './LinkEditPopover';
+import { findEditorScrollContainer } from '@cloudvoyant/vortex-ui';
 
 export interface BubbleMenuProps {
   editor: Editor;
@@ -30,6 +31,15 @@ export function BubbleMenu({ editor }: BubbleMenuProps) {
   const [linkUrl, setLinkUrl] = useState('');
   const [dismissedSelection, setDismissedSelection] = useState<string | null>(null);
   const currentAlign = ['left', 'center', 'right', 'justify'].find((a) => editor.isActive({ textAlign: a }));
+
+  useEffect(() => {
+    if (!isEditingLink) return;
+    const container = findEditorScrollContainer(editor.view.dom);
+    if (!container) return;
+    const preventWheel = (event: WheelEvent) => event.preventDefault();
+    container.addEventListener('wheel', preventWheel, { passive: false });
+    return () => container.removeEventListener('wheel', preventWheel);
+  }, [editor, isEditingLink]);
 
   useEffect(() => {
     const selectionKey = () => `${editor.state.selection.from}:${editor.state.selection.to}`;
@@ -104,8 +114,8 @@ export function BubbleMenu({ editor }: BubbleMenuProps) {
         </ToggleGroupItem>
       </ToggleGroup>
 
-      <ColorPicker editor={editor} mode="text" />
-      <ColorPicker editor={editor} mode="highlight" />
+      <FontColorPicker editor={editor} mode="text" />
+      <FontColorPicker editor={editor} mode="highlight" />
 
       <ToggleGroup defaultValue={currentAlign ? [currentAlign] : []}>
         {(

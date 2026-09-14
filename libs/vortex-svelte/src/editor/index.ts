@@ -1,7 +1,7 @@
 // libs/vortex-svelte/src/editor/index.ts
-// Public surface of the Svelte editor. Matches the React package's surface (Phase 7).
 export { default as Editor } from './Editor.svelte';
 export { default as Reader } from './Reader.svelte';
+export { default as CursorOverlay } from './CursorOverlay.svelte';
 export type {
   EditorCounts,
   MentionItem,
@@ -9,4 +9,5 @@ export type {
   SlashCommandItem,
   UrlMentionAttributes,
   LinkPreviewAttributes,
+  LinkPreviewFetcher,
 } from '@cloudvoyant/vortex-ui';

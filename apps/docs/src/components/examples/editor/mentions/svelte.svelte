@@ -11,6 +11,8 @@
     { id: '3', label: 'Grace Hopper', type: 'user' },
   ];
 
+  const compactEditor = { enforceTitle: false };
+
   async function mentionSource(query: string): Promise<MentionItem[]> {
     const q = query.toLowerCase();
     return PEOPLE.filter((person) => person.label.toLowerCase().includes(q));
@@ -18,5 +20,5 @@
 </script>
 
 <div class="rounded-lg border border-input p-3">
-  <Editor content="" {mentionSource} />
+  <Editor content="" {...compactEditor} {mentionSource} />
 </div>

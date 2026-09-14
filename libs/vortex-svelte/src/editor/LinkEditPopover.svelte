@@ -15,6 +15,8 @@
   let inputElement: HTMLInputElement;
   let isFocused = $state(false);
 
+  onMount(() => inputElement?.focus());
+
   function saveAndClose() {
     if (linkUrl.trim()) {
       editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
@@ -45,7 +47,10 @@
 </script>
 
 <div
-  class="fixed z-50 rounded border shadow-lg bg-popover text-popover-foreground"
+  data-link-editor
+  role="dialog"
+  aria-label="Edit link"
+  class="absolute start-0 top-full z-50 mt-2 rounded border shadow-lg bg-popover text-popover-foreground"
   class:border-border={!isFocused}
   class:border-ring={isFocused}
   style="width: 280px"

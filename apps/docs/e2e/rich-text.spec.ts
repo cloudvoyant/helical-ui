@@ -128,6 +128,7 @@ for (const framework of FRAMEWORKS) {
       await page.goto('components/youtube');
       await selectFramework(page, framework);
       const root = page.locator(`[data-demo] [data-fw="${framework}"] [data-youtube-id]`).first();
+      await expect(root.locator('[data-youtube-logo]')).toBeVisible();
       await expect(root.locator('button').first()).toBeVisible();
       await expect(root.locator('iframe')).toHaveCount(0);
       await root.locator('button').first().click();

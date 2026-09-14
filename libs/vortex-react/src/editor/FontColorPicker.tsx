@@ -1,7 +1,4 @@
-// libs/vortex-react/src/editor/ColorPicker.tsx
-// React parity of ColorPicker.svelte: a swatch grid for the text-color and highlight marks.
-// Text colour uses @tiptap/extension-color (setColor/unsetColor); highlight uses the
-// multicolor Highlight extension.
+// libs/vortex-react/src/editor/FontColorPicker.tsx
 import { useEffect, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Palette, Highlighter } from 'lucide-react';
@@ -34,12 +31,12 @@ const HIGHLIGHT_PREVIEW: Record<string, string> = {
   slate: '#e2e8f0',
 };
 
-export interface ColorPickerProps {
+export interface FontColorPickerProps {
   editor: Editor;
   mode: 'text' | 'highlight';
 }
 
-export function ColorPicker({ editor, mode }: ColorPickerProps) {
+export function FontColorPicker({ editor, mode }: FontColorPickerProps) {
   const [open, setOpen] = useState(false);
   // The editor instance is stable, so a transaction must explicitly re-render this control for
   // `isActive` and the current swatch to follow the selection.

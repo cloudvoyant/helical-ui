@@ -1,6 +1,4 @@
 // libs/vortex-react/src/editor/ImageInput.tsx
-// React parity of ImageInput.svelte. The app-specific uploader is replaced by the injected
-// `onUpload` seam, with the URL tab as the fallback when no handler is supplied.
 import { useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import type { ImageUploadResult } from '@cloudvoyant/vortex-ui';
@@ -21,7 +19,6 @@ export interface ImageInputProps {
   editor: Editor;
   position: number;
   onClose: () => void;
-  /** Seam: replaces the source editor's app-specific uploader. */
   onUpload?: (file: File) => Promise<ImageUploadResult>;
 }
 
@@ -112,7 +109,7 @@ export function ImageInput({ editor, position, onClose, onUpload }: ImageInputPr
         </div>
 
         {tab === 'upload' ? (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <ImageFileUpload
               file={selectedFile}
               disabled={uploading}
@@ -122,10 +119,14 @@ export function ImageInput({ editor, position, onClose, onUpload }: ImageInputPr
               }}
             />
             {uploading ? <p className="text-xs text-muted-foreground">Uploading…</p> : null}
-            {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
+            {uploadError ? (
+              <div role="alert" className="text-xs leading-tight text-destructive">
+                {uploadError}
+              </div>
+            ) : null}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <input
               ref={urlInputRef}
               type="url"
@@ -138,9 +139,14 @@ export function ImageInput({ editor, position, onClose, onUpload }: ImageInputPr
                 if (event.key === 'Enter') handleUrlSubmit();
               }}
               placeholder="https://example.com/image.jpg"
+              aria-invalid={Boolean(urlError)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            {urlError ? <p className="text-xs text-destructive">{urlError}</p> : null}
+            {urlError ? (
+              <div role="alert" className="text-xs leading-tight text-destructive">
+                {urlError}
+              </div>
+            ) : null}
           </div>
         )}
 

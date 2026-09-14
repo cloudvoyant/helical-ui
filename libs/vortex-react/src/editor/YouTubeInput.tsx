@@ -1,7 +1,7 @@
 // libs/vortex-react/src/editor/YouTubeInput.tsx
 import { useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
-import { X } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 
 export interface YouTubeInputProps {
   editor: Editor;
@@ -43,9 +43,16 @@ export function YouTubeInput({ editor, position, onClose }: YouTubeInputProps) {
   };
 
   return (
-    <div className="w-80 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+    <div
+      role="dialog"
+      aria-label="Embed YouTube video"
+      className="w-80 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg"
+    >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium">Embed YouTube video</span>
+        <span className="flex items-center gap-2 text-sm font-medium">
+          <Play className="size-5 fill-current text-red-600" aria-hidden="true" data-youtube-logo />
+          Embed YouTube video
+        </span>
         <button
           type="button"
           onClick={onClose}
@@ -70,9 +77,14 @@ export function YouTubeInput({ editor, position, onClose }: YouTubeInputProps) {
         }}
         placeholder="https://youtube.com/watch?v=…"
         aria-label="YouTube URL"
+        aria-invalid={Boolean(error)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
       />
-      {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+      {error ? (
+        <div role="alert" className="mt-1 text-xs leading-tight text-destructive">
+          {error}
+        </div>
+      ) : null}
       <div className="mt-3 flex justify-end gap-2">
         <button
           type="button"

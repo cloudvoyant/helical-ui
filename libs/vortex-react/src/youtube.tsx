@@ -4,6 +4,7 @@
 // YoutubeTimestampAt (auto-inferred from web metadata, or overridden manually).
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
+import { ChevronRight, Play } from 'lucide-react';
 import {
   youtubeRootBase,
   youtubeTitleBase,
@@ -25,38 +26,6 @@ import {
   cn,
 } from '@cloudvoyant/vortex-ui';
 import type { YouTubeProps as YouTubePropsBase, YouTubeChapter } from '@cloudvoyant/vortex-ui';
-
-function PlayIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className="h-8 w-8"
-      aria-hidden="true"
-    >
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /*  Context — lets composed timestamps seek the parent player           */
@@ -118,7 +87,7 @@ export function YouTube({ url, title, description, poster, className, children, 
             />
             <ark.span className={youtubePlayButtonBase} aria-hidden="true">
               <ark.span className={youtubePlayButtonInnerBase}>
-                <PlayIcon />
+                <Play className="size-8 fill-current" aria-hidden="true" data-youtube-logo />
               </ark.span>
             </ark.span>
           </ark.button>
@@ -187,7 +156,7 @@ export function YoutubeTimestamps({ chapters, children, className, ...props }: Y
     <ark.div className={cn(youtubeChaptersBase, className)} {...props}>
       <details className="group" open>
         <ark.summary className={youtubeChaptersSummaryBase}>
-          <ChevronRightIcon className={youtubeChaptersChevronBase} />
+          <ChevronRight className={youtubeChaptersChevronBase} aria-hidden="true" />
           <span>Timestamps</span>
         </ark.summary>
         <ark.nav aria-label="Video timestamps" className={youtubeChaptersListBase}>

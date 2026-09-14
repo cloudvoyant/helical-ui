@@ -1,20 +1,17 @@
 // libs/vortex-react/src/editor/BookmarkInput.tsx
-// React parity of BookmarkInput.svelte: asks for a URL, then inserts a bookmark card.
-// The fetch target is document data, not app state, so it stays a caller-supplied prop and
-// has a safe default of "no metadata".
 import { useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
-import type { LinkPreviewAttributes } from '@cloudvoyant/vortex-ui';
+import type { LinkPreviewFetcher } from '@cloudvoyant/vortex-ui';
 
 export interface BookmarkInputProps {
   editor: Editor;
   position: number;
   onClose: () => void;
   /** Optional metadata fetcher; without it a bare bookmark is inserted. */
-  fetchMetadata?: (url: string) => Promise<Omit<LinkPreviewAttributes, 'url' | 'type'>>;
+  fetchLinkPreview?: LinkPreviewFetcher;
 }
 
-export function BookmarkInput({ editor, position, onClose, fetchMetadata }: BookmarkInputProps) {
+export function BookmarkInput({ editor, position, onClose, fetchLinkPreview }: BookmarkInputProps) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +25,8 @@ export function BookmarkInput({ editor, position, onClose, fetchMetadata }: Book
     const trimmed = url.trim();
     if (!trimmed) return setError('Please enter a URL');
     try {
-      new URL(trimmed);
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('Unsupported URL protocol');
     } catch {
       return setError('Please enter a valid URL');
     }
@@ -36,8 +34,8 @@ export function BookmarkInput({ editor, position, onClose, fetchMetadata }: Book
     setLoading(true);
     setError('');
     try {
-      const metadata = fetchMetadata
-        ? await fetchMetadata(trimmed)
+      const metadata = fetchLinkPreview
+        ? await fetchLinkPreview(trimmed)
         : {
             title: trimmed,
             description: '',
@@ -70,21 +68,28 @@ export function BookmarkInput({ editor, position, onClose, fetchMetadata }: Book
       className="w-80 space-y-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl"
     >
       <p className="text-sm font-semibold">Insert Bookmark</p>
-      <input
-        ref={inputRef}
-        type="url"
-        value={url}
-        onChange={(event) => {
-          setUrl(event.target.value);
-          setError('');
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') void submit();
-        }}
-        placeholder="https://example.com"
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-      />
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      <div className="space-y-1">
+        <input
+          ref={inputRef}
+          type="url"
+          value={url}
+          onChange={(event) => {
+            setUrl(event.target.value);
+            setError('');
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void submit();
+          }}
+          placeholder="https://example.com"
+          aria-invalid={Boolean(error)}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        {error ? (
+          <div role="alert" className="text-xs leading-tight text-destructive">
+            {error}
+          </div>
+        ) : null}
+      </div>
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm hover:bg-muted">
           Cancel

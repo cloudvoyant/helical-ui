@@ -12,7 +12,8 @@
   let { items, command }: Props = $props();
 
   let selectedIndex = $state(0);
-  let previousItems = $state<SlashCommandItem[] | undefined>();
+  let previousItemsKey = $state('');
+  let menuScrollElement = $state<HTMLDivElement | undefined>();
   let itemElements = $state<Array<HTMLButtonElement | undefined>>([]);
 
   function getIcon(iconName: string): Component | undefined {
@@ -21,14 +22,23 @@
 
   function setSelectedIndex(index: number) {
     selectedIndex = index;
-    void tick().then(() => itemElements[index]?.scrollIntoView({ block: 'nearest' }));
+    void tick().then(() => {
+      const viewport = menuScrollElement;
+      const item = itemElements[index];
+      if (!viewport || !item) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      if (itemRect.top < viewportRect.top) viewport.scrollTop -= viewportRect.top - itemRect.top;
+      else if (itemRect.bottom > viewportRect.bottom) viewport.scrollTop += itemRect.bottom - viewportRect.bottom;
+    });
   }
 
-  // A new query supplies a new item set, so selection starts at its first command instead of
-  // retaining an index into the previous result set.
+  // Reset only when the command titles change. Suggestion can replace the items array during
+  // keyboard navigation even when its contents are identical.
   $effect(() => {
-    if (items !== previousItems) {
-      previousItems = items;
+    const itemsKey = items.map((item) => item.title).join('\u0000');
+    if (itemsKey !== previousItemsKey) {
+      previousItemsKey = itemsKey;
       setSelectedIndex(0);
     }
   });
@@ -44,12 +54,12 @@
     if (items.length === 0) return false;
 
     if (event.key === 'ArrowUp') {
-      setSelectedIndex((selectedIndex - 1 + items.length) % items.length);
+      setSelectedIndex(Math.max(0, selectedIndex - 1));
       return true;
     }
 
     if (event.key === 'ArrowDown') {
-      setSelectedIndex((selectedIndex + 1) % items.length);
+      setSelectedIndex(Math.min(items.length - 1, selectedIndex + 1));
       return true;
     }
 
@@ -77,7 +87,11 @@
 
 {#if items.length > 0}
   <div class="w-72 rounded-md border border-border bg-popover text-popover-foreground shadow-lg">
-    <div class="max-h-[320px] overflow-y-auto p-1">
+    <div
+      bind:this={menuScrollElement}
+      class="max-h-[320px] overflow-y-auto p-1"
+      data-slash-menu-scroll
+    >
       {#each items as item, index}
         {@const IconComponent = getIcon(item.icon)}
         <button
@@ -87,11 +101,16 @@
             ? 'bg-accent text-accent-foreground'
             : ''}"
           bind:this={itemElements[index]}
+          data-slash-selected={index === selectedIndex ? '' : undefined}
           onclick={() => selectItem(index)}
-          onmouseenter={() => setSelectedIndex(index)}
+          onmousemove={() => setSelectedIndex(index)}
         >
-          <span class="inline-flex w-5 justify-center opacity-70">
-            {#if IconComponent}
+          <span class="inline-flex w-5 justify-center opacity-70" data-slash-icon={item.icon} aria-hidden="true">
+            {#if item.icon === 'YouTube'}
+              <svg viewBox="0 0 24 24" class="size-4" fill="currentColor">
+                <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z" />
+              </svg>
+            {:else if IconComponent}
               <IconComponent size={16} />
             {/if}
           </span>

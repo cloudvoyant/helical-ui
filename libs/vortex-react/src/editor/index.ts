@@ -1,7 +1,7 @@
 // libs/vortex-react/src/editor/index.ts
-// Public surface of the React editor — parity with the Svelte package (Phase 6).
 export { Editor, getEditorCounts, type EditorProps, type EditorHandle } from './Editor';
 export { Reader, type ReaderProps } from './Reader';
+export { CursorOverlay, type CursorOverlayProps } from './CursorOverlay';
 export type {
   EditorCounts,
   MentionItem,
@@ -9,4 +9,5 @@ export type {
   SlashCommandItem,
   UrlMentionAttributes,
   LinkPreviewAttributes,
+  LinkPreviewFetcher,
 } from '@cloudvoyant/vortex-ui';

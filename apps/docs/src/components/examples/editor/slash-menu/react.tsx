@@ -15,10 +15,18 @@ const seed = JSON.stringify({
   ],
 });
 
+const fetchLinkPreview = async (url: string) => ({
+  title: 'Vortex bookmark',
+  description: 'Metadata returned by the app-owned preview function.',
+  image: null,
+  favicon: null,
+  provider: new URL(url).hostname,
+});
+
 export default function ReactEditorSlashMenu() {
   return (
     <Prose>
-      <Editor content={seed} />
+      <Editor content={seed} fetchLinkPreview={fetchLinkPreview} />
     </Prose>
   );
 }

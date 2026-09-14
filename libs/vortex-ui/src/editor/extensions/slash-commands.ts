@@ -171,27 +171,9 @@ export const slashCommands = Extension.create({
               },
             },
             {
-              title: 'Table',
-              description: 'Insert a three-by-three table',
-              icon: 'Table2',
-              category: 'advanced',
-              command: ({ editor, range }) => {
-                editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-              },
-            },
-            {
-              title: 'Mermaid',
-              description: 'Insert an editable Mermaid diagram',
-              icon: 'Workflow',
-              category: 'advanced',
-              command: ({ editor, range }) => {
-                editor.chain().focus().deleteRange(range).insertMermaid().run();
-              },
-            },
-            {
               title: 'YouTube',
               description: 'Embed a YouTube video',
-              icon: 'Youtube',
+              icon: 'YouTube',
               category: 'media',
               command: ({ editor, range }) => {
                 editor.chain().focus().deleteRange(range).run();
