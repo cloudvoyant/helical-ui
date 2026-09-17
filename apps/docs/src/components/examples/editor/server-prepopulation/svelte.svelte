@@ -1,7 +1,7 @@
 <!-- Astro or SvelteKit can fetch this serialized JSON on the server and pass it as content. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Editor, Prose, Reader } from '@cloudvoyant/vortex-svelte';
+  import { Editor, Prose, Reader } from '@cloudvoyant/helical-svelte';
 
   const serverContent = JSON.stringify({
     type: 'doc',

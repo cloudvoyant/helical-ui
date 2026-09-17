@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/pagination/controlled/react.tsx
 import { useState } from 'react';
-import { Pagination, VStack, PaginationItems, PaginationPrevious, PaginationNext } from '@cloudvoyant/vortex-react';
+import { Pagination, VStack, PaginationItems, PaginationPrevious, PaginationNext } from '@cloudvoyant/helical-react';
 
 export default function ReactPaginationControlled() {
   const [page, setPage] = useState(2);

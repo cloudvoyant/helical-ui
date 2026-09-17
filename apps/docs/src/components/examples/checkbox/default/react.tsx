@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/checkbox/default/react.tsx
-import { Checkbox, CheckboxControl, CheckboxIndicator, CheckboxLabel } from '@cloudvoyant/vortex-react';
+import { Checkbox, CheckboxControl, CheckboxIndicator, CheckboxLabel } from '@cloudvoyant/helical-react';
 import { Check } from 'lucide-react';
 
 export default function ReactCheckboxDefault() {

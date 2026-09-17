@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/editor/bubble-menu/react.tsx
-import { Editor, Prose } from '@cloudvoyant/vortex-react';
+import { Editor, Prose } from '@cloudvoyant/helical-react';
 
 const seed = JSON.stringify({
   type: 'doc',

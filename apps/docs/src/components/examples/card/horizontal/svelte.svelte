@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/card/horizontal/svelte.svelte -->
 <script lang="ts">
-  import { Card, CardHeader, CardBody, CardTitle, CardDescription, CardCover } from '@cloudvoyant/vortex-svelte';
+  import { Card, CardHeader, CardBody, CardTitle, CardDescription, CardCover } from '@cloudvoyant/helical-svelte';
   import { User } from 'lucide-svelte';
 </script>
 

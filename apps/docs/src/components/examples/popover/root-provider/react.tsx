@@ -6,7 +6,7 @@ import {
   PopoverTitle,
   PopoverDescription,
   PopoverContent,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 
 export default function ReactPopoverRootProvider() {
   const popover = usePopover({ positioning: { placement: 'bottom-start' } });

@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/row/separator/react.tsx
-import { Row } from '@cloudvoyant/vortex-react';
+import { Row } from '@cloudvoyant/helical-react';
 
 export default function ReactRowSeparator() {
   return (

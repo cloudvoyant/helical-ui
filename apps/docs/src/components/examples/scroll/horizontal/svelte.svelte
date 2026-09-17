@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/scroll/horizontal/svelte.svelte -->
 <script lang="ts">
-  import { Scroll } from '@cloudvoyant/vortex-svelte';
+  import { Scroll } from '@cloudvoyant/helical-svelte';
 
   const items = Array.from({ length: 20 }, (_, i) => i + 1);
 </script>

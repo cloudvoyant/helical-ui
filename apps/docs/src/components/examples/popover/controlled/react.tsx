@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/popover/controlled/react.tsx
 import { useState } from 'react';
-import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-react';
+import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-react';
 
 export default function ReactPopoverControlled() {
   const [open, setOpen] = useState(false);

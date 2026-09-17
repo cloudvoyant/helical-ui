@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/dialog/root-provider/react.tsx
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-react';
+import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-react';
 
 export default function ReactDialogRootProvider() {
   const [open, setOpen] = useState(false);

@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { NAV_GROUPS } from '../lib/nav';
-import { Page, PageGutter, PageContent, PageFooter } from '@cloudvoyant/vortex-react';
+import { Page, PageGutter, PageContent, PageFooter } from '@cloudvoyant/helical-react';
 import '../styles/global.css';
 import TopNav from '../components/TopNav.tsx';
 import Sidebar from '../components/Sidebar.astro';
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const {
-  title = 'vortex-ui',
+  title = 'helical-ui',
   description,
   currentPath = import.meta.env.BASE_URL,
   headings = [],
@@ -72,9 +72,9 @@ const groups = NAV_GROUPS.map((g) => {
           var dark = mode === 'dark' || (mode === 'system' && mq.matches);
           if (dark) root.classList.add('dark');
           var theme = localStorage.getItem('vortex:theme');
-          // Default to the vortex-ui brand theme when nothing is stored. Ignore
+          // Default to the helical-ui brand theme when nothing is stored. Ignore
           // legacy 'light'/'dark' values left by the old theme toggle.
-          if (!theme || theme === 'light' || theme === 'dark') theme = 'vortex-ui';
+          if (!theme || theme === 'light' || theme === 'dark') theme = 'helical-ui';
           {
             var toRemove = [];
             for (var i = 0; i < root.classList.length; i++) {

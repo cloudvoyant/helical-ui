@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/prose/default/svelte.svelte -->
 <script lang="ts">
-  import { Prose } from '@cloudvoyant/vortex-svelte';
+  import { Prose } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Prose>

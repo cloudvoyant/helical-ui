@@ -1,6 +1,12 @@
 // apps/docs/src/components/examples/listbox/controlled/react.tsx
 import { useState } from 'react';
-import { Listbox, ListboxContent, ListboxItem, ListboxItemText, ListboxItemIndicator } from '@cloudvoyant/vortex-react';
+import {
+  Listbox,
+  ListboxContent,
+  ListboxItem,
+  ListboxItemText,
+  ListboxItemIndicator,
+} from '@cloudvoyant/helical-react';
 import { Check } from 'lucide-react';
 
 const items = [

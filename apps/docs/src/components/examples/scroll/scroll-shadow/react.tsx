@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/scroll/scroll-shadow/react.tsx
-import { Scroll } from '@cloudvoyant/vortex-react';
+import { Scroll } from '@cloudvoyant/helical-react';
 
 export default function ReactScrollScrollShadow() {
   return (

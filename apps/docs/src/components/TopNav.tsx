@@ -1,5 +1,5 @@
 // apps/docs/src/components/TopNav.tsx
-// The docs site top navigation, built from the vortex-ui Navbar (shrink variant).
+// The docs site top navigation, built from the helical-ui Navbar (shrink variant).
 import {
   Navbar,
   NavbarProvider,
@@ -11,8 +11,8 @@ import {
   NavbarMenuList,
   NavbarMenuItem,
   NavbarMenuLink,
-} from '@cloudvoyant/vortex-react';
-import { VortexLogo } from './examples/VortexLogo';
+} from '@cloudvoyant/helical-react';
+import { HelicalLogo } from './examples/HelicalLogo';
 import ThemeSelector from './ThemeSelector';
 import FrameworkSelector from './FrameworkSelector';
 
@@ -45,8 +45,8 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
         className="border-transparent bg-background/60 backdrop-blur-xl transition-[height,background-color,box-shadow,border-color] duration-300 data-[scrolled=true]:border-border data-[scrolled=true]:bg-background/75"
       >
         <NavbarBrand className="text-primary">
-          <VortexLogo className="h-7 w-auto" />
-          <span className="font-brand text-sm font-semibold">vortex-ui</span>
+          <HelicalLogo className="h-7 w-auto" />
+          <span className="font-brand text-sm font-semibold">helical-ui</span>
         </NavbarBrand>
         <NavbarMenu placement="center">
           <NavbarMenuList>
@@ -68,7 +68,7 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
           <div className="flex-1" />
           <ThemeSelector />
           <a
-            href="https://github.com/cloudvoyant/vortex-ui"
+            href="https://github.com/cloudvoyant/helical-ui"
             aria-label="GitHub"
             className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             target="_blank"

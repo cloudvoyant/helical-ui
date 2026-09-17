@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/center/inline/react.tsx
-import { Center } from '@cloudvoyant/vortex-react';
+import { Center } from '@cloudvoyant/helical-react';
 
 export default function ReactCenterInline() {
   return (

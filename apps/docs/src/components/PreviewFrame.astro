@@ -17,7 +17,7 @@ interface Props {
   desktopWidth?: number;
 }
 
-const { component, example, title = 'vortex-ui preview', desktopWidth } = Astro.props;
+const { component, example, title = 'helical-ui preview', desktopWidth } = Astro.props;
 const uid = `pf-${Math.random().toString(36).slice(2)}`;
 const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 ---
@@ -128,7 +128,7 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       document.documentElement.dataset.framework === 'svelte' ? 'svelte' : 'react';
     const currentTheme = () => {
       const cls = [...document.documentElement.classList];
-      const name = cls.find((c) => c.startsWith('theme-'))?.slice('theme-'.length) ?? 'vortex-ui';
+      const name = cls.find((c) => c.startsWith('theme-'))?.slice('theme-'.length) ?? 'helical-ui';
       return name;
     };
     const currentDark = () => document.documentElement.classList.contains('dark');

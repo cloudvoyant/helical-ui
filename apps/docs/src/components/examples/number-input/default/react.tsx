@@ -5,7 +5,7 @@ import {
   NumberInputInput,
   NumberInputDecrement,
   NumberInputIncrement,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { Minus, Plus } from 'lucide-react';
 
 export default function ReactNumberInputDefault() {

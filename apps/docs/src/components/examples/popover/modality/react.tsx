@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/popover/modality/react.tsx
-import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-react';
+import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-react';
 
 export default function ReactPopoverModality() {
   return (

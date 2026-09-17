@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/toggle-button/outline/react.tsx
-import { ToggleButton } from '@cloudvoyant/vortex-react';
+import { ToggleButton } from '@cloudvoyant/helical-react';
 
 export default function ReactToggleButtonOutline() {
   return (

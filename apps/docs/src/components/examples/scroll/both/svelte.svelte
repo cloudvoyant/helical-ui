@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/scroll/both/svelte.svelte -->
 <script lang="ts">
-  import { Scroll } from '@cloudvoyant/vortex-svelte';
+  import { Scroll } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Scroll orientation="both" class="h-64 w-64 rounded-md border border-border">

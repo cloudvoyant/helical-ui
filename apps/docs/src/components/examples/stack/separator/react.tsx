@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/stack/separator/react.tsx
-import { Stack } from '@cloudvoyant/vortex-react';
+import { Stack } from '@cloudvoyant/helical-react';
 
 export default function ReactStackSeparator() {
   return (

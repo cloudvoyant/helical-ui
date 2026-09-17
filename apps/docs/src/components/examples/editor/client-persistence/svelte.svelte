@@ -1,7 +1,7 @@
 <!-- Persist serialized Tiptap JSON in browser storage and restore it after a reload. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Editor, Prose } from '@cloudvoyant/vortex-svelte';
+  import { Editor, Prose } from '@cloudvoyant/helical-svelte';
 
   const STORAGE_KEY = 'vortex-editor-client-persistence-v1';
   const seed = JSON.stringify({

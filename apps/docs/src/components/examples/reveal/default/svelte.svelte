@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/reveal/default/svelte.svelte -->
 <script lang="ts">
-  import { Reveal } from '@cloudvoyant/vortex-svelte';
+  import { Reveal } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Reveal question="Why does a static site need client-side components?">

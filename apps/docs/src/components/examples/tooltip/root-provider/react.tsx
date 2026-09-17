@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/tooltip/root-provider/react.tsx
-import { useTooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-react';
+import { useTooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-react';
 
 export default function ReactTooltipRootProvider() {
   const tooltip = useTooltip();

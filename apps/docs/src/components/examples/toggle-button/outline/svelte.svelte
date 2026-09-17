@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/toggle-button/outline/svelte.svelte -->
 <script lang="ts">
-  import { ToggleButton } from '@cloudvoyant/vortex-svelte';
+  import { ToggleButton } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="flex flex-wrap items-center gap-3">

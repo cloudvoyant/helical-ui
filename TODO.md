@@ -122,7 +122,7 @@
   - Wave3D
 - MDX?
 
-Split: vortex-ui vs diffui vs kernelui
+Split: helical-ui vs diffui vs kernelui
 
 ## Primitives
 

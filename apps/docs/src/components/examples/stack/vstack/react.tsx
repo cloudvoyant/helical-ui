@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/stack/vstack/react.tsx
-import { Item, VStack } from '@cloudvoyant/vortex-react';
+import { Item, VStack } from '@cloudvoyant/helical-react';
 
 export default function ReactStackVstack() {
   return (

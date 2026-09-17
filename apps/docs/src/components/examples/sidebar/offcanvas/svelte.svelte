@@ -11,9 +11,9 @@
     SidebarInset,
     SidebarTrigger,
     Container,
-  } from '@cloudvoyant/vortex-svelte';
+  } from '@cloudvoyant/helical-svelte';
   import { House as Home, Inbox, Settings } from 'lucide-svelte';
-  import VortexLogo from '../../VortexLogo.svelte';
+  import HelicalLogo from '../../HelicalLogo.svelte';
 
   const NAV = [
     { label: 'Home', icon: Home },
@@ -29,11 +29,11 @@
         <SidebarMenu>
           {#snippet logoIcon()}
             <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <VortexLogo class="size-5" />
+              <HelicalLogo class="size-5" />
             </div>
           {/snippet}
           <SidebarMenuLink href="#" size="lg" icon={logoIcon}>
-            vortex-ui
+            helical-ui
           </SidebarMenuLink>
         </SidebarMenu>
       </SidebarHeader>

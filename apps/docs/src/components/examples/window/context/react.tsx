@@ -11,7 +11,7 @@ import {
   WindowBody,
   WindowResizeTrigger,
   useWindowContext,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { Minus, Maximize2, RotateCcw, X } from 'lucide-react';
 
 function WindowStatus() {

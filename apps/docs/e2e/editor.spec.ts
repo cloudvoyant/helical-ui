@@ -310,7 +310,7 @@ for (const framework of FRAMEWORKS) {
       const bookmarkUrl = dialog.locator('input');
       await bookmarkUrl.fill('https://example.com/bookmark');
       await bookmarkUrl.press('Enter');
-      await expect(editor).toContainText('Vortex bookmark');
+      await expect(editor).toContainText('Helical bookmark');
     });
 
     test('places insertion overlays flush with the caret', async ({ page }) => {

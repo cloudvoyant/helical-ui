@@ -1,0 +1,88 @@
+/* helical-ui — brand theme based on anyscale: white surface, saturated logo-purple
+   primary/accent (deepest logo purple #0700f3), cool slate text. Dark mode
+   carries a subtle purple tinge in the surface tones. */
+.theme-helical-ui {
+  --radius: 0.5rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.02 270);
+  --muted: oklch(0.93 0.008 278);
+  --muted-foreground: oklch(0.5 0.03 275);
+  --popover: oklch(0.985 0.006 280);
+  --popover-foreground: oklch(0.22 0.02 270);
+  --card: oklch(0.985 0.006 280);
+  --card-foreground: oklch(0.22 0.02 270);
+  --border: oklch(0.92 0.014 276);
+  --input: oklch(0.92 0.014 276);
+  --primary: oklch(0.5 0.3 265);
+  --primary-foreground: oklch(1 0 180);
+  --secondary: oklch(0.92 0.01 278);
+  --secondary-foreground: oklch(0.42 0.05 274);
+  --accent: oklch(0.9 0.035 274);
+  --accent-foreground: oklch(0.42 0.29 264);
+  --destructive: oklch(0.63 0.256 29.629);
+  --destructive-foreground: oklch(1 0 180);
+  --ring: oklch(0.5 0.3 265);
+  --chart-1: oklch(0.5 0.3 265);
+  --chart-2: oklch(0.92 0.01 278);
+  --chart-3: oklch(0.9 0.035 274);
+  --chart-4: oklch(0.94 0.008 276.055);
+  --chart-5: oklch(0.565 0.244 267.612);
+  --sidebar: oklch(0.985 0.006 280);
+  --sidebar-foreground: oklch(0.22 0.02 270);
+  --sidebar-primary: oklch(0.5 0.3 265);
+  --sidebar-primary-foreground: oklch(1 0 180);
+  --sidebar-accent: oklch(0.9 0.035 274);
+  --sidebar-accent-foreground: oklch(0.42 0.29 264);
+  --sidebar-border: oklch(0.92 0.014 276);
+  --sidebar-ring: oklch(0.5 0.3 265);
+  /* Match code-block backgrounds to the surface tone instead of the gray fallback. */
+  --shiki-light-bg: oklch(0.985 0.006 280);
+  --shiki-dark-bg: oklch(0.24 0.055 274);
+  /* Un-shadowed aliases used by the code-block override (Astro's Shiki inline
+     vars set on the element would otherwise win). */
+  --helical-ui-shiki-light-bg: oklch(0.985 0.006 280);
+  --helical-ui-shiki-dark-bg: oklch(0.24 0.055 274);
+}
+
+.theme-helical-ui.dark {
+  --radius: 0.5rem;
+  --background: oklch(0.18 0.054 270.4);
+  --foreground: oklch(0.955 0.02 278);
+  --muted: oklch(0.25 0.05 271);
+  --muted-foreground: oklch(0.74 0.045 275);
+  --popover: oklch(0.21 0.05 270.4);
+  --popover-foreground: oklch(0.955 0.02 278);
+  --card: oklch(0.21 0.05 270.4);
+  --card-foreground: oklch(0.955 0.02 278);
+  --border: oklch(0.31 0.065 272);
+  --input: oklch(0.31 0.065 272);
+  --primary: oklch(0.68 0.27 270);
+  --primary-foreground: oklch(1 0 180);
+  --secondary: oklch(0.25 0.045 271);
+  --secondary-foreground: oklch(0.84 0.05 275);
+  --accent: oklch(0.28 0.07 277);
+  --accent-foreground: oklch(0.9 0.06 274);
+  --destructive: oklch(0.62 0.232 29.041);
+  --destructive-foreground: oklch(1 0 180);
+  --ring: oklch(0.68 0.27 270);
+  --chart-1: oklch(0.68 0.27 270);
+  --chart-2: oklch(0.25 0.045 271);
+  --chart-3: oklch(0.28 0.07 277);
+  --chart-4: oklch(0.217 0.013 275.322);
+  --chart-5: oklch(0.565 0.244 267.612);
+  --sidebar: oklch(0.21 0.05 270.4);
+  --sidebar-foreground: oklch(0.955 0.02 278);
+  --sidebar-primary: oklch(0.68 0.27 270);
+  --sidebar-primary-foreground: oklch(1 0 180);
+  --sidebar-accent: oklch(0.28 0.07 277);
+  --sidebar-accent-foreground: oklch(0.9 0.06 274);
+  --sidebar-border: oklch(0.31 0.065 272);
+  --sidebar-ring: oklch(0.68 0.27 270);
+  /* Match code-block backgrounds to the surface tone instead of the gray fallback. */
+  --shiki-dark-bg: oklch(0.24 0.055 274);
+  --shiki-light-bg: oklch(0.98 0.012 280);
+  /* Un-shadowed aliases used by the code-block override (Astro's Shiki inline
+     vars set on the element would otherwise win). */
+  --helical-ui-shiki-dark-bg: oklch(0.24 0.055 274);
+  --helical-ui-shiki-light-bg: oklch(0.985 0.006 280);
+}

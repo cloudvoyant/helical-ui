@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://cloudvoyant.github.io',
-  base: '/vortex-ui/',
+  base: '/helical-ui/',
   integrations: [react(), svelte(), mdx()],
   devToolbar: {
     enabled: false,
@@ -18,19 +18,19 @@ export default defineConfig({
       alias: [
         // Serve workspace packages from source in dev so edits to libs/* hot-reload
         // instead of requiring a rebuild (the package exports map points at dist/).
-        // Exact-match anchors keep subpath imports (@cloudvoyant/vortex-ui/theme.css, ...)
+        // Exact-match anchors keep subpath imports (@cloudvoyant/helical-ui/theme.css, ...)
         // resolving through the exports map, not through the JS alias.
         {
-          find: /^@cloudvoyant\/vortex-ui$/,
-          replacement: new URL('../../libs/vortex-ui/src/index.ts', import.meta.url).pathname,
+          find: /^@cloudvoyant\/helical-ui$/,
+          replacement: new URL('../../libs/helical-ui/src/index.ts', import.meta.url).pathname,
         },
         {
-          find: /^@cloudvoyant\/vortex-react$/,
-          replacement: new URL('../../libs/vortex-react/src/index.ts', import.meta.url).pathname,
+          find: /^@cloudvoyant\/helical-react$/,
+          replacement: new URL('../../libs/helical-react/src/index.ts', import.meta.url).pathname,
         },
         {
-          find: /^@cloudvoyant\/vortex-svelte$/,
-          replacement: new URL('../../libs/vortex-svelte/src/index.ts', import.meta.url).pathname,
+          find: /^@cloudvoyant\/helical-svelte$/,
+          replacement: new URL('../../libs/helical-svelte/src/index.ts', import.meta.url).pathname,
         },
       ],
     },
@@ -38,7 +38,7 @@ export default defineConfig({
       // Workspace packages resolve to source in dev (see alias above); don't let
       // Vite pre-bundle and cache a stale copy (new named exports then throw
       // "does not provide an export named ..." until a dev-server restart).
-      exclude: ['@cloudvoyant/vortex-ui', '@cloudvoyant/vortex-react', '@cloudvoyant/vortex-svelte'],
+      exclude: ['@cloudvoyant/helical-ui', '@cloudvoyant/helical-react', '@cloudvoyant/helical-svelte'],
     },
   },
   redirects: {

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "@cloudvoyant/helical-ui": ["src/index.ts"]
+    }
+  },
+  "include": ["src", "tests"]
+}

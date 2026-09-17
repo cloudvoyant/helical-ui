@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/code-block/features/react.tsx
-import { CodeBlock } from '@cloudvoyant/vortex-react';
+import { CodeBlock } from '@cloudvoyant/helical-react';
 
 const code = `function fibonacci(n: number): number {
   if (n <= 1) return n;

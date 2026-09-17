@@ -7,7 +7,7 @@ import {
   DialogDismiss,
   DialogContent,
   DialogBackdrop,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { X } from 'lucide-react';
 
 export default function ReactDialogDefault() {

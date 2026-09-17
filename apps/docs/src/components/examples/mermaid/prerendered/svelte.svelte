@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/mermaid/prerendered/svelte.svelte -->
 <script lang="ts">
-  import { Mermaid } from '@cloudvoyant/vortex-svelte';
+  import { Mermaid } from '@cloudvoyant/helical-svelte';
 
   const code = `flowchart LR
   A[Source] --> B[Prerendered]

@@ -1,6 +1,6 @@
 // Astro can fetch this serialized JSON on the server and pass it as the content prop.
 import { useEffect, useState } from 'react';
-import { Editor, Prose, Reader } from '@cloudvoyant/vortex-react';
+import { Editor, Prose, Reader } from '@cloudvoyant/helical-react';
 
 const serverContent = JSON.stringify({
   type: 'doc',

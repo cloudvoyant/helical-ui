@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/prose/default/react.tsx
-import { Prose } from '@cloudvoyant/vortex-react';
+import { Prose } from '@cloudvoyant/helical-react';
 
 export default function ReactProseDefault() {
   return (

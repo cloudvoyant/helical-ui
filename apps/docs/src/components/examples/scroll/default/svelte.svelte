@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/scroll/default/svelte.svelte -->
 <script lang="ts">
-  import { Scroll } from '@cloudvoyant/vortex-svelte';
+  import { Scroll } from '@cloudvoyant/helical-svelte';
 
   const tags = Array.from({ length: 50 }, (_, i) => `v1.2.0-beta.${50 - i}`);
 </script>

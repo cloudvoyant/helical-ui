@@ -9,7 +9,7 @@
     ComboboxItem,
     ComboboxItemText,
     ComboboxItemIndicator,
-  } from '@cloudvoyant/vortex-svelte';
+  } from '@cloudvoyant/helical-svelte';
   import { Check } from 'lucide-svelte';
 
   const items = [

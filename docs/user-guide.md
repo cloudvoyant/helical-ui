@@ -1,6 +1,6 @@
 # User Guide
 
-> How to install and use vortex-ui.
+> How to install and use helical-ui.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ mise run dev   # opens the Astro docs site
 
 ## Workspace (pnpm monorepo)
 
-vortex-ui is a pnpm workspace monorepo:
+helical-ui is a pnpm workspace monorepo:
 
 - Install everything: `mise run install`
 - Build all packages: `mise run build`
@@ -31,19 +31,19 @@ vortex-ui is a pnpm workspace monorepo:
 ## Using the packages
 
 ```text
-pnpm add @cloudvoyant/vortex-ui @cloudvoyant/vortex-react
+pnpm add @cloudvoyant/helical-ui @cloudvoyant/helical-react
 # or for Svelte
-pnpm add @cloudvoyant/vortex-ui @cloudvoyant/vortex-svelte
+pnpm add @cloudvoyant/helical-ui @cloudvoyant/helical-svelte
 ```
 
 Import the theme once in your global CSS:
 
 ```css
 @import 'tailwindcss';
-@import '@cloudvoyant/vortex-ui/theme.css';
-/* Registers the vortex-ui component class strings (cva variants + framework
+@import '@cloudvoyant/helical-ui/theme.css';
+/* Registers the helical-ui component class strings (cva variants + framework
    classes) with Tailwind via @source self-scanning — no manual @source needed. */
-@import '@cloudvoyant/vortex-ui/components.css';
+@import '@cloudvoyant/helical-ui/components.css';
 ```
 
 Components accept the same `variant` and `size` props across frameworks. Available components:

@@ -4,7 +4,7 @@ import {
   SplitterPanel,
   SplitterResizeTrigger,
   SplitterResizeTriggerIndicator,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 
 export default function ReactSplitterCollapsible() {
   return (

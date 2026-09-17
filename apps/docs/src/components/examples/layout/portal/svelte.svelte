@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/layout/portal/svelte.svelte -->
 <script lang="ts">
-  import { Portal } from '@cloudvoyant/vortex-svelte';
+  import { Portal } from '@cloudvoyant/helical-svelte';
 </script>
 
 <p class="text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/item/in-stack/react.tsx
-import { Item, Stack } from '@cloudvoyant/vortex-react';
+import { Item, Stack } from '@cloudvoyant/helical-react';
 
 export default function ReactItemInStack() {
   return (

@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/badge/variants/react.tsx
-import { Badge } from '@cloudvoyant/vortex-react';
+import { Badge } from '@cloudvoyant/helical-react';
 
 export default function ReactBadgeVariants() {
   return (

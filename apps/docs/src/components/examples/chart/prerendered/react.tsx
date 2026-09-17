@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/chart/prerendered/react.tsx
-import { Chart } from '@cloudvoyant/vortex-react';
-import { renderChartSvgString } from '@cloudvoyant/vortex-ui';
+import { Chart } from '@cloudvoyant/helical-react';
+import { renderChartSvgString } from '@cloudvoyant/helical-ui';
 
 const data = [
   { name: 'React', value: 40 },

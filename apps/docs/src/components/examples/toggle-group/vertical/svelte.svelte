@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/toggle-group/vertical/svelte.svelte -->
 <script lang="ts">
-  import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/vortex-svelte';
+  import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/helical-svelte';
 </script>
 
 <ToggleGroup orientation="vertical" defaultValue={['a']}>

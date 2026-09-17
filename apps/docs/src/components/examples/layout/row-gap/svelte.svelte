@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/row/with-gap/svelte.svelte -->
 <script lang="ts">
-  import { Item, Row } from '@cloudvoyant/vortex-svelte';
+  import { Item, Row } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Row class="gap-4">

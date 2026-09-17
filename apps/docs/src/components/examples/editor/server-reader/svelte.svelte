@@ -1,6 +1,6 @@
 <!-- Server-rendered Reader example. Demo.astro loads this through SsrRouter without a client directive. -->
 <script lang="ts">
-  import { Reader } from '@cloudvoyant/vortex-svelte';
+  import { Reader } from '@cloudvoyant/helical-svelte';
 
   const content = JSON.stringify({
     type: 'doc',

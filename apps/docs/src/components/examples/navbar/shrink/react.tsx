@@ -17,12 +17,12 @@ import {
   NavbarMobileMenu,
   NavbarMobileMenuTrigger,
   NavbarMobileMenuContent,
-} from '@cloudvoyant/vortex-react';
-import { VortexLogo } from '../../VortexLogo';
+} from '@cloudvoyant/helical-react';
+import { HelicalLogo } from '../../HelicalLogo';
 
 const CONTENT = [
-  ['About', 'A brief history of vortex-ui and its guiding principles.'],
-  ['Installation', 'Add vortex-ui to your Astro, Vite, or framework project.'],
+  ['About', 'A brief history of helical-ui and its guiding principles.'],
+  ['Installation', 'Add helical-ui to your Astro, Vite, or framework project.'],
   ['Components', 'Every component, demoed and documented for React and Svelte.'],
   ['Theming', 'Light and dark themes over the shadcn token model.'],
   ['Accessibility', "Roles, focus, and keyboard behavior come from Ark's state machine."],
@@ -35,8 +35,8 @@ export default function ReactNavbarShrink() {
       <NavbarProvider>
         <Navbar variant="shrink" className="z-30">
           <NavbarBrand>
-            <VortexLogo className="h-7 w-auto" />
-            <span className="text-sm font-semibold">vortex-ui</span>
+            <HelicalLogo className="h-7 w-auto" />
+            <span className="text-sm font-semibold">helical-ui</span>
           </NavbarBrand>
           <NavbarMenu placement="center">
             <NavbarMenuList>

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/container/sizes/svelte.svelte -->
 <script lang="ts">
-  import { Container, Item } from '@cloudvoyant/vortex-svelte';
+  import { Container, Item } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="flex flex-col gap-4">

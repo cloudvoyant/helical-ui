@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/code-block/features/svelte.svelte -->
 <script lang="ts">
-  import { CodeBlock } from '@cloudvoyant/vortex-svelte';
+  import { CodeBlock } from '@cloudvoyant/helical-svelte';
 
   const code = `function fibonacci(n: number): number {
   if (n <= 1) return n;

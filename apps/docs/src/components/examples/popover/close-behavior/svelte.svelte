@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/popover/close-behavior/svelte.svelte -->
 <script lang="ts">
-  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverDismiss, PopoverContent } from '@cloudvoyant/vortex-svelte';
+  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverDismiss, PopoverContent } from '@cloudvoyant/helical-svelte';
   import { X } from 'lucide-svelte';
 </script>
 

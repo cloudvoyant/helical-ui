@@ -5,25 +5,25 @@ order: 3
 ---
 
 import { Code } from 'astro/components';
-import themeCss from '../../../../../libs/vortex-ui/src/theme.css?raw';
+import themeCss from '../../../../../libs/helical-ui/src/theme.css?raw';
 
 ## CSS variables
 
-The theme in `@cloudvoyant/vortex-ui` matches [shadcn/ui's theming](https://ui.shadcn.com/docs/theming) exactly: semantic tokens such as `--background`, `--foreground`, `--primary`, and `--secondary` are defined under `:root` for light mode and overridden under `.dark`. On top of the shadcn token set, vortex-ui adds `--success`, `--danger`, `--warn`, and `--info` (each with a `-foreground`) for semantic status colors used by `Button` and `Badge`, plus the standard font stacks — marked as vortex-ui additions in `theme.css`.
+The theme in `@cloudvoyant/helical-ui` matches [shadcn/ui's theming](https://ui.shadcn.com/docs/theming) exactly: semantic tokens such as `--background`, `--foreground`, `--primary`, and `--secondary` are defined under `:root` for light mode and overridden under `.dark`. On top of the shadcn token set, helical-ui adds `--success`, `--danger`, `--warn`, and `--info` (each with a `-foreground`) for semantic status colors used by `Button` and `Badge`, plus the standard font stacks — marked as helical-ui additions in `theme.css`.
 
 <Code code={themeCss} lang="css" themes={{ light: 'github-light', dark: 'github-dark' }} defaultColor={false} />
 
 ## Theme presets
 
-Beyond the base shadcn "Neutral" palette, `@cloudvoyant/vortex-ui` ships over fifty shadcn-compatible theme presets in `@cloudvoyant/vortex-ui/themes.css`. Each preset is a `.theme-{name}` block for light mode and a `.theme-{name}.dark` block for dark mode that overrides the same CSS variables:
+Beyond the base shadcn "Neutral" palette, `@cloudvoyant/helical-ui` ships over fifty shadcn-compatible theme presets in `@cloudvoyant/helical-ui/themes.css`. Each preset is a `.theme-{name}` block for light mode and a `.theme-{name}.dark` block for dark mode that overrides the same CSS variables:
 
 ```css
 @import 'tailwindcss';
-@import '@cloudvoyant/vortex-ui/theme.css';
-@import '@cloudvoyant/vortex-ui/themes.css';
+@import '@cloudvoyant/helical-ui/theme.css';
+@import '@cloudvoyant/helical-ui/themes.css';
 ```
 
-Apply a preset by adding its class to `<html>` — e.g. `class="theme-catppuccin"`. Any token a preset doesn't override (for example a vortex-ui status color) falls back to the base `:root` / `.dark` values. The docs site's theme selector demonstrates the full list.
+Apply a preset by adding its class to `<html>` — e.g. `class="theme-catppuccin"`. Any token a preset doesn't override (for example a helical-ui status color) falls back to the base `:root` / `.dark` values. The docs site's theme selector demonstrates the full list.
 
 ## Dark mode
 

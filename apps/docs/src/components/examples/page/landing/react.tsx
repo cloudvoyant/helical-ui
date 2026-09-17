@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/page/landing/react.tsx
-import { Page, PageSection, PageFooter } from '@cloudvoyant/vortex-react';
+import { Page, PageSection, PageFooter } from '@cloudvoyant/helical-react';
 
 export default function ReactPageLanding() {
   return (

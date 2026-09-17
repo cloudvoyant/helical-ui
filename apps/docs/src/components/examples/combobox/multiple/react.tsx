@@ -8,7 +8,7 @@ import {
   ComboboxItem,
   ComboboxItemText,
   ComboboxItemIndicator,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { Check } from 'lucide-react';
 
 const items = [

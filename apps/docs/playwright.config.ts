@@ -2,7 +2,7 @@
 import { defineConfig } from '@playwright/test';
 
 const PORT = process.env.E2E_PORT ?? '4321';
-const SERVER_URL = `http://localhost:${PORT}/vortex-ui/`;
+const SERVER_URL = `http://localhost:${PORT}/helical-ui/`;
 
 export default defineConfig({
   testDir: './e2e',

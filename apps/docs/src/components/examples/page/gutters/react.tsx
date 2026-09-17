@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/page/gutters/react.tsx
-import { Page, PageGutter, PageContent, PageFooter, Col } from '@cloudvoyant/vortex-react';
+import { Page, PageGutter, PageContent, PageFooter, Col } from '@cloudvoyant/helical-react';
 
 export default function ReactPageGutters() {
   return (

@@ -13,8 +13,8 @@
     ListboxItemIndicator,
     ListboxInput,
     ListboxEmpty,
-  } from '@cloudvoyant/vortex-svelte';
-  import { defaultListboxFilter } from '@cloudvoyant/vortex-ui';
+  } from '@cloudvoyant/helical-svelte';
+  import { defaultListboxFilter } from '@cloudvoyant/helical-ui';
   import { Check } from 'lucide-svelte';
 
   const items = [

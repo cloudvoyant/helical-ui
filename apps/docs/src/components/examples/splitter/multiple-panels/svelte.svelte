@@ -5,7 +5,7 @@
     SplitterPanel,
     SplitterResizeTrigger,
     SplitterResizeTriggerIndicator,
-  } from '@cloudvoyant/vortex-svelte';
+  } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="h-64 w-full rounded-md border border-border bg-background">

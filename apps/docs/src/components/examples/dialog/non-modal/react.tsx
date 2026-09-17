@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/dialog/non-modal/react.tsx
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogDescription, DialogContent } from '@cloudvoyant/vortex-react';
+import { Dialog, DialogTitle, DialogDescription, DialogContent } from '@cloudvoyant/helical-react';
 
 export default function ReactDialogNonModal() {
   const [open, setOpen] = useState(false);

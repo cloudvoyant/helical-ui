@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/popover/multiple-triggers/svelte.svelte -->
 <script lang="ts">
-  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-svelte';
+  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-svelte';
 
   const items = [
     { id: 'share', label: 'Share', detail: 'Share this item with others via link or email.' },

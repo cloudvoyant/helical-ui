@@ -1,7 +1,7 @@
 // apps/docs/src/components/examples/dialog/dialog-with-tooltip/react.tsx
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-react';
+import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-react';
 
 export default function ReactDialogWithTooltip() {
   const [open, setOpen] = useState(false);

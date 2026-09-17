@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/field/fieldset/svelte.svelte -->
 <script lang="ts">
-  import { FieldSet, FieldSetLegend, Field, FieldLabel, Input } from '@cloudvoyant/vortex-svelte';
+  import { FieldSet, FieldSetLegend, Field, FieldLabel, Input } from '@cloudvoyant/helical-svelte';
 </script>
 
 <FieldSet class="max-w-sm">

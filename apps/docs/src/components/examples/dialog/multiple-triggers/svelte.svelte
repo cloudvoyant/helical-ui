@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/dialog/multiple-triggers/svelte.svelte -->
 <script lang="ts">
-  import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-svelte';
+  import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-svelte';
 
   const sections = [
     { id: 'general', title: 'General', body: 'General account settings.' },

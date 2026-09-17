@@ -6,7 +6,7 @@
 
 [env]
 _.path   = ['{{config_root}}/node_modules/.bin']
-PROJECT  = "vortex-ui"
+PROJECT  = "helical-ui"
 TEMPLATE         = "mise-pnpm-template"
 VERSION  = "{{exec(command='node -p \"require(\\\"./package.json\\\").version\" 2>/dev/null || echo 0.1.0')}}"
 

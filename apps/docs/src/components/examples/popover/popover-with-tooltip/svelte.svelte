@@ -1,7 +1,7 @@
 <!-- apps/docs/src/components/examples/popover/popover-with-tooltip/svelte.svelte -->
 <script lang="ts">
-  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-svelte';
-  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-svelte';
+  import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-svelte';
+  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Popover>

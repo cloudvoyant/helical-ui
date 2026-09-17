@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/button/sizes/react.tsx
-import { Button } from '@cloudvoyant/vortex-react';
+import { Button } from '@cloudvoyant/helical-react';
 
 export default function ReactButtonSizes() {
   return (

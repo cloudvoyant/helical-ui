@@ -1,9 +1,9 @@
 {
-  "name": "vortex-ui-monorepo",
+  "name": "helical-ui-monorepo",
   "version": "0.18.0",
   "private": true,
   "packageManager": "pnpm@10.32.1",
-  "description": "vortex-ui — UI component library monorepo (React + Svelte libs + docs app)",
+  "description": "helical-ui — UI component library monorepo (React + Svelte libs + docs app)",
   "scripts": {
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",

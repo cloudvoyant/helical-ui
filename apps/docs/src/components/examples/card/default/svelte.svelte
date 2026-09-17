@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/card/default/svelte.svelte -->
 <script lang="ts">
-  import { Card, CardHeader, CardBody, CardFooter, CardTitle, CardDescription, Button } from '@cloudvoyant/vortex-svelte';
+  import { Card, CardHeader, CardBody, CardFooter, CardTitle, CardDescription, Button } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Card class="w-full max-w-sm">

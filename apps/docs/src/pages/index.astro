@@ -1,9 +1,9 @@
 ---
 import Shell from '../layouts/Shell.astro';
 import { getCollection } from 'astro:content';
-import { buttonVariants } from '@cloudvoyant/vortex-ui';
-import { cn } from '@cloudvoyant/vortex-ui';
-import { PageSection } from '@cloudvoyant/vortex-react';
+import { buttonVariants } from '@cloudvoyant/helical-ui';
+import { cn } from '@cloudvoyant/helical-ui';
+import { PageSection } from '@cloudvoyant/helical-react';
 import HeroWord from '../components/HeroWord.tsx';
 
 const components = (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
@@ -11,14 +11,14 @@ const components = (await getCollection('components')).sort((a, b) => a.data.ord
 
 <Shell
   variant="landing"
-  title="vortex-ui — React and Svelte components"
+  title="helical-ui — React and Svelte components"
   description="Accessible React and Svelte components built on Ark UI with a shared shadcn-style theme."
 >
   <PageSection className="relative items-center justify-center overflow-hidden px-4 py-16">
     <div aria-hidden="true" class="pointer-events-none absolute inset-0">
       <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_8%,transparent),transparent_62%)]" />
       <canvas
-        data-hero-vortex-ui
+        data-hero-helical-ui
         class="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_80%)]"
       />
       <div class="absolute inset-0 bg-[radial-gradient(ellipse_52%_46%_at_50%_50%,color-mix(in_oklab,var(--background)_82%,transparent)_0%,transparent_72%)]" />
@@ -62,6 +62,6 @@ const components = (await getCollection('components')).sort((a, b) => a.data.ord
 </Shell>
 
 <script>
-  import { initHeroVortex } from '../components/HeroVortex';
-  initHeroVortex();
+  import { initHeroHelical } from '../components/HeroHelical';
+  initHeroHelical();
 </script>

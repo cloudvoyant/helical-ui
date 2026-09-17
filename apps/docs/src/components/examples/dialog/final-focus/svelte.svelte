@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/dialog/final-focus/svelte.svelte -->
 <script lang="ts">
-  import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-svelte';
+  import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-svelte';
 
   let open = $state(false);
   let buttonEl: HTMLButtonElement | undefined = $state();

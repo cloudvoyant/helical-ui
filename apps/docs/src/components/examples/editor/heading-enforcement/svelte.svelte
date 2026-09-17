@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/editor/heading-enforcement/svelte.svelte -->
 <script lang="ts">
-  import { Editor, Prose } from '@cloudvoyant/vortex-svelte';
+  import { Editor, Prose } from '@cloudvoyant/helical-svelte';
 
   const seed = JSON.stringify({
     type: 'doc',

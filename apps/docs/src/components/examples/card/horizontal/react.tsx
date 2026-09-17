@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/card/horizontal/react.tsx
-import { Card, CardHeader, CardBody, CardTitle, CardDescription, CardCover } from '@cloudvoyant/vortex-react';
+import { Card, CardHeader, CardBody, CardTitle, CardDescription, CardCover } from '@cloudvoyant/helical-react';
 import { User } from 'lucide-react';
 
 export default function ReactCardHorizontal() {

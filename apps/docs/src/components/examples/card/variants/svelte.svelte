@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/card/variants/svelte.svelte -->
 <script lang="ts">
-  import { Card, CardHeader, CardBody, CardTitle } from '@cloudvoyant/vortex-svelte';
+  import { Card, CardHeader, CardBody, CardTitle } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="grid gap-4 sm:grid-cols-3">

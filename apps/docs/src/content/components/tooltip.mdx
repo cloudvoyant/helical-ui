@@ -8,7 +8,7 @@ group: overlays
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`Tooltip` is a thin wrapper over [Ark UI `tooltip`](https://ark-ui.com/docs/components/tooltip) that shows supplementary text on hover or focus. It is styled with the vortex-ui theme (`bg-popover`/`text-popover-foreground` content, a neutral surface) and accessibility comes entirely from Ark's tooltip state machine — the content carries `role="tooltip"` and is associated with its trigger. The portal and positioner are internal details; the arrow is toggled with the `arrow` prop on `TooltipContent` and only rendered while the tooltip is open.
+`Tooltip` is a thin wrapper over [Ark UI `tooltip`](https://ark-ui.com/docs/components/tooltip) that shows supplementary text on hover or focus. It is styled with the helical-ui theme (`bg-popover`/`text-popover-foreground` content, a neutral surface) and accessibility comes entirely from Ark's tooltip state machine — the content carries `role="tooltip"` and is associated with its trigger. The portal and positioner are internal details; the arrow is toggled with the `arrow` prop on `TooltipContent` and only rendered while the tooltip is open.
 
 <Demo component="tooltip" example="default" />
 

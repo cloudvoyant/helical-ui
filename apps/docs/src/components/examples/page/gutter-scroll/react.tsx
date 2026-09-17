@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/page/gutter-scroll/react.tsx
-import { Page, PageGutter, PageContent, Scroll } from '@cloudvoyant/vortex-react';
+import { Page, PageGutter, PageContent, Scroll } from '@cloudvoyant/helical-react';
 
 const tags = Array.from({ length: 60 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`);
 
