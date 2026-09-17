@@ -8,9 +8,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@cloudvoyant/vortex-ui": ["../../libs/vortex-ui/src/index.ts"],
-      "@cloudvoyant/vortex-react": ["../../libs/vortex-react/src/index.ts"],
-      "@cloudvoyant/vortex-svelte": ["../../libs/vortex-svelte/src/index.ts"]
+      "@cloudvoyant/helical-ui": ["../../libs/helical-ui/src/index.ts"],
+      "@cloudvoyant/helical-react": ["../../libs/helical-react/src/index.ts"],
+      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"]
     }
   }
 }

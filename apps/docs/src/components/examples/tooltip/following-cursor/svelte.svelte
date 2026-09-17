@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tooltip/following-cursor/svelte.svelte -->
 <script lang="ts">
-  import { Tooltip, TooltipTrigger, TooltipContent, TooltipContext } from '@cloudvoyant/vortex-svelte';
+  import { Tooltip, TooltipTrigger, TooltipContent, TooltipContext } from '@cloudvoyant/helical-svelte';
 
   let areaEl: HTMLDivElement | undefined = $state();
   const cursor = { x: 0, y: 0 };

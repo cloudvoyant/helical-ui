@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/item/in-container/react.tsx
-import { Item, Row } from '@cloudvoyant/vortex-react';
+import { Item, Row } from '@cloudvoyant/helical-react';
 
 export default function ReactItemInContainer() {
   return (

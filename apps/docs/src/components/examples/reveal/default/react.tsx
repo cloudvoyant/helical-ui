@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/reveal/default/react.tsx
-import { Reveal } from '@cloudvoyant/vortex-react';
+import { Reveal } from '@cloudvoyant/helical-react';
 
 export default function ReactRevealDefault() {
   return (

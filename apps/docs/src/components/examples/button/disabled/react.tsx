@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/button/disabled/react.tsx
-import { Button } from '@cloudvoyant/vortex-react';
+import { Button } from '@cloudvoyant/helical-react';
 
 export default function ReactButtonDisabled() {
   return (

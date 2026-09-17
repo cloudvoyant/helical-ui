@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/row/separator/svelte.svelte -->
 <script lang="ts">
-  import { Row } from '@cloudvoyant/vortex-svelte';
+  import { Row } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Row class="gap-0 divide-x divide-border">

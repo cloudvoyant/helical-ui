@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tooltip/controlled/svelte.svelte -->
 <script lang="ts">
-  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-svelte';
+  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-svelte';
 
   let open = $state(false);
 </script>

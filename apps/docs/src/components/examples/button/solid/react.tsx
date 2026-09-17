@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/button/solid/react.tsx
-import { Button } from '@cloudvoyant/vortex-react';
+import { Button } from '@cloudvoyant/helical-react';
 
 export default function ReactButtonSolid() {
   return (

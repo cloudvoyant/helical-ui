@@ -1,5 +1,5 @@
 // Server-rendered Reader example. Demo.astro loads this through SsrRouter without a client directive.
-import { Reader } from '@cloudvoyant/vortex-react';
+import { Reader } from '@cloudvoyant/helical-react';
 
 const content = JSON.stringify({
   type: 'doc',

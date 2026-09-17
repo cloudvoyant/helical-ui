@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@cloudvoyant/helical-ui": ["../helical-ui/src/index.ts"]
+    }
+  },
+  "include": ["src", "tests"]
+}

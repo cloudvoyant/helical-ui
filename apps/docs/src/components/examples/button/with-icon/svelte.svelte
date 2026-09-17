@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/button/with-icon/svelte.svelte -->
 <script lang="ts">
-  import { Button } from '@cloudvoyant/vortex-svelte';
+  import { Button } from '@cloudvoyant/helical-svelte';
   import { Check, Trash2, AlertTriangle, Info, Plus, Download } from 'lucide-svelte';
 </script>
 

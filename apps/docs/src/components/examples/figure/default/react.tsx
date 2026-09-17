@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/figure/default/react.tsx
-import { Figure } from '@cloudvoyant/vortex-react';
+import { Figure } from '@cloudvoyant/helical-react';
 
 const src = `${import.meta.env.BASE_URL}figure-example.svg`;
 

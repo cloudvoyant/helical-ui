@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/popover/root-provider/svelte.svelte -->
 <script lang="ts">
-  import { usePopover, PopoverProvider, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-svelte';
+  import { usePopover, PopoverProvider, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-svelte';
 
   const popover = usePopover({ id: 'popover-1', positioning: { placement: 'bottom-start' } });
 </script>

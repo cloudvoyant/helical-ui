@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install vortex-ui packages with pnpm.
+description: Install helical-ui packages with pnpm.
 order: 2
 ---
 
@@ -8,24 +8,24 @@ order: 2
 
 The library ships three npm packages:
 
-- `@cloudvoyant/vortex-ui` — shared interfaces, cva variants, and the shadcn-style theme.
-- `@cloudvoyant/vortex-react` — React components (Ark UI based).
-- `@cloudvoyant/vortex-svelte` — Svelte components (Ark UI based).
+- `@cloudvoyant/helical-ui` — shared interfaces, cva variants, and the shadcn-style theme.
+- `@cloudvoyant/helical-react` — React components (Ark UI based).
+- `@cloudvoyant/helical-svelte` — Svelte components (Ark UI based).
 
 ## Install
 
 ```bash
-pnpm add @cloudvoyant/vortex-ui @cloudvoyant/vortex-react
+pnpm add @cloudvoyant/helical-ui @cloudvoyant/helical-react
 # or for Svelte
-pnpm add @cloudvoyant/vortex-ui @cloudvoyant/vortex-svelte
+pnpm add @cloudvoyant/helical-ui @cloudvoyant/helical-svelte
 ```
 
 Import the theme once in your app's global CSS:
 
 ```css
 @import 'tailwindcss';
-@import '@cloudvoyant/vortex-ui/theme.css';
-/* Registers the vortex-ui component class strings (cva variants + framework
+@import '@cloudvoyant/helical-ui/theme.css';
+/* Registers the helical-ui component class strings (cva variants + framework
    classes) with Tailwind via @source self-scanning — no manual @source needed. */
-@import '@cloudvoyant/vortex-ui/components.css';
+@import '@cloudvoyant/helical-ui/components.css';
 ```

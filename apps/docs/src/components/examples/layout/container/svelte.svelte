@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/container/default/svelte.svelte -->
 <script lang="ts">
-  import { Container, Item } from '@cloudvoyant/vortex-svelte';
+  import { Container, Item } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Container>

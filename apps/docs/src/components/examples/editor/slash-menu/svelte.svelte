@@ -1,10 +1,10 @@
 <!-- apps/docs/src/components/examples/editor/slash-menu/svelte.svelte -->
 <script lang="ts">
-  import { Editor, Prose } from '@cloudvoyant/vortex-svelte';
+  import { Editor, Prose } from '@cloudvoyant/helical-svelte';
 
   const editorProps = {
     fetchLinkPreview: async (url: string) => ({
-      title: 'Vortex bookmark',
+      title: 'Helical bookmark',
       description: 'Metadata returned by the app-owned preview function.',
       image: null,
       favicon: null,

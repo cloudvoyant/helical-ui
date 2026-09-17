@@ -99,7 +99,7 @@ for (const framework of FRAMEWORKS) {
         .locator('[data-example-id="language-tabs"]')
         .locator(`[data-fw="${framework}"] [data-code-block]`);
       await expect(languageTabs.locator('.shiki')).toBeVisible({ timeout: 15_000 });
-      // Language selector is the Ark-based vortex-ui Select (visible Ark trigger, not a visible
+      // Language selector is the Ark-based helical-ui Select (visible Ark trigger, not a visible
       // native <select> — Ark's SelectHiddenSelect is always present but visually hidden).
       await expect(languageTabs.locator('[data-scope="select"][data-part="trigger"]')).toHaveCount(1);
       await expect(languageTabs.locator('select')).toHaveCount(1);

@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/dialog/initial-focus/react.tsx
 import { useRef, useState } from 'react';
-import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-react';
+import { Dialog, DialogTitle, DialogDescription, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-react';
 
 export default function ReactDialogInitialFocus() {
   const [open, setOpen] = useState(false);

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/field/default/svelte.svelte -->
 <script lang="ts">
-  import { Field, FieldLabel, FieldRequiredIndicator, FieldHelper, FieldError, Input } from '@cloudvoyant/vortex-svelte';
+  import { Field, FieldLabel, FieldRequiredIndicator, FieldHelper, FieldError, Input } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Field invalid class="max-w-sm">

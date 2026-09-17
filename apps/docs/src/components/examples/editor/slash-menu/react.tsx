@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/editor/slash-menu/react.tsx
-import { Editor, Prose } from '@cloudvoyant/vortex-react';
+import { Editor, Prose } from '@cloudvoyant/helical-react';
 
 const seed = JSON.stringify({
   type: 'doc',
@@ -16,7 +16,7 @@ const seed = JSON.stringify({
 });
 
 const fetchLinkPreview = async (url: string) => ({
-  title: 'Vortex bookmark',
+  title: 'Helical bookmark',
   description: 'Metadata returned by the app-owned preview function.',
   image: null,
   favicon: null,

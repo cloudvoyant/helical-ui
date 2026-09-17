@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/listbox/filtering/react.tsx
-// Filtering is consumer-owned: `visible` is filtered with vortex-ui's defaultListboxFilter and
+// Filtering is consumer-owned: `visible` is filtered with helical-ui's defaultListboxFilter and
 // the SAME array is both passed to Listbox and rendered — so the collection and the children
 // cannot diverge. Ark's ListboxInput is a typeahead input (zag exposes only autoHighlight /
 // keyboardPriority — there is no controlled query prop on the root), so the consumer controls
@@ -15,8 +15,8 @@ import {
   ListboxItemIndicator,
   ListboxInput,
   ListboxEmpty,
-} from '@cloudvoyant/vortex-react';
-import { defaultListboxFilter } from '@cloudvoyant/vortex-ui';
+} from '@cloudvoyant/helical-react';
+import { defaultListboxFilter } from '@cloudvoyant/helical-ui';
 import { Check } from 'lucide-react';
 
 const items = [

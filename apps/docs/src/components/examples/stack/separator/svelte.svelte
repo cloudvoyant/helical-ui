@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/stack/separator/svelte.svelte -->
 <script lang="ts">
-  import { Stack } from '@cloudvoyant/vortex-svelte';
+  import { Stack } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Stack class="gap-0 divide-y divide-border">

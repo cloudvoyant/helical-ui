@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/page/landing/svelte.svelte -->
 <script lang="ts">
-  import { Page, PageSection, PageFooter } from '@cloudvoyant/vortex-svelte';
+  import { Page, PageSection, PageFooter } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Page variant="landing">

@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/scroll/default/react.tsx
-import { Scroll } from '@cloudvoyant/vortex-react';
+import { Scroll } from '@cloudvoyant/helical-react';
 
 const tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`);
 

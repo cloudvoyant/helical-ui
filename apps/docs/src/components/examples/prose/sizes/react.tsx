@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/prose/sizes/react.tsx
-import { Prose } from '@cloudvoyant/vortex-react';
+import { Prose } from '@cloudvoyant/helical-react';
 
 export default function ReactProseSizes() {
   return (

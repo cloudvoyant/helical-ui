@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/popover/multiple-triggers/react.tsx
 import { useState } from 'react';
-import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/vortex-react';
+import { Popover, PopoverTrigger, PopoverTitle, PopoverDescription, PopoverContent } from '@cloudvoyant/helical-react';
 
 const items = [
   { id: 'share', label: 'Share', detail: 'Share this item with others via link or email.' },

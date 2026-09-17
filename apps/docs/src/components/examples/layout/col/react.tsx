@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/col/default/react.tsx
-import { Item, Col } from '@cloudvoyant/vortex-react';
+import { Item, Col } from '@cloudvoyant/helical-react';
 
 export default function ReactColDefault() {
   return (

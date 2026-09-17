@@ -1,7 +1,7 @@
 // apps/docs/src/components/examples/mermaid/prerendered/react.tsx
 // Demonstrates the server-side rendering path: a pre-rendered SVG is passed via the `svg`
 // prop, so `mermaid` is never imported on the client and the diagram paints immediately.
-import { Mermaid } from '@cloudvoyant/vortex-react';
+import { Mermaid } from '@cloudvoyant/helical-react';
 
 const code = `flowchart LR
   A[Source] --> B[Prerendered]

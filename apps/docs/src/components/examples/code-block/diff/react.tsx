@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/code-block/diff/react.tsx
-import { CodeBlock } from '@cloudvoyant/vortex-react';
+import { CodeBlock } from '@cloudvoyant/helical-react';
 
 const code = `--- a/src/greet.ts
 +++ b/src/greet.ts

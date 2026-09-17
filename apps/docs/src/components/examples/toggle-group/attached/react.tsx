@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/toggle-group/attached/react.tsx
-import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/vortex-react';
+import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/helical-react';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
 export default function ReactToggleGroupAttached() {

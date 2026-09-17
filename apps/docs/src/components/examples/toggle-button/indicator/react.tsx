@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/toggle-button/indicator/react.tsx
-import { ToggleButton, ToggleButtonIndicator } from '@cloudvoyant/vortex-react';
+import { ToggleButton, ToggleButtonIndicator } from '@cloudvoyant/helical-react';
 import { Bookmark } from 'lucide-react';
 
 export default function ReactToggleButtonIndicator() {

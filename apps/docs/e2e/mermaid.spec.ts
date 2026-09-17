@@ -78,7 +78,7 @@ for (const framework of FRAMEWORKS) {
       // mermaid v11 appends its temp render container (`#d<render-id>`) to document.body;
       // suppressErrorRendering must make a failed render clean up after itself, leaving
       // no stray "Syntax error in text" graphic behind.
-      await expect(page.locator('body > div[id^="dvortex-ui-mmd-"]')).toHaveCount(0);
+      await expect(page.locator('body > div[id^="dhelical-ui-mmd-"]')).toHaveCount(0);
       await expect(page.locator('svg text', { hasText: 'Syntax error in text' })).toHaveCount(0);
     });
   });

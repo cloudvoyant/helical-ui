@@ -8,7 +8,7 @@ import {
   ComboboxList,
   ComboboxItem,
   ComboboxItemText,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { ChevronsUpDown } from 'lucide-react';
 
 const items = [

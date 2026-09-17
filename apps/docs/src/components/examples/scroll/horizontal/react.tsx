@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/scroll/horizontal/react.tsx
-import { Scroll } from '@cloudvoyant/vortex-react';
+import { Scroll } from '@cloudvoyant/helical-react';
 
 export default function ReactScrollHorizontal() {
   return (

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tooltip/root-provider/svelte.svelte -->
 <script lang="ts">
-  import { useTooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-svelte';
+  import { useTooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-svelte';
 
   const tooltip = useTooltip({ id: 'tooltip-1' });
 </script>

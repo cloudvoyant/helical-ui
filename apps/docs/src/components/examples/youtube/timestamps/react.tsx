@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/youtube/timestamps/react.tsx
-import { YouTube, YoutubeTimestamps, YoutubeTimestampAt } from '@cloudvoyant/vortex-react';
+import { YouTube, YoutubeTimestamps, YoutubeTimestampAt } from '@cloudvoyant/helical-react';
 
 export default function ReactYouTubeTimestamps() {
   return (

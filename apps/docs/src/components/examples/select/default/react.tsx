@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectItemText,
   SelectItemIndicator,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
 const items = [

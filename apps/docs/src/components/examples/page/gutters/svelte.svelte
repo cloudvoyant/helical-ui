@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/page/gutters/svelte.svelte -->
 <script lang="ts">
-  import { Page, PageGutter, PageContent, PageFooter, Col } from '@cloudvoyant/vortex-svelte';
+  import { Page, PageGutter, PageContent, PageFooter, Col } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Page>

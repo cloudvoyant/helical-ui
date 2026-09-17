@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/questions/single/svelte.svelte -->
 <script lang="ts">
-  import { SingleChoiceQuestion } from '@cloudvoyant/vortex-svelte';
+  import { SingleChoiceQuestion } from '@cloudvoyant/helical-svelte';
 </script>
 
 <SingleChoiceQuestion

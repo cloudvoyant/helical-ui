@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/card/default/react.tsx
-import { Card, CardHeader, CardBody, CardFooter, CardTitle, CardDescription, Button } from '@cloudvoyant/vortex-react';
+import { Card, CardHeader, CardBody, CardFooter, CardTitle, CardDescription, Button } from '@cloudvoyant/helical-react';
 
 export default function ReactCardDefault() {
   return (

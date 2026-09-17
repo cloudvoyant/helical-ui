@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/notice/variants/svelte.svelte -->
 <script lang="ts">
-  import { Notice } from '@cloudvoyant/vortex-svelte';
+  import { Notice } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="flex flex-col gap-2">

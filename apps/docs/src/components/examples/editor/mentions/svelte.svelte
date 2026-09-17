@@ -2,8 +2,8 @@
 <!-- Minimal, no Prose wrapper — a chat-style input with @user mentions, backed by the -->
 <!-- injected mentionSource seam (a static in-memory list here). -->
 <script lang="ts">
-  import { Editor } from '@cloudvoyant/vortex-svelte';
-  import type { MentionItem } from '@cloudvoyant/vortex-ui';
+  import { Editor } from '@cloudvoyant/helical-svelte';
+  import type { MentionItem } from '@cloudvoyant/helical-ui';
 
   const PEOPLE: MentionItem[] = [
     { id: '1', label: 'Ada Lovelace', type: 'user' },

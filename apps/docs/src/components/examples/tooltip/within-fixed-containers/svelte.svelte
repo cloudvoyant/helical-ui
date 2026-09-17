@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tooltip/within-fixed-containers/svelte.svelte -->
 <script lang="ts">
-  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-svelte';
+  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-svelte';
 </script>
 
 <div class="flex flex-col gap-2 rounded-md border p-4">

@@ -21,7 +21,7 @@ The Mermaid component renders [Mermaid](https://mermaid.js.org/) diagrams with t
 
 ### Client loading
 
-`mermaid` is an **optional peer dependency** of `@cloudvoyant/vortex-react` and `@cloudvoyant/vortex-svelte` — the loading skeleton renders without it, and the library chunk is fetched only when a Mermaid component mounts, so it never lands in the SSR bundle. Install it in any app that renders diagrams:
+`mermaid` is an **optional peer dependency** of `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte` — the loading skeleton renders without it, and the library chunk is fetched only when a Mermaid component mounts, so it never lands in the SSR bundle. Install it in any app that renders diagrams:
 
 ```bash
 pnpm add mermaid
@@ -34,7 +34,7 @@ While the diagram renders, a centered spinner with an "Rendering diagram" label 
 For content rendered at build time — MDX pages, static exports, or server components — pass a pre-rendered SVG string through the `svg` prop:
 
 <Code
-  code={`import { Mermaid } from '@cloudvoyant/vortex-react';
+  code={`import { Mermaid } from '@cloudvoyant/helical-react';
 
 <Mermaid
   code="flowchart LR\\n  A --> B"
@@ -58,10 +58,10 @@ flowchart LR
 ```
 ````
 
-A component map (`vortex-ui-mdx`) routes `code.language-mermaid` to the `Mermaid` component so the fence renders as a diagram; the same source is usable via the JSX `code` prop directly when you prefer an explicit component:
+A component map (`helical-ui-mdx`) routes `code.language-mermaid` to the `Mermaid` component so the fence renders as a diagram; the same source is usable via the JSX `code` prop directly when you prefer an explicit component:
 
 <Code
-  code={`import { Mermaid } from '@cloudvoyant/vortex-react';
+  code={`import { Mermaid } from '@cloudvoyant/helical-react';
 
 <Mermaid
   client:load
@@ -74,7 +74,7 @@ flowchart LR
   defaultColor={false}
 />
 
-The `code` prop works identically from Svelte and plain JSX; the `vortex-ui-mdx` fence mapping for other MDX hosts is planned future work.
+The `code` prop works identically from Svelte and plain JSX; the `helical-ui-mdx` fence mapping for other MDX hosts is planned future work.
 
 ### Security
 
@@ -82,7 +82,7 @@ Client-rendered diagrams use mermaid's `securityLevel: 'strict'`: the generated 
 
 ### Theming
 
-Diagram colors follow the app theme: mermaid's `themeVariables` are resolved at render time from the vortex-ui shadcn CSS custom properties (`--card`, `--foreground`, `--border`, `--muted-foreground`, `--background`, …) on `<html>`, so brand-theme overrides and the active light/dark mode apply to diagrams. If those tokens are not defined, mermaid's own theme defaults are used.
+Diagram colors follow the app theme: mermaid's `themeVariables` are resolved at render time from the helical-ui shadcn CSS custom properties (`--card`, `--foreground`, `--border`, `--muted-foreground`, `--background`, …) on `<html>`, so brand-theme overrides and the active light/dark mode apply to diagrams. If those tokens are not defined, mermaid's own theme defaults are used.
 
 You can also override colors per node in the diagram source with mermaid's `style` statement or a reusable `classDef`:
 

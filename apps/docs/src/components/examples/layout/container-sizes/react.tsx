@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/container/sizes/react.tsx
-import { Container, Item } from '@cloudvoyant/vortex-react';
+import { Container, Item } from '@cloudvoyant/helical-react';
 
 export default function ReactContainerSizes() {
   return (

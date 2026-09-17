@@ -8,7 +8,7 @@ group: rich-text
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-Chart renders line, bar, area, and pie charts with [TanStack Charts](https://tanstack.com/chart), themed with the vortex-ui `--chart-N` tokens. The chart definition is framework-agnostic, so the **same** definition renders in both React and Svelte. Pass `svg` for the static/server path (rendered at build time via `renderChartSvgString`, no client adapter mounted).
+Chart renders line, bar, area, and pie charts with [TanStack Charts](https://tanstack.com/chart), themed with the helical-ui `--chart-N` tokens. The chart definition is framework-agnostic, so the **same** definition renders in both React and Svelte. Pass `svg` for the static/server path (rendered at build time via `renderChartSvgString`, no client adapter mounted).
 
 <Demo component="chart" example="pie" />
 
@@ -17,7 +17,7 @@ Chart renders line, bar, area, and pie charts with [TanStack Charts](https://tan
 Render the chart to an SVG string on the server and pass it through `svg` — the chart paints immediately with no client JavaScript:
 
 ```tsx
-import { renderChartSvgString } from '@cloudvoyant/vortex-ui';
+import { renderChartSvgString } from '@cloudvoyant/helical-ui';
 
 const svg = renderChartSvgString(
   { type: 'pie', data, series: [{ key: 'value' }], nameKey: 'name' },

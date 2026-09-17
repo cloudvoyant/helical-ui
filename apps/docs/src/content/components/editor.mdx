@@ -60,7 +60,7 @@ In Astro, load the JSON in frontmatter and pass it to a hydrated React island:
 
 ```astro
 ---
-import { Reader } from '@cloudvoyant/vortex-react';
+import { Reader } from '@cloudvoyant/helical-react';
 import EditorIsland from './EditorIsland.tsx';
 const content = await loadSavedTiptapJson();
 ---
@@ -73,7 +73,7 @@ In TanStack Start, load the JSON through a server function and return it from th
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Editor } from '@cloudvoyant/vortex-react';
+import { Editor } from '@cloudvoyant/helical-react';
 
 const loadContent = createServerFn({ method: 'GET' })
   .inputValidator((data: { documentId: string }) => data)
@@ -97,7 +97,7 @@ function EditDocument() {
 
 ```svelte
 <script lang="ts">
-  import { Editor, Reader } from '@cloudvoyant/vortex-svelte';
+  import { Editor, Reader } from '@cloudvoyant/helical-svelte';
   let { data } = $props(); // `data.content` was loaded on the server.
 </script>
 

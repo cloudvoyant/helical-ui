@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/code-block/language-tabs/svelte.svelte -->
 <script lang="ts">
-  import { LanguageTabsCodeBlock } from '@cloudvoyant/vortex-svelte';
+  import { LanguageTabsCodeBlock } from '@cloudvoyant/helical-svelte';
 
   const tabs = [
     {

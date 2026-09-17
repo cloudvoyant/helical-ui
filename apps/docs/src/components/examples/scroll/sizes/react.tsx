@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/scroll/sizes/react.tsx
-import { Scroll } from '@cloudvoyant/vortex-react';
+import { Scroll } from '@cloudvoyant/helical-react';
 
 const items = Array.from({ length: 12 }).map((_, i) => `Item ${i + 1}`);
 

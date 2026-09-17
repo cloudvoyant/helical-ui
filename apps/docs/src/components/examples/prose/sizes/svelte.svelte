@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/prose/sizes/svelte.svelte -->
 <script lang="ts">
-  import { Prose } from '@cloudvoyant/vortex-svelte';
+  import { Prose } from '@cloudvoyant/helical-svelte';
   const sizes = ['sm', 'base', 'lg'] as const;
 </script>
 

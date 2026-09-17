@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/page/footer/svelte.svelte -->
 <script lang="ts">
-  import { Page, PageContent, PageFooter, Container } from '@cloudvoyant/vortex-svelte';
+  import { Page, PageContent, PageFooter, Container } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Page>
@@ -41,6 +41,6 @@
         </ul>
       </div>
     </Container>
-    <p class="border-t border-border px-4 py-3 text-sm text-muted-foreground">© 2026 vortex-ui</p>
+    <p class="border-t border-border px-4 py-3 text-sm text-muted-foreground">© 2026 helical-ui</p>
   </PageFooter>
 </Page>

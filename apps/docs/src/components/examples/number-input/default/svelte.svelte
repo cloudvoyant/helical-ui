@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/number-input/default/svelte.svelte -->
 <script lang="ts">
-  import { NumberInput, NumberInputControl, NumberInputInput, NumberInputDecrement, NumberInputIncrement } from '@cloudvoyant/vortex-svelte';
+  import { NumberInput, NumberInputControl, NumberInputInput, NumberInputDecrement, NumberInputIncrement } from '@cloudvoyant/helical-svelte';
   import { Minus, Plus } from 'lucide-svelte';
 </script>
 

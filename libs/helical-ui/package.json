@@ -1,0 +1,86 @@
+{
+  "name": "@cloudvoyant/helical-ui",
+  "version": "0.18.0",
+  "description": "helical-ui shared component interfaces, cva variants, and theme",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./theme.css": "./src/theme.css",
+    "./themes.css": "./src/themes.css",
+    "./components.css": "./src/components.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src/theme.css",
+    "src/themes.css",
+    "src/components.css",
+    "src/themes"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src tests --no-error-on-unmatched-pattern && tsc --noEmit",
+    "lint:fix": "eslint src tests --no-error-on-unmatched-pattern --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@tanstack/charts": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "@tiptap/suggestion": "catalog:",
+    "@tiptap/extension-character-count": "catalog:",
+    "@tiptap/extension-code-block-lowlight": "catalog:",
+    "@tiptap/extension-color": "catalog:",
+    "@tiptap/extension-heading": "catalog:",
+    "@tiptap/extension-highlight": "catalog:",
+    "@tiptap/extension-link": "catalog:",
+    "@tiptap/extension-mention": "catalog:",
+    "@tiptap/extension-placeholder": "catalog:",
+    "@tiptap/extension-task-item": "catalog:",
+    "@tiptap/extension-task-list": "catalog:",
+    "@tiptap/extension-text-align": "catalog:",
+    "@tiptap/extension-text-style": "catalog:",
+    "@tiptap/extension-typography": "catalog:",
+    "@tiptap/extension-underline": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "katex": "catalog:",
+    "lowlight": "catalog:",
+    "tailwind-merge": "catalog:"
+  },
+  "peerDependencies": {
+    "mermaid": "catalog:",
+    "shiki": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "mermaid": {
+      "optional": true
+    },
+    "shiki": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/katex": "catalog:",
+    "@types/node": "catalog:",
+    "katex": "catalog:",
+    "manim-web": "catalog:",
+    "mermaid": "catalog:",
+    "shiki": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/dialog/default/svelte.svelte -->
 <script lang="ts">
-  import { Dialog, DialogTitle, DialogDescription, DialogDismiss, DialogContent, DialogBackdrop } from '@cloudvoyant/vortex-svelte';
+  import { Dialog, DialogTitle, DialogDescription, DialogDismiss, DialogContent, DialogBackdrop } from '@cloudvoyant/helical-svelte';
   import { X } from 'lucide-svelte';
 
   let open = $state(false);

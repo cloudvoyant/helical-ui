@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogBackdrop,
   useDialogContext,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 
 function DialogStatus() {
   const dialog = useDialogContext();

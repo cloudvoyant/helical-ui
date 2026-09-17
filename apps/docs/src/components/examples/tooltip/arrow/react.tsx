@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/tooltip/arrow/react.tsx
-import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-react';
 
 export default function ReactTooltipArrow() {
   return (

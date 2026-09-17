@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/toggle-group/attached/svelte.svelte -->
 <script lang="ts">
-  import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/vortex-svelte';
+  import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/helical-svelte';
   import { AlignLeft, AlignCenter, AlignRight } from 'lucide-svelte';
 </script>
 

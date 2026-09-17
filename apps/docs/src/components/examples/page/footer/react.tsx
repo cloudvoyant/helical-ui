@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/page/footer/react.tsx
-import { Page, PageContent, PageFooter, Container } from '@cloudvoyant/vortex-react';
+import { Page, PageContent, PageFooter, Container } from '@cloudvoyant/helical-react';
 
 export default function ReactPageFooter() {
   return (
@@ -41,7 +41,7 @@ export default function ReactPageFooter() {
             </ul>
           </div>
         </Container>
-        <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">© 2026 vortex-ui</p>
+        <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">© 2026 helical-ui</p>
       </PageFooter>
     </Page>
   );

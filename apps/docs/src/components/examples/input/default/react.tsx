@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/input/default/react.tsx
-import { Field, FieldLabel, FieldHelper, Input } from '@cloudvoyant/vortex-react';
+import { Field, FieldLabel, FieldHelper, Input } from '@cloudvoyant/helical-react';
 
 export default function ReactInputDefault() {
   return (

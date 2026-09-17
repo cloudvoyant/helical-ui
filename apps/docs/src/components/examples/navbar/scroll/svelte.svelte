@@ -18,12 +18,12 @@
     NavbarMobileMenu,
     NavbarMobileMenuTrigger,
     NavbarMobileMenuContent,
-  } from '@cloudvoyant/vortex-svelte';
-  import VortexLogo from '../../VortexLogo.svelte';
+  } from '@cloudvoyant/helical-svelte';
+  import HelicalLogo from '../../HelicalLogo.svelte';
 
   const CONTENT: [string, string][] = [
-    ['About', 'A brief history of vortex-ui and its guiding principles.'],
-    ['Installation', 'Add vortex-ui to your Astro, Vite, or framework project.'],
+    ['About', 'A brief history of helical-ui and its guiding principles.'],
+    ['Installation', 'Add helical-ui to your Astro, Vite, or framework project.'],
     ['Components', 'Every component, demoed and documented for React and Svelte.'],
     ['Theming', 'Light and dark themes over the shadcn token model.'],
     ['Accessibility', "Roles, focus, and keyboard behavior come from Ark's state machine."],
@@ -35,7 +35,7 @@
   <NavbarProvider>
     <Navbar variant="scroll">
         <NavbarBrand>
-          <VortexLogo class="h-7 w-auto" /><span class="text-sm font-semibold">vortex-ui</span>
+          <HelicalLogo class="h-7 w-auto" /><span class="text-sm font-semibold">helical-ui</span>
         </NavbarBrand>
         <NavbarMenu placement="center">
           <NavbarMenuList>

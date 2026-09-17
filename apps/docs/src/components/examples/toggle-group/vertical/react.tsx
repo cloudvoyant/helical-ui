@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/toggle-group/vertical/react.tsx
-import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/vortex-react';
+import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/helical-react';
 
 export default function ReactToggleGroupVertical() {
   return (

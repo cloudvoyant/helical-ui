@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tooltip/multiple-triggers/svelte.svelte -->
 <script lang="ts">
-  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/vortex-svelte';
+  import { Tooltip, TooltipTrigger, TooltipContent } from '@cloudvoyant/helical-svelte';
 
   const items = ['First', 'Second', 'Third'];
   let active = $state('First');

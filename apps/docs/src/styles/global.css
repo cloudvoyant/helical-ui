@@ -5,26 +5,26 @@
    docs sidebar/TOC scroll fade. */
 @import 'shadcn/tailwind.css';
 /* Scan the workspace lib sources directly. In a pnpm workspace the
-   `@source` lines in @cloudvoyant/vortex-ui/components.css resolve through the
+   `@source` lines in @cloudvoyant/helical-ui/components.css resolve through the
    node_modules symlink, whose target is gitignored — so Tailwind skips it
-   in the production build and vortex-ui's Tailwind classes never compile here.
-   Explicit real paths guarantee @cloudvoyant/vortex-ui/react/svelte classes (e.g.
+   in the production build and helical-ui's Tailwind classes never compile here.
+   Explicit real paths guarantee @cloudvoyant/helical-ui/react/svelte classes (e.g.
    group-data-[density=compact]/nav-menu, the link variant, viewport classes). */
-@source '../../../../libs/vortex-ui/src';
-@source '../../../../libs/vortex-react/src';
-@source '../../../../libs/vortex-svelte/src';
-@import '@cloudvoyant/vortex-ui/theme.css';
+@source '../../../../libs/helical-ui/src';
+@source '../../../../libs/helical-react/src';
+@source '../../../../libs/helical-svelte/src';
+@import '@cloudvoyant/helical-ui/theme.css';
 /* shadcn-compatible theme presets (`.theme-{name}` / `.theme-{name}.dark`). */
-@import '@cloudvoyant/vortex-ui/themes.css';
-/* Registers the vortex-ui component class strings (cva + inline framework
+@import '@cloudvoyant/helical-ui/themes.css';
+/* Registers the helical-ui component class strings (cva + inline framework
    classes) with Tailwind, resolving via the package exports. This is the same
    line an external consumer uses. */
-@import '@cloudvoyant/vortex-ui/components.css';
+@import '@cloudvoyant/helical-ui/components.css';
 /* KaTeX typesetting (glyphs, fractions, spacing). Without it the raw MathML
    annotation and the HTML glyphs both render, so equations appear twice as ascii. */
 @import 'katex/dist/katex.min.css';
 
-/* Brand wordmark font — distinctive geometric grotesque for the "vortex-ui" lockup. */
+/* Brand wordmark font — distinctive geometric grotesque for the "helical-ui" lockup. */
 .font-brand {
   font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.02em;
@@ -88,10 +88,10 @@ html.dark [data-example-code] .astro-code span {
 /* Astro inlines a hardcoded Shiki background on MDX code blocks; force it to
    the theme's surface token so light/dark code blocks match the theme. */
 .astro-code {
-  background-color: var(--vortex-ui-shiki-light-bg, #ffffff) !important;
+  background-color: var(--helical-ui-shiki-light-bg, #ffffff) !important;
 }
 html.dark .astro-code {
-  background-color: var(--vortex-ui-shiki-dark-bg, #24292e) !important;
+  background-color: var(--helical-ui-shiki-dark-bg, #24292e) !important;
 }
 
 /* Rendered MDX docs. */

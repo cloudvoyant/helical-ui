@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/tabs/underline/svelte.svelte -->
 <script lang="ts">
-  import { Tabs, TabsList, TabsTrigger, TabsContent } from '@cloudvoyant/vortex-svelte';
+  import { Tabs, TabsList, TabsTrigger, TabsContent } from '@cloudvoyant/helical-svelte';
 </script>
 
 <Tabs defaultValue="account">

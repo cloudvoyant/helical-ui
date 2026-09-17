@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/toggle-group/default/react.tsx
-import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/vortex-react';
+import { ToggleGroup, ToggleGroupItem } from '@cloudvoyant/helical-react';
 import { Bold, Italic, Underline } from 'lucide-react';
 
 export default function ReactToggleGroupDefault() {

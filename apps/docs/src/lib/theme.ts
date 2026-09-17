@@ -1,13 +1,13 @@
 // apps/docs/src/lib/theme.ts
 // Color-mode (light/dark/system) and theme-preset helpers for the docs shell.
-// Ported from diffbook; localStorage keys use the vortex: namespace and all
+// Ported from diffbook; localStorage keys are intentionally unchanged and all
 // document/localStorage access is guarded for SSR safety.
-import { THEME_NAMES } from '@cloudvoyant/vortex-ui';
+import { THEME_NAMES } from '@cloudvoyant/helical-ui';
 
 export const COLOR_MODE_KEY = 'vortex:color-mode' as const;
 export const THEME_KEY = 'vortex:theme' as const;
 export type ColorMode = 'light' | 'dark' | 'system';
-export type ThemeName = string; // any vortex-ui theme name — see @cloudvoyant/vortex-ui THEMES
+export type ThemeName = string; // any helical-ui theme name — see @cloudvoyant/helical-ui THEMES
 
 const THEME_PREFIX = 'theme-';
 
@@ -59,17 +59,17 @@ export function applyColorMode(mode: ColorMode): void {
 // ── Theme ────────────────────────────────────────────────────────────────
 
 /**
- * Read the persisted theme from localStorage. Falls back to the vortex-ui brand theme.
+ * Read the persisted theme from localStorage. Falls back to the helical-ui brand theme.
  */
 export function getInitialTheme(): ThemeName {
-  if (typeof window === 'undefined') return 'vortex-ui';
+  if (typeof window === 'undefined') return 'helical-ui';
   try {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved && THEME_NAMES.includes(saved)) return saved;
   } catch {
     /* storage unavailable */
   }
-  return 'vortex-ui';
+  return 'helical-ui';
 }
 
 /**

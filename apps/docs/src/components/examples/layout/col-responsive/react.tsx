@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/col/responsive-direction/react.tsx
-import { Item, Col } from '@cloudvoyant/vortex-react';
+import { Item, Col } from '@cloudvoyant/helical-react';
 
 export default function ReactColResponsiveDirection() {
   return (

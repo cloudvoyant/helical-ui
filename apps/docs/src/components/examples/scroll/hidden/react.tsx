@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/scroll/hidden/react.tsx
-import { Scroll } from '@cloudvoyant/vortex-react';
+import { Scroll } from '@cloudvoyant/helical-react';
 
 const lines = Array.from({ length: 40 }).map((_, i) => `Item ${i + 1}`);
 

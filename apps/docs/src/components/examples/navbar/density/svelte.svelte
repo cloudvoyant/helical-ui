@@ -9,7 +9,7 @@
     NavbarMenuTrigger,
     NavbarMenuContent,
     NavbarMenuLink,
-  } from '@cloudvoyant/vortex-svelte';
+  } from '@cloudvoyant/helical-svelte';
 </script>
 
 <NavbarProvider>

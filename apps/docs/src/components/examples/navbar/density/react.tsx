@@ -8,7 +8,7 @@ import {
   NavbarMenuTrigger,
   NavbarMenuContent,
   NavbarMenuLink,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 
 export default function ReactNavbarMenuDensity() {
   return (

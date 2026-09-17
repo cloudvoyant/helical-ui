@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/questions/multiple/react.tsx
-import { MultipleChoiceQuestion } from '@cloudvoyant/vortex-react';
+import { MultipleChoiceQuestion } from '@cloudvoyant/helical-react';
 
 export default function ReactQuestionMultiple() {
   return (

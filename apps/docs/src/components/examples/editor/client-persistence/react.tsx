@@ -1,6 +1,6 @@
 // Persist serialized Tiptap JSON in browser storage and restore it after a reload.
 import { useEffect, useState } from 'react';
-import { Editor, Prose } from '@cloudvoyant/vortex-react';
+import { Editor, Prose } from '@cloudvoyant/helical-react';
 
 const STORAGE_KEY = 'vortex-editor-client-persistence-v1';
 const seed = JSON.stringify({

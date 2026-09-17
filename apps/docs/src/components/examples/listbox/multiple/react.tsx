@@ -1,5 +1,11 @@
 // apps/docs/src/components/examples/listbox/multiple/react.tsx
-import { Listbox, ListboxContent, ListboxItem, ListboxItemText, ListboxItemIndicator } from '@cloudvoyant/vortex-react';
+import {
+  Listbox,
+  ListboxContent,
+  ListboxItem,
+  ListboxItemText,
+  ListboxItemIndicator,
+} from '@cloudvoyant/helical-react';
 import { Check } from 'lucide-react';
 
 const items = [

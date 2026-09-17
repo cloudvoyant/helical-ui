@@ -2,7 +2,7 @@
 // Per-node colors in the diagram source: a reusable classDef + explicit style statements.
 // Colors are chosen to stay legible on both light and dark backgrounds (the component
 // already resolves themeVariables from the active color mode for the diagram chrome).
-import { Mermaid } from '@cloudvoyant/vortex-react';
+import { Mermaid } from '@cloudvoyant/helical-react';
 
 const code = `flowchart LR
   classDef success fill:#16a34a,stroke:#16a34a,color:#ffffff,stroke-width:2px

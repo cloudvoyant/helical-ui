@@ -9,7 +9,7 @@ import {
   TagInputItemInput,
   TagInputItemDeleteTrigger,
   TagInputContext,
-} from '@cloudvoyant/vortex-react';
+} from '@cloudvoyant/helical-react';
 import { X } from 'lucide-react';
 
 export default function ReactTagInputDefault() {

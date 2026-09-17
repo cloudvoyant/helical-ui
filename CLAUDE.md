@@ -1,4 +1,4 @@
-# vortex-ui Style Guide
+# helical-ui Style Guide
 
 <!-- CRITICAL RULES — always apply these; load relevant sections below for your current task -->
 
@@ -75,7 +75,7 @@ Use Conventional Commits. No Claude attributions.
 
 - `feat:` → MINOR bump (1.x.0)
 - `fix:` → PATCH bump (1.0.x)
-- `feat!:` / `fix!:` → MAJOR bump (x.0.0) — except vortex-ui, which intentionally caps at `minor` to stay at v0 (see `.releaserc.json`)
+- `feat!:` / `fix!:` → MAJOR bump (x.0.0) — except helical-ui, which intentionally caps at `minor` to stay at v0 (see `.releaserc.json`)
 - `docs:`, `refactor:`, `test:` → changelog only, no bump
 - `chore:` → hidden from changelog, no bump
 

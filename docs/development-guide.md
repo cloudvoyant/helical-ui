@@ -1,4 +1,4 @@
-# vortex-ui Development Guide
+# helical-ui Development Guide
 
 Generated from mise-lib-template v2.15.0.
 
@@ -26,8 +26,8 @@ mise run format:check
 
 ```
 apps/docs/     # Docs/demo app (private placeholder)
-libs/vortex-react/    # React UI lib (tsup: ESM + CJS + d.ts)
-libs/vortex-svelte/   # Svelte UI lib (svelte-package: ESM + d.ts)
+libs/helical-react/    # React UI lib (tsup: ESM + CJS + d.ts)
+libs/helical-svelte/   # Svelte UI lib (svelte-package: ESM + d.ts)
 version.txt            # Single source of truth for the lockstep version
 mise.toml              # Task runner and tool versions
 pnpm-workspace.yaml    # Workspace declaration (apps/*, libs/*)
@@ -45,8 +45,8 @@ tsconfig.base.json     # Shared strict TypeScript base
 ## Adding Dependencies
 
 ```bash
-pnpm --filter @cloudvoyant/vortex-react add express            # runtime dep for one package
-pnpm --filter @cloudvoyant/vortex-react add -D @types/express  # dev-only dependency
+pnpm --filter @cloudvoyant/helical-react add express            # runtime dep for one package
+pnpm --filter @cloudvoyant/helical-react add -D @types/express  # dev-only dependency
 pnpm add -w typescript                             # workspace root tooling
 ```
 
@@ -89,7 +89,7 @@ To publish as `@your-org/my-library`:
 ```bash
 mise run publish:rc
 # Publishes every public workspace package to npm as X.Y.Z-rc.<timestamp>.<sha> with tag "next"
-# Consumers install with: pnpm add @cloudvoyant/vortex-react@next
+# Consumers install with: pnpm add @cloudvoyant/helical-react@next
 ```
 
 ### Token Expiration and Trusted Publishing

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/stack/hstack/svelte.svelte -->
 <script lang="ts">
-  import { Item, HStack } from '@cloudvoyant/vortex-svelte';
+  import { Item, HStack } from '@cloudvoyant/helical-svelte';
 </script>
 
 <HStack>
