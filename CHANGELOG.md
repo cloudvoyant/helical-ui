@@ -1,3 +1,10 @@
+# [0.19.0](https://github.com/cloudvoyant/helical-ui/compare/v0.18.0...v0.19.0) (2026-09-17)
+
+
+### Features
+
+* rename vortex-ui to helical-ui ([f7b262d](https://github.com/cloudvoyant/helical-ui/commit/f7b262d5a97aa59064944245a5f96d54e044f942))
+
 # [0.18.0](https://github.com/cloudvoyant/vortex-ui/compare/v0.17.0...v0.18.0) (2026-09-14)
 
 

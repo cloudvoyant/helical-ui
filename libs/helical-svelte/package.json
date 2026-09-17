@@ -1,6 +1,6 @@
 {
   "name": "@cloudvoyant/helical-svelte",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "helical-ui Svelte UI components",
   "license": "MIT",
   "type": "module",

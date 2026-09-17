@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "type": "module",
   "description": "helical-ui docs/demo app — Astro site with React + Svelte component demos",
