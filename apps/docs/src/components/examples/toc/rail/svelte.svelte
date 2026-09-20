@@ -2,7 +2,7 @@
 <!-- Mirrors Ark UI's TOC "With Rail" example — the depth rail, bezier turns, and
      per-item SVG geometry live in the high-level component, not here. -->
 <script lang="ts">
-  import { Toc } from '@cloudvoyant/helical-svelte';
+  import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
 
   const items = [
     { value: 'svelte-07-overview', depth: 2, label: 'Overview', lines: 10 },
@@ -16,11 +16,10 @@
     { value: 'svelte-07-api-reference', depth: 2, label: 'API Reference', lines: 12 },
   ];
 
-  let contentRef: HTMLElement | null = $state(null);
 </script>
 
-<div class="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-  <main bind:this={contentRef} data-toc-scroll class="h-dvh overflow-y-auto p-8">
+<Page class="bg-background text-foreground">
+  <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each items as item (item.value)}
         <section class="scroll-mt-8" data-depth={item.depth}>
@@ -38,8 +37,8 @@
         </section>
       {/each}
     </div>
-  </main>
-  <aside class="h-dvh border-s border-border p-6">
-    <Toc {items} scrollEl={() => contentRef} variant="rail" />
-  </aside>
-</div>
+  </PageContent>
+  <PageGutter side="right" class="border-s border-border">
+    <Toc {items} variant="rail" />
+  </PageGutter>
+</Page>

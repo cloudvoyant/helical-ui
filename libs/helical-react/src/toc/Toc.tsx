@@ -144,15 +144,18 @@ function HoverNav({ items, title }: { items: TocItem[]; title?: ReactNode }) {
 
   return (
     <TocPrimitive.Nav
-      className={cn(tocNavClass, 'w-full')}
+      className="absolute end-2 top-1/2 z-10 w-6 -translate-y-1/2 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
       data-expanded={hovered || undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Screen-reader-only Title: the machine's `aria-labelledby` points at it. */}
       <TocPrimitive.Title className="sr-only">{title}</TocPrimitive.Title>
-      <SwapRoot swap={hovered} className="w-full">
-        <SwapIndicator type="off" className={cn(tocListVariants({ variant: 'hover' }), 'w-full items-end gap-2')}>
+      <SwapRoot swap={hovered} className="grid w-full [&>*]:[grid-area:1/1]">
+        <SwapIndicator
+          type="off"
+          className={cn(tocListVariants({ variant: 'hover' }), 'w-full items-end gap-2 px-1 py-0.5')}
+        >
           {items.map((item) => (
             <TocPrimitive.Item key={item.value} item={item} className={tocSkeletonBase} />
           ))}
@@ -367,8 +370,8 @@ function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNo
  */
 function CollapsibleNav({ items }: { items: TocItem[] }) {
   return (
-    <CollapsibleRoot className="w-full">
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md py-1 text-start">
+    <CollapsibleRoot className="flex w-full flex-col gap-2">
+      <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-transparent px-3 py-2.5 text-start text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <TocPrimitive.Context>
           {({ activeItems }) => {
             const activeIndex = items.findIndex((item) => item.value === activeItems[0]?.value);
@@ -387,7 +390,7 @@ function CollapsibleNav({ items }: { items: TocItem[] }) {
           <ChevronRight className="size-4" aria-hidden="true" />
         </CollapsibleIndicator>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-1">
+      <CollapsibleContent className="overflow-hidden pt-1 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
         <TocPrimitive.List className={tocListVariants({ variant: 'collapsible' })}>
           {items.map((item, index) => (
             <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>

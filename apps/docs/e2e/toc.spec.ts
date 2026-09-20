@@ -1,9 +1,8 @@
 // apps/docs/e2e/toc.spec.ts
 // Behavior coverage for the Toc component page, matrixed over React and Svelte.
-// Every Toc example renders in a PreviewFrame iframe (full-page previews), so all
-// assertions target the iframe document. The spec also guards the machine-wiring
-// contract: the high-level Toc owns exactly one machine, and the Root Provider
-// example reuses the single machine it was given.
+// Every Toc example renders in a PreviewFrame iframe and uses the published Page
+// layout with Toc in its right PageGutter. Assertions target the isolated preview
+// document and guard both the composition and the one-machine contract.
 import { test, expect, type FrameLocator, type Page } from '@playwright/test';
 import { FRAMEWORKS, type Framework } from './helpers';
 
@@ -55,19 +54,19 @@ async function frameFor(
   return frame;
 }
 
-/** Scroll a tracked heading into the machine's active band (top of the scroll root). */
+/** Scroll a tracked heading into the document viewport's active band. */
 async function scrollHeadingIntoBand(frame: FrameLocator, framework: Framework, id: string) {
   await frame.locator(`${scope(framework)} [id="${idOf(framework, id)}"]`).evaluate((el) => {
-    const root = el.closest('[data-toc-scroll]') as HTMLElement | null;
-    if (!root) return;
-    const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
-    root.scrollTop = Math.max(0, top - 100);
+    el.scrollIntoView({ block: 'start' });
+    window.scrollBy(0, -100);
   });
 }
 
 /** The machine marks the active link with both `data-active` and `aria-current`. */
 async function expectActive(frame: FrameLocator, framework: Framework, id: string) {
-  await expect(frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-active]`)).toBeVisible({
+  await expect(
+    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-active]`),
+  ).toBeVisible({
     timeout: 10_000,
   });
   await expect(frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"]`)).toHaveAttribute(
@@ -87,6 +86,31 @@ async function outputIds(frame: FrameLocator, framework: Framework): Promise<str
     return [];
   }
 }
+
+test('wheel input over a preview can still reach the end of the docs page', async ({ page }) => {
+  await page.goto('components/toc');
+  await page.locator('[data-framework-selector][data-ready]').waitFor();
+  await frameFor(page, 'basic', 'react');
+
+  const iframe = cardFor(page, 'basic').locator('iframe[data-preview]');
+  await iframe.scrollIntoViewIfNeeded();
+  const box = await iframe.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+
+  await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 250));
+  for (let index = 0; index < 20; index += 1) {
+    await page.mouse.wheel(0, 1_000);
+  }
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        atEnd: Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight,
+      })),
+    )
+    .toEqual({ atEnd: true });
+});
 
 for (const framework of FRAMEWORKS) {
   test.describe(`Toc docs page · ${framework}`, () => {
@@ -112,7 +136,26 @@ for (const framework of FRAMEWORKS) {
         await expect(cardFor(page, example)).toHaveCount(1);
       }
       await expect(cardFor(page, 'prose')).toHaveCount(1);
-      // The one-machine guarantee: each example renders exactly one toc root/nav.
+      // Every example uses the existing Page layout and right gutter; none adds
+      // the custom nested main scroller that previously trapped wheel input.
+      for (const example of ALL_EXAMPLES) {
+        const frame = await frameFor(
+          page,
+          example,
+          framework,
+          example === 'prose' ? '[data-slot="page-content"]' : '[data-toc-scroll]',
+        );
+        await expect(frame.locator(`${scope(framework)} [data-slot="page"]`)).toHaveCount(1);
+        await expect(
+          frame.locator(`${scope(framework)} [data-slot="page-gutter-area"][class*="grid-area:right"]`),
+        ).toHaveCount(1);
+        await expect(frame.locator(`${scope(framework)} [data-slot="page-content"]`)).not.toHaveCSS(
+          'overflow-y',
+          'auto',
+        );
+      }
+
+      // The one-machine guarantee: each example renders exactly one toc root.
       const frame = await frameFor(page, 'basic', framework);
       await expect(frame.locator(`${scope(framework)} [data-part="root"]`)).toHaveCount(1);
     });
@@ -123,13 +166,9 @@ for (const framework of FRAMEWORKS) {
       await scrollHeadingIntoBand(frame, framework, '01-usage');
       await expectActive(frame, framework, '01-usage');
 
-      // Clicking a link scrolls the content root and pushes the hash.
+      // Clicking a link scrolls the preview document and updates its hash.
       await frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, '01-conclusion')}"]`).click();
-      await expect
-        .poll(() =>
-          frame.locator(`${scope(framework)} [data-toc-scroll]`).evaluate((el) => (el as HTMLElement).scrollTop),
-        )
-        .toBeGreaterThan(0);
+      await expect.poll(() => frame.locator('html').evaluate(() => window.scrollY)).toBeGreaterThan(0);
       await expect
         .poll(() => frame.locator('html').evaluate(() => location.hash))
         .toBe(`#${idOf(framework, '01-conclusion')}`);
@@ -168,8 +207,9 @@ for (const framework of FRAMEWORKS) {
 
       await scrollHeadingIntoBand(frame, framework, '03-usage');
 
-      // The rendered ids and the high-level Toc's active link must agree, which
-      // can only happen if both read the same supplied machine.
+      // Ark can report a contiguous active range. The machine output and the
+      // high-level Toc must agree on the first active id, proving both read the
+      // same supplied machine without incorrectly forcing one active heading.
       await expect
         .poll(
           async () => {
@@ -177,11 +217,16 @@ for (const framework of FRAMEWORKS) {
               .locator(`${scope(framework)} nav a[data-active]`)
               .first()
               .getAttribute('data-value');
-            return { ids: await outputIds(frame, framework), link };
+            const ids = await outputIds(frame, framework);
+            return { firstId: ids[0], includesUsage: ids.includes(idOf(framework, '03-usage')), link };
           },
           { timeout: 10_000 },
         )
-        .toEqual({ ids: [idOf(framework, '03-usage')], link: idOf(framework, '03-usage') });
+        .toEqual({
+          firstId: idOf(framework, '03-usage'),
+          includesUsage: true,
+          link: idOf(framework, '03-usage'),
+        });
     });
 
     test('collapsible: reveals numbered links from the progress-ring trigger', async ({ page }) => {

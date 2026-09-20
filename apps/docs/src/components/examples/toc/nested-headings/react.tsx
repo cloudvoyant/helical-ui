@@ -1,7 +1,6 @@
 // apps/docs/src/components/examples/toc/nested-headings/react.tsx
 // Mirrors Ark UI's TOC "Nested Headings" example — mixed depths, indented links.
-import { Toc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 
 const items = [
   { value: 'react-02-importance', depth: 2, label: 'Importance', lines: 10 },
@@ -15,11 +14,9 @@ const items = [
 ];
 
 export default function ReactTocNestedHeadings() {
-  const contentRef = useRef<HTMLElement | null>(null);
-
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-      <main ref={contentRef} data-toc-scroll className="h-dvh overflow-y-auto p-8">
+    <Page className="bg-background text-foreground">
+      <PageContent data-toc-scroll className="px-8 py-10">
         <div className="mx-auto flex max-w-2xl flex-col gap-10">
           {items.map((item) =>
             item.depth > 2 ? (
@@ -47,10 +44,10 @@ export default function ReactTocNestedHeadings() {
             ),
           )}
         </div>
-      </main>
-      <aside className="h-dvh border-s border-border p-6">
-        <Toc items={items} scrollEl={() => contentRef.current} variant="default" />
-      </aside>
-    </div>
+      </PageContent>
+      <PageGutter side="right" className="border-s border-border">
+        <Toc items={items} variant="default" />
+      </PageGutter>
+    </Page>
   );
 }

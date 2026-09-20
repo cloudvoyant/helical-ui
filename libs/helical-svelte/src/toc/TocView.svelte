@@ -145,7 +145,7 @@
     <!-- Ark's hover nav *is* the root nav (pointer handlers + Swap), so it is the only <nav>;
          nesting a second one would add a duplicate landmark. -->
     <TocNav
-      class="flex w-full min-w-0 flex-col gap-2"
+      class="absolute end-2 top-1/2 z-10 w-6 -translate-y-1/2 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
       data-expanded={hovered || undefined}
       onmouseenter={() => (hovered = true)}
       onmouseleave={() => (hovered = false)}
@@ -153,8 +153,11 @@
       <!-- Screen-reader-only Title: the machine's `aria-labelledby` points at it. -->
       <TocTitle class="sr-only">{titleText}</TocTitle>
       <!-- Ark's Swap construction: two overlapping panels, skeleton bars while collapsed. -->
-      <SwapRoot swap={hovered} class="w-full">
-        <SwapIndicator type="off" class={cn(tocListVariants({ variant: 'hover' }), 'w-full items-end gap-2')}>
+      <SwapRoot swap={hovered} class="grid w-full [&>*]:[grid-area:1/1]">
+        <SwapIndicator
+          type="off"
+          class={cn(tocListVariants({ variant: 'hover' }), 'w-full items-end gap-2 px-1 py-0.5')}
+        >
           {#each items as item (item.value)}
             <TocItemPart {item} class={tocSkeletonBase} />
           {/each}
@@ -243,9 +246,9 @@
         </TreeView.Root>
       {:else}
         <!-- Ark's Collapsible + progress-ring construction, with numbered links. -->
-        <CollapsibleRoot class="w-full">
+        <CollapsibleRoot class="flex w-full flex-col gap-2">
           <CollapsibleTrigger
-            class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md py-1 text-start"
+            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-transparent px-3 py-2.5 text-start text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <TocContext>
               {#snippet render(context)}
@@ -297,7 +300,7 @@
               <ChevronRight class="size-4" aria-hidden="true" />
             </CollapsibleIndicator>
           </CollapsibleTrigger>
-          <CollapsibleContent class="pt-1">
+          <CollapsibleContent class="overflow-hidden pt-1 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
             <TocList class={tocListVariants({ variant: 'collapsible' })}>
               {#each items as item, index (item.value)}
                 <TocItemPart {item} class={tocItemBase}>
