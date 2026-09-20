@@ -1,8 +1,7 @@
 // apps/docs/src/components/examples/toc/hover/react.tsx
 // Mirrors Ark UI's TOC "With Hover" example — collapsed skeleton bars expand to
 // links on pointer enter/leave. No pin behavior; upstream has none.
-import { Toc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 
 const items = [
   { value: 'react-05-analytics-dashboard', depth: 2, label: 'Real-time Analytics', lines: 55 },
@@ -13,11 +12,9 @@ const items = [
 ];
 
 export default function ReactTocHover() {
-  const contentRef = useRef<HTMLElement | null>(null);
-
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-      <main ref={contentRef} data-toc-scroll className="h-dvh overflow-y-auto p-8">
+    <Page className="bg-background text-foreground">
+      <PageContent data-toc-scroll className="px-8 py-10">
         <div className="mx-auto flex max-w-2xl flex-col gap-10">
           {items.map((item) => (
             <section key={item.value} className="scroll-mt-8">
@@ -32,10 +29,10 @@ export default function ReactTocHover() {
             </section>
           ))}
         </div>
-      </main>
-      <aside className="h-dvh border-s border-border p-6">
-        <Toc items={items} scrollEl={() => contentRef.current} variant="hover" />
-      </aside>
-    </div>
+      </PageContent>
+      <PageGutter side="right" className="border-s border-border">
+        <Toc items={items} variant="hover" />
+      </PageGutter>
+    </Page>
   );
 }

@@ -3,7 +3,7 @@
      passed through `value`. The `{#if value}` branch mounts TocView only, so
      TocOwned never runs and no second machine is created. -->
 <script lang="ts">
-  import { Toc, useToc } from '@cloudvoyant/helical-svelte';
+  import { Page, PageContent, PageGutter, Toc, useToc } from '@cloudvoyant/helical-svelte';
 
   const items = [
     { value: 'svelte-03-introduction', depth: 2, label: 'Introduction', lines: 12 },
@@ -13,13 +13,12 @@
     { value: 'svelte-03-conclusion', depth: 2, label: 'Conclusion', lines: 10 },
   ];
 
-  let contentRef: HTMLElement | null = $state(null);
   // The single machine for this example — Toc must not create another.
-  const toc = useToc(() => ({ items, scrollEl: () => contentRef }));
+  const toc = useToc(() => ({ items }));
 </script>
 
-<div class="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-  <main bind:this={contentRef} data-toc-scroll class="h-dvh overflow-y-auto p-8">
+<Page class="bg-background text-foreground">
+  <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each items as item (item.value)}
         <section class="scroll-mt-8">
@@ -32,11 +31,11 @@
         </section>
       {/each}
     </div>
-  </main>
-  <aside class="h-dvh border-s border-border p-6">
+  </PageContent>
+  <PageGutter side="right" class="border-s border-border">
     <output data-toc-active-ids class="mb-3 block truncate font-mono text-xs text-muted-foreground">
       activeIds: {JSON.stringify(toc().activeIds)}
     </output>
     <Toc {items} value={toc} />
-  </aside>
-</div>
+  </PageGutter>
+</Page>

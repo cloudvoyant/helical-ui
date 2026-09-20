@@ -14,17 +14,18 @@ export interface TocItem {
   label: string;
 }
 
-export const tocNavBase = 'w-full min-w-0 text-sm';
+export const tocNavBase = 'relative w-full min-w-0 text-sm';
 
-export const tocTitleBase = 'mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase';
+export const tocTitleBase =
+  'mb-2 px-2 text-[0.6875rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase';
 
 export const tocListBase = 'relative flex min-w-0 flex-col';
 
 export const tocListVariants = cva(tocListBase, {
   variants: {
     variant: {
-      default: 'gap-0.5 border-s border-border',
-      indicator: 'gap-0.5 border-s border-border',
+      default: 'gap-0.5',
+      indicator: 'gap-0.5',
       hover: 'gap-0.5',
       rail: 'gap-0.5',
       tree: 'gap-0.5',
@@ -40,18 +41,16 @@ export const tocItemBase = 'min-w-0';
 // getItemProps; a unitless heading level, e.g. 2, 3). h2 (depth 2) sits flush;
 // each deeper level steps in by one spacing unit.
 export const tocLinkBase =
-  'flex items-center gap-1.5 truncate rounded-md py-1 pe-2 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/30 data-[active]:text-foreground motion-reduce:transition-none';
+  'flex items-center gap-1.5 truncate rounded-md py-[0.3rem] pe-2 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[active]:font-medium data-[active]:text-primary motion-reduce:transition-none';
 
 export const tocLinkVariants = cva(tocLinkBase, {
   variants: {
     variant: {
-      // -1px + border pulls the active marker over the list's own start border
-      default:
-        '-ms-px border-s-2 border-transparent ps-[calc(--spacing(3)+(var(--depth,2)-2)*--spacing(3))] data-[active]:border-primary',
-      indicator: 'ps-[calc(--spacing(3)+(var(--depth,2)-2)*--spacing(3))]',
-      hover: 'ps-2',
-      rail: 'group/link relative ps-2',
-      tree: 'ps-1.5',
+      default: 'ps-[calc(--spacing(3.5)+(var(--depth,2)-2)*--spacing(4))]',
+      indicator: 'ps-[calc(--spacing(3.5)+(var(--depth,2)-2)*--spacing(4))]',
+      hover: 'px-1 py-[0.2rem] text-[0.8125rem] data-[active]:bg-primary/10',
+      rail: 'group/link relative rounded-none py-[0.35rem] text-[0.8125rem] leading-[1.4]',
+      tree: 'rounded-none ps-1.5',
       collapsible: 'ps-2',
     },
   },
@@ -62,7 +61,7 @@ export const tocLinkVariants = cva(tocLinkBase, {
 // root (getRootProps sets them from the active item's rect); getIndicatorProps
 // adds position:absolute and `hidden` when there is no active item.
 export const tocIndicatorBase =
-  'pointer-events-none absolute start-0 h-(--height) w-0.5 translate-y-(--top) rounded-full bg-primary transition-[translate,height] duration-200 ease-out motion-reduce:transition-none';
+  'pointer-events-none absolute start-0 [top:var(--top)] [height:var(--height)] w-0.5 rounded-full bg-primary transition-[top,height] duration-200 ease-out motion-reduce:transition-none';
 
 // Collapsed skeleton bar for the `hover` variant (shown before expansion).
-export const tocSkeletonBase = 'h-1.5 rounded-full bg-border transition-colors';
+export const tocSkeletonBase = 'block h-0.5 w-[calc(var(--depth)*12px)] rounded-full bg-muted-foreground opacity-30';

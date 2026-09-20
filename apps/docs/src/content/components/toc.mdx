@@ -36,14 +36,16 @@ Every Ark UI TOC example is reachable through the high-level API — the migrate
 | With Tree View   | `tree-view`       | `<Toc variant="tree" />` with a TreeView derived from the flat items.                              |
 | helical-ui extra | `prose`           | `<Toc />` in a `PageGutter` beside the published `Prose` component.                                |
 
-The `prose` example is the helical-ui addition: the machine observes document scroll, so the navigation sits in the right `PageGutter` while the article keeps its own layout.
+Every example runs on its own `/preview/toc/<example>` page inside the existing `PreviewFrame` web view. Each preview uses the published `Page` layout: article content belongs in `PageContent`, and the navigation belongs in the right `PageGutter`. The machine observes that isolated preview document, not the surrounding docs page.
+
+The `prose` example is the helical-ui addition. It uses the same Page/gutter composition with the published `Prose` component for article typography.
 
 ## Usage
 
 Describe your headings once, then render them with matching `id`s anywhere on the page:
 
 ```tsx
-import { Toc, type TocItem } from '@cloudvoyant/helical-react';
+import { Page, PageContent, PageGutter, Toc, type TocItem } from '@cloudvoyant/helical-react';
 
 const items: TocItem[] = [
   { value: 'overview', depth: 2, label: 'Overview' },
@@ -53,19 +55,21 @@ const items: TocItem[] = [
 
 export function Docs() {
   return (
-    <div className="flex gap-8">
-      <main>
+    <Page>
+      <PageContent>
         <h2 id="overview">Overview</h2>
         <h2 id="installation">Installation</h2>
         <h3 id="advanced-config">Advanced configuration</h3>
-      </main>
-      <Toc items={items} />
-    </div>
+      </PageContent>
+      <PageGutter side="right">
+        <Toc items={items} />
+      </PageGutter>
+    </Page>
   );
 }
 ```
 
-When the navigation tracks a scrolling panel instead of the document, hand the machine that panel as its scroll root. The machine still does all the observation and scrolling:
+`Page` uses document scrolling, so its gutter composition does not need `scrollEl`. When another application tracks a deliberately independent scrolling panel, hand the machine that panel as its scroll root:
 
 ```tsx
 const contentRef = useRef<HTMLElement | null>(null);

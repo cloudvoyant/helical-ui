@@ -1,8 +1,7 @@
 // apps/docs/src/components/examples/toc/root-provider/react.tsx
 // Mirrors Ark UI's TOC "Root Provider" example: one external machine, passed
 // through `value`. The high-level Toc creates none on this path.
-import { Toc, useToc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+import { Page, PageContent, PageGutter, Toc, useToc } from '@cloudvoyant/helical-react';
 
 const items = [
   { value: 'react-03-introduction', depth: 2, label: 'Introduction', lines: 12 },
@@ -13,13 +12,12 @@ const items = [
 ];
 
 export default function ReactTocRootProvider() {
-  const contentRef = useRef<HTMLElement | null>(null);
   // The single machine for this example — Toc must not create another.
-  const toc = useToc({ items, scrollEl: () => contentRef.current });
+  const toc = useToc({ items });
 
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-      <main ref={contentRef} data-toc-scroll className="h-dvh overflow-y-auto p-8">
+    <Page className="bg-background text-foreground">
+      <PageContent data-toc-scroll className="px-8 py-10">
         <div className="mx-auto flex max-w-2xl flex-col gap-10">
           {items.map((item) => (
             <section key={item.value} className="scroll-mt-8">
@@ -34,13 +32,13 @@ export default function ReactTocRootProvider() {
             </section>
           ))}
         </div>
-      </main>
-      <aside className="h-dvh border-s border-border p-6">
+      </PageContent>
+      <PageGutter side="right" className="border-s border-border">
         <output data-toc-active-ids className="mb-3 block truncate font-mono text-xs text-muted-foreground">
           activeIds: {JSON.stringify(toc.activeIds)}
         </output>
         <Toc items={items} value={toc} />
-      </aside>
-    </div>
+      </PageGutter>
+    </Page>
   );
 }

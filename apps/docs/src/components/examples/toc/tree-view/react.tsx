@@ -3,8 +3,7 @@
 // drives the article content only; it is flattened into the public flat
 // `TocItem[]`, and the high-level `variant="tree"` derives the TreeView
 // collection and its expansion state.
-import { Toc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 
 type Section = {
   id: string;
@@ -51,11 +50,9 @@ const items = sections.flatMap((section) => [
 ]);
 
 export default function ReactTocTreeView() {
-  const contentRef = useRef<HTMLElement | null>(null);
-
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-      <main ref={contentRef} data-toc-scroll className="h-dvh overflow-y-auto p-8">
+    <Page className="bg-background text-foreground">
+      <PageContent data-toc-scroll className="px-8 py-10">
         <div className="mx-auto flex max-w-2xl flex-col gap-10">
           {sections.map((section) => (
             <section key={section.id} className="scroll-mt-8">
@@ -82,10 +79,10 @@ export default function ReactTocTreeView() {
             </section>
           ))}
         </div>
-      </main>
-      <aside className="h-dvh border-s border-border p-6">
-        <Toc items={items} scrollEl={() => contentRef.current} variant="tree" />
-      </aside>
-    </div>
+      </PageContent>
+      <PageGutter side="right" className="border-s border-border">
+        <Toc items={items} variant="tree" />
+      </PageGutter>
+    </Page>
   );
 }

@@ -1,7 +1,7 @@
 <!-- apps/docs/src/components/examples/toc/basic/svelte.svelte -->
 <!-- Mirrors Ark UI's TOC "Basic" example through the high-level helical-ui Toc. -->
 <script lang="ts">
-  import { Toc } from '@cloudvoyant/helical-svelte';
+  import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
 
   const items = [
     { value: 'svelte-01-introduction', depth: 2, label: 'Introduction', lines: 12 },
@@ -11,11 +11,10 @@
     { value: 'svelte-01-conclusion', depth: 2, label: 'Conclusion', lines: 10 },
   ];
 
-  let contentRef: HTMLElement | null = $state(null);
 </script>
 
-<div class="grid min-h-dvh grid-cols-[minmax(0,1fr)_16rem] bg-background text-foreground">
-  <main bind:this={contentRef} data-toc-scroll class="h-dvh overflow-y-auto p-8">
+<Page class="bg-background text-foreground">
+  <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each items as item (item.value)}
         <section class="scroll-mt-8">
@@ -28,8 +27,8 @@
         </section>
       {/each}
     </div>
-  </main>
-  <aside class="h-dvh border-s border-border p-6">
-    <Toc {items} scrollEl={() => contentRef} variant="default" />
-  </aside>
-</div>
+  </PageContent>
+  <PageGutter side="right" class="border-s border-border">
+    <Toc {items} variant="default" />
+  </PageGutter>
+</Page>
