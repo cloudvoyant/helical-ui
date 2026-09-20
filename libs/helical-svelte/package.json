@@ -48,6 +48,8 @@
     "@tanstack/charts": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/suggestion": "catalog:",
+    "@zag-js/svelte": "catalog:",
+    "@zag-js/toc": "catalog:",
     "lucide-svelte": "catalog:",
     "lowlight": "catalog:",
     "svelte-tiptap": "catalog:"

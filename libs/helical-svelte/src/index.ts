@@ -60,3 +60,4 @@ export * from './prose';
 export * from './toggle-group';
 export * from './listbox';
 export * from './editor';
+export * from './toc';

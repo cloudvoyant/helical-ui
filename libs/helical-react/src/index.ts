@@ -309,3 +309,4 @@ export {
   type ListboxLabelProps,
 } from './listbox';
 export * from './editor';
+export * from './toc';

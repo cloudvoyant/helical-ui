@@ -53,6 +53,8 @@
     "@tiptap/core": "catalog:",
     "@tiptap/react": "catalog:",
     "@tiptap/suggestion": "catalog:",
+    "@zag-js/react": "catalog:",
+    "@zag-js/toc": "catalog:",
     "lucide-react": "catalog:"
   },
   "devDependencies": {
