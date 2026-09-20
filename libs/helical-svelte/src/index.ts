@@ -76,3 +76,4 @@ export type {
   CommandStyle,
 } from '@cloudvoyant/helical-ui';
 export * from './which-key';
+export * from './toc';

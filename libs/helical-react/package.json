@@ -57,6 +57,8 @@
     "@tiptap/suggestion": "catalog:",
     "@zag-js/dismissable": "catalog:",
     "@zag-js/dom-query": "catalog:",
+    "@zag-js/react": "catalog:",
+    "@zag-js/toc": "catalog:",
     "lucide-react": "catalog:"
   },
   "devDependencies": {
