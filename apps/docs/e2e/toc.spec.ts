@@ -130,12 +130,25 @@ for (const framework of FRAMEWORKS) {
       await page.locator(`[data-framework-selector] button[data-fw="${framework}"]`).click();
     });
 
+    test('defers offscreen preview navigation until it approaches the viewport', async ({ page }) => {
+      const card = cardFor(page, 'tree-view');
+      const iframe = card.locator('iframe[data-preview]');
+      await expect(iframe).toHaveAttribute('loading', 'lazy');
+      await expect(iframe).not.toHaveAttribute('src', /preview\/toc\/tree-view/);
+
+      await card.scrollIntoViewIfNeeded();
+      await expect(iframe).toHaveAttribute('src', /preview\/toc\/tree-view\//);
+    });
+
     test('renders nine demos, each in its own preview iframe', async ({ page }) => {
       const frames = page.locator('[data-preview-frame][data-component="toc"]');
       await expect(frames).toHaveCount(ALL_EXAMPLES.length);
       for (const example of ALL_EXAMPLES) {
-        const src = await cardFor(page, example).locator('iframe[data-preview]').getAttribute('src');
-        expect(src).toContain(`preview/toc/${example}/`);
+        const card = cardFor(page, example);
+        const iframe = card.locator('iframe[data-preview]');
+        await expect(iframe).toHaveAttribute('loading', 'lazy');
+        await card.scrollIntoViewIfNeeded();
+        await expect.poll(() => iframe.getAttribute('src')).toContain(`preview/toc/${example}/`);
       }
     });
 

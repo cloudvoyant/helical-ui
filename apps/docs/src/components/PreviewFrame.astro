@@ -1,7 +1,7 @@
 ---
 // apps/docs/src/components/PreviewFrame.astro
-// Full-window iframe demo for layout components. Loads the component in its own
-// viewport (so 100svh / position: sticky behave as in production), styled flush
+// Full-window iframe demo for layout components. Lazily loads the component near
+// the viewport (so 100svh / position: sticky behave as in production), styled flush
 // like the other examples — no fake browser chrome. A desktop/mobile width
 // toggle floats as icon buttons in the top-right corner, and the framework and
 // theme sync with the docs shell via postMessage. Only adopted for Page
@@ -37,7 +37,7 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       class="relative mx-auto shrink-0 overflow-hidden transition-[width] duration-200"
       style={`width: ${initialWidth}; aspect-ratio: 16 / 9`}
     >
-      <iframe data-preview title={title} class="block h-full w-full border-0"></iframe>
+      <iframe data-preview title={title} loading="lazy" class="block h-full w-full border-0"></iframe>
     </div>
   </div>
   <div
@@ -149,9 +149,26 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       );
     };
 
-    setSrc();
     frame.addEventListener('load', sendState);
     window.addEventListener(FRAMEWORK_EVENT, sendState);
+
+    // A native lazy iframe can begin loading several viewports early. Keep src
+    // unset until the preview is close enough to be useful, then let the browser
+    // handle the actual lazy navigation. This avoids hydrating every framework
+    // preview during the initial docs-page load.
+    if ('IntersectionObserver' in window) {
+      const loadObserver = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          loadObserver.disconnect();
+          setSrc();
+        },
+        { rootMargin: '600px 0px' },
+      );
+      loadObserver.observe(root);
+    } else {
+      setSrc();
+    }
     new MutationObserver(sendState).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
