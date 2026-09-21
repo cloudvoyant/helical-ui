@@ -34,7 +34,7 @@ export default function ReactTocBasic() {
           </div>
         </PageContent>
         <PageGutter side="right" className="border-s border-border">
-          <Toc items={items} variant="default" scrollEl={() => pageRef.current} />
+          <Toc variant="default" scrollEl={() => pageRef.current} />
         </PageGutter>
       </Page>
     </div>

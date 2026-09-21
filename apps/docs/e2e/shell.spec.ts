@@ -53,6 +53,32 @@ test.describe('Docs shell', () => {
     await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
   });
 
+  test('right gutter uses Toc with an active indicator', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('components/toc');
+
+    const toc = page.locator('[data-docs-toc]');
+    await expect(toc.locator('nav[data-part="root"]')).toBeVisible();
+    await expect(toc.locator('[data-part="indicator"]')).toBeAttached();
+
+    const links = toc.locator('a[data-value]');
+    await expect(links).not.toHaveCount(0);
+    await expect(toc.locator('a[data-value="guide"]')).toBeVisible();
+    await expect(toc.locator('a[data-value="usage"]')).toHaveCount(0);
+    const lastLink = links.last();
+    const lastValue = await lastLink.getAttribute('data-value');
+    expect(lastValue).toBeTruthy();
+
+    // Preview frames can finish sizing after the document first scrolls. Keep
+    // moving to the latest scroll end until layout settles and the final
+    // heading enters the machine's visible range.
+    await expect(async () => {
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expect(toc.locator(`a[data-current][data-value="${lastValue}"]`)).toHaveCount(1, { timeout: 500 });
+    }).toPass({ timeout: 30_000, intervals: [100, 250, 500] });
+    await expect(lastLink).toHaveAttribute('aria-current', 'location');
+  });
+
   test('topnav marks scrolled once the page is scrolled', async ({ page }) => {
     await page.goto('components/button');
     const header = page.locator('[data-slot="navbar"]');
