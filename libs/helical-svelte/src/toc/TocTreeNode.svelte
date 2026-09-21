@@ -18,6 +18,7 @@
 
   const toc = useTocContext();
   const linkProps = $derived(toc().getLinkProps({ item: { value: node.value, depth: node.depth } }));
+  const current = $derived(toc().activeItems[0]?.value === node.value);
 </script>
 
 <TreeView.NodeProvider {node} {indexPath}>
@@ -30,7 +31,12 @@
           <ChevronRight class="size-3.5" aria-hidden="true" />
         </TreeView.BranchIndicator>
         <TreeView.BranchText class="min-w-0 flex-1">
-          <a {...linkProps} class={cn(tocLinkVariants({ variant: 'tree' }), 'flex-1')}>{node.label}</a>
+          <a
+            {...linkProps}
+            aria-current={current ? 'location' : 'false'}
+            data-current={current || undefined}
+            class={cn(tocLinkVariants({ variant: 'tree' }), 'flex-1')}>{node.label}</a
+          >
         </TreeView.BranchText>
       </TreeView.BranchControl>
       <TreeView.BranchContent class="relative ms-1.5 flex min-w-0 flex-col gap-0.5 ps-3">
@@ -43,7 +49,12 @@
   {:else}
     <TreeView.Item class="min-w-0">
       <TreeView.ItemText class="min-w-0">
-        <a {...linkProps} class={tocLinkVariants({ variant: 'tree' })}>{node.label}</a>
+        <a
+          {...linkProps}
+          aria-current={current ? 'location' : 'false'}
+          data-current={current || undefined}
+          class={tocLinkVariants({ variant: 'tree' })}>{node.label}</a
+        >
       </TreeView.ItemText>
     </TreeView.Item>
   {/if}

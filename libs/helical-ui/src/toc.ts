@@ -19,7 +19,7 @@ export const tocNavBase = 'relative w-full min-w-0 text-sm';
 export const tocTitleBase =
   'mb-2 px-2 text-[0.6875rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase';
 
-export const tocListBase = 'relative flex min-w-0 flex-col';
+export const tocListBase = 'relative m-0 flex min-w-0 list-none flex-col p-0';
 
 export const tocListVariants = cva(tocListBase, {
   variants: {
@@ -27,7 +27,7 @@ export const tocListVariants = cva(tocListBase, {
       default: 'gap-0.5',
       indicator: 'gap-0.5',
       hover: 'gap-0.5',
-      rail: 'gap-0.5',
+      rail: 'gap-0',
       tree: 'gap-0.5',
       collapsible: 'gap-0.5',
     },
@@ -41,14 +41,14 @@ export const tocItemBase = 'min-w-0';
 // getItemProps; a unitless heading level, e.g. 2, 3). h2 (depth 2) sits flush;
 // each deeper level steps in by one spacing unit.
 export const tocLinkBase =
-  'flex items-center gap-1.5 truncate rounded-md py-[0.3rem] pe-2 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[active]:font-medium data-[active]:text-primary motion-reduce:transition-none';
+  'flex items-center gap-1.5 truncate rounded-md py-[0.3rem] pe-2 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[current]:font-medium data-[current]:text-primary motion-reduce:transition-none';
 
 export const tocLinkVariants = cva(tocLinkBase, {
   variants: {
     variant: {
       default: 'ps-[calc(--spacing(3.5)+(var(--depth,2)-2)*--spacing(4))]',
       indicator: 'ps-[calc(--spacing(3.5)+(var(--depth,2)-2)*--spacing(4))]',
-      hover: 'px-1 py-[0.2rem] text-[0.8125rem] data-[active]:bg-primary/10',
+      hover: 'px-1 py-[0.2rem] text-[0.8125rem] data-[current]:bg-primary/10',
       rail: 'group/link relative rounded-none py-[0.35rem] text-[0.8125rem] leading-[1.4]',
       tree: 'rounded-none ps-1.5',
       collapsible: 'ps-2',
@@ -61,7 +61,7 @@ export const tocLinkVariants = cva(tocLinkBase, {
 // root (getRootProps sets them from the active item's rect); getIndicatorProps
 // adds position:absolute and `hidden` when there is no active item.
 export const tocIndicatorBase =
-  'pointer-events-none absolute start-0 [top:var(--top)] [height:var(--height)] w-0.5 rounded-full bg-primary transition-[top,height] duration-200 ease-out motion-reduce:transition-none';
+  'pointer-events-none absolute start-0 [top:var(--top)] h-[1.85rem] w-0.5 rounded-full bg-primary transition-[top] duration-200 ease-out motion-reduce:transition-none';
 
 // Collapsed skeleton bar for the `hover` variant (shown before expansion).
 export const tocSkeletonBase = 'block h-0.5 w-[calc(var(--depth)*12px)] rounded-full bg-muted-foreground opacity-30';

@@ -49,23 +49,29 @@ async function frameFor(
   framework: Framework,
   readySelector = '[data-toc-scroll]',
 ): Promise<FrameLocator> {
-  const frame = cardFor(page, example).frameLocator('iframe[data-preview]');
+  const card = cardFor(page, example);
+  await card.scrollIntoViewIfNeeded();
+  const frame = card.frameLocator('iframe[data-preview]');
   await expect(frame.locator(`${scope(framework)} ${readySelector}`).first()).toBeVisible({ timeout: 15_000 });
   return frame;
 }
 
-/** Scroll a tracked heading into the document viewport's active band. */
+/** Scroll a tracked heading into the isolated full-preview Page scroll root. */
 async function scrollHeadingIntoBand(frame: FrameLocator, framework: Framework, id: string) {
   await frame.locator(`${scope(framework)} [id="${idOf(framework, id)}"]`).evaluate((el) => {
-    el.scrollIntoView({ block: 'start' });
-    window.scrollBy(0, -100);
+    const root = el.closest('[data-toc-scroll-root]') as HTMLElement | null;
+    if (!root) return;
+    const targetTop = root.scrollTop + el.getBoundingClientRect().top - root.getBoundingClientRect().top - 100;
+    // Assigning scrollTop bypasses CSS smooth scrolling, so IntersectionObserver
+    // receives one deterministic position instead of overlapping animations.
+    root.scrollTop = targetTop;
   });
 }
 
-/** The machine marks the active link with both `data-active` and `aria-current`. */
+/** The high-level renderer exposes exactly one current link from Ark's active range. */
 async function expectActive(frame: FrameLocator, framework: Framework, id: string) {
   await expect(
-    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-active]`),
+    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-current]`),
   ).toBeVisible({
     timeout: 10_000,
   });
@@ -73,6 +79,8 @@ async function expectActive(frame: FrameLocator, framework: Framework, id: strin
     'aria-current',
     'location',
   );
+  await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
+  await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
 }
 
 /** The `activeIds` the Root Provider example renders from its own machine. */
@@ -87,12 +95,12 @@ async function outputIds(frame: FrameLocator, framework: Framework): Promise<str
   }
 }
 
-test('wheel input over a preview can still reach the end of the docs page', async ({ page }) => {
+test('wheel input over the long rail preview can still reach the end of the docs page', async ({ page }) => {
   await page.goto('components/toc');
   await page.locator('[data-framework-selector][data-ready]').waitFor();
-  await frameFor(page, 'basic', 'react');
+  await frameFor(page, 'rail', 'react');
 
-  const iframe = cardFor(page, 'basic').locator('iframe[data-preview]');
+  const iframe = cardFor(page, 'rail').locator('iframe[data-preview]');
   await iframe.scrollIntoViewIfNeeded();
   const box = await iframe.boundingBox();
   expect(box).not.toBeNull();
@@ -136,8 +144,9 @@ for (const framework of FRAMEWORKS) {
         await expect(cardFor(page, example)).toHaveCount(1);
       }
       await expect(cardFor(page, 'prose')).toHaveCount(1);
-      // Every example uses the existing Page layout and right gutter; none adds
-      // the custom nested main scroller that previously trapped wheel input.
+      // Every example uses Page inside one full-preview scroll root. Gutter
+      // variants place Toc in the right gutter; Ark's stacked collapsible stays sticky above
+      // its content instead of being forced into a sidebar.
       for (const example of ALL_EXAMPLES) {
         const frame = await frameFor(
           page,
@@ -146,9 +155,10 @@ for (const framework of FRAMEWORKS) {
           example === 'prose' ? '[data-slot="page-content"]' : '[data-toc-scroll]',
         );
         await expect(frame.locator(`${scope(framework)} [data-slot="page"]`)).toHaveCount(1);
-        await expect(
-          frame.locator(`${scope(framework)} [data-slot="page-gutter-area"][class*="grid-area:right"]`),
-        ).toHaveCount(1);
+        const rightGutter = frame.locator(
+          `${scope(framework)} [data-slot="page-gutter-area"][class*="grid-area:right"]`,
+        );
+        await expect(rightGutter).toHaveCount(example === 'collapsible' ? 0 : 1);
         await expect(frame.locator(`${scope(framework)} [data-slot="page-content"]`)).not.toHaveCSS(
           'overflow-y',
           'auto',
@@ -166,13 +176,28 @@ for (const framework of FRAMEWORKS) {
       await scrollHeadingIntoBand(frame, framework, '01-usage');
       await expectActive(frame, framework, '01-usage');
 
-      // Clicking a link scrolls the preview document and updates its hash.
-      await frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, '01-conclusion')}"]`).click();
-      await expect.poll(() => frame.locator('html').evaluate(() => window.scrollY)).toBeGreaterThan(0);
+      // Clicking a link scrolls the isolated Page root and updates its hash.
+      const scrollRoot = frame.locator(`${scope(framework)} [data-toc-scroll-root]`);
+      const beforeClickTop = await scrollRoot.evaluate((el) => el.scrollTop);
+      await frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, '01-installation')}"]`).click();
+      await expect
+        .poll(() => scrollRoot.evaluate((el, before) => Math.abs(el.scrollTop - before), beforeClickTop))
+        .toBeGreaterThan(10);
       await expect
         .poll(() => frame.locator('html').evaluate(() => location.hash))
-        .toBe(`#${idOf(framework, '01-conclusion')}`);
-      await expectActive(frame, framework, '01-conclusion');
+        .toBe(`#${idOf(framework, '01-installation')}`);
+
+      // End the machine's smooth link-scroll animation at one deterministic
+      // position before asserting IntersectionObserver-derived current state.
+      await scrollHeadingIntoBand(frame, framework, '01-installation');
+      await expectActive(frame, framework, '01-installation');
+
+      // Moving the surrounding docs page must not alter the iframe machine's
+      // current item when the preview's own scroll position is unchanged.
+      const innerTop = await scrollRoot.evaluate((el) => el.scrollTop);
+      await page.evaluate(() => window.scrollBy(0, 250));
+      await expect(scrollRoot).toHaveJSProperty('scrollTop', innerTop);
+      await expectActive(frame, framework, '01-installation');
     });
 
     test('nested headings: keeps depth data and tracks nested headings', async ({ page }) => {
@@ -213,10 +238,7 @@ for (const framework of FRAMEWORKS) {
       await expect
         .poll(
           async () => {
-            const link = await frame
-              .locator(`${scope(framework)} nav a[data-active]`)
-              .first()
-              .getAttribute('data-value');
+            const link = await frame.locator(`${scope(framework)} nav a[data-current]`).getAttribute('data-value');
             const ids = await outputIds(frame, framework);
             return { firstId: ids[0], includesUsage: ids.includes(idOf(framework, '03-usage')), link };
           },
@@ -232,7 +254,12 @@ for (const framework of FRAMEWORKS) {
     test('collapsible: reveals numbered links from the progress-ring trigger', async ({ page }) => {
       const frame = await frameFor(page, 'collapsible', framework);
       const trigger = frame.locator(`${scope(framework)} [data-part="trigger"]`).first();
+      const sticky = frame.locator(`${scope(framework)} [data-toc-sticky]`);
       const link = frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, '04-quick-start')}"]`);
+
+      // Ark's stacked composition pins the collapsible above scrolling content.
+      await expect(sticky).toHaveCSS('position', 'sticky');
+      await expect(frame.locator(`${scope(framework)} [data-slot="page-gutter"]`)).toHaveCount(0);
 
       // The trigger shows a progress ring; the list starts collapsed.
       await expect(trigger).toBeVisible();
@@ -258,12 +285,25 @@ for (const framework of FRAMEWORKS) {
       await expect(skeleton).toBeVisible();
       await expect(links).toBeHidden();
 
-      await frame.locator(`${scope(framework)} nav`).hover();
+      const nav = frame.locator(`${scope(framework)} nav`);
+      await nav.hover();
       await expect(links).toBeVisible();
       await expect(skeleton).toBeHidden();
       await expect(
         frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, '05-cloud-storage')}"]`),
       ).toBeVisible();
+      await expect(links).toHaveCSS('list-style-type', 'none');
+      await expect
+        .poll(() =>
+          nav.evaluate((el) => {
+            const rect = el.getBoundingClientRect();
+            return {
+              centered: Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2) <= 2,
+              onRight: window.innerWidth - rect.right < 80,
+            };
+          }),
+        )
+        .toEqual({ centered: true, onRight: true });
     });
 
     test('indicator: slides a marker to the active item', async ({ page }) => {
@@ -289,13 +329,26 @@ for (const framework of FRAMEWORKS) {
       await expect
         .poll(() => root.evaluate((el) => (el as HTMLElement).style.getPropertyValue('--top')))
         .not.toBe(firstTop);
+
+      // Three content-free headings at the end deliberately occupy the active
+      // band together. Ark may retain the range internally, but the public Toc
+      // must show one current link and one single-row indicator.
+      await frame
+        .locator(`${scope(framework)} [data-toc-scroll-root]`)
+        .evaluate((root) => root.scrollTo({ top: root.scrollHeight }));
+      await expect.poll(() => frame.locator(`${scope(framework)} nav a[data-active]`).count()).toBeGreaterThan(1);
+      await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
+      await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
+      await expect.poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height))).toBe(30);
     });
 
     test('rail: renders per-item depth geometry with clamped deep levels', async ({ page }) => {
       const frame = await frameFor(page, 'rail', framework);
 
       // One rail SVG per item, plus a bezier turn wherever the depth changes.
+      // The upstream per-row SVG math assumes zero list gap.
       await expect(frame.locator(`${scope(framework)} nav a svg`)).toHaveCount(9);
+      await expect(frame.locator(`${scope(framework)} nav ul`)).toHaveCSS('row-gap', '0px');
       await expect(frame.locator(`${scope(framework)} nav svg path`).first()).toBeAttached();
 
       const indentOf = (value: string) =>
@@ -325,7 +378,7 @@ for (const framework of FRAMEWORKS) {
       ).toHaveAttribute('data-state', 'open');
     });
 
-    test('prose: renders Prose in a gutter and tracks document scroll', async ({ page }) => {
+    test('prose: renders Prose in a gutter and tracks isolated preview scroll', async ({ page }) => {
       const frame = await frameFor(page, 'prose', framework, '[data-slot="page-content"]');
 
       await expect(frame.locator(`${scope(framework)} [data-slot="page-gutter"]`)).toBeAttached();
@@ -333,11 +386,8 @@ for (const framework of FRAMEWORKS) {
       // Real headings with matching ids inside the Prose article.
       await expect(frame.locator(`${scope(framework)} .prose h2#${idOf(framework, 'prose-theming')}`)).toBeAttached();
 
-      // No scrollEl was passed, so the machine observes document scroll.
-      await frame
-        .locator(`${scope(framework)} [id="${idOf(framework, 'prose-theming')}"]`)
-        .evaluate((el) => el.scrollIntoView({ block: 'center' }));
-      await expectActive(frame, framework, 'prose-theming');
+      await scrollHeadingIntoBand(frame, framework, 'prose-authoring');
+      await expectActive(frame, framework, 'prose-authoring');
     });
 
     test('framework and theme switching reach the preview frame', async ({ page }) => {

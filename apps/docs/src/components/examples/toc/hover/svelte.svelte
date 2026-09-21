@@ -4,6 +4,8 @@
 <script lang="ts">
   import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
 
+  let pageEl = $state<HTMLDivElement | null>(null);
+
   const items = [
     { value: 'svelte-05-analytics-dashboard', depth: 2, label: 'Real-time Analytics', lines: 55 },
     { value: 'svelte-05-cloud-storage', depth: 2, label: 'S3 Cloud Storage', lines: 14 },
@@ -14,7 +16,8 @@
 
 </script>
 
-<Page class="bg-background text-foreground">
+<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+  <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each items as item (item.value)}
@@ -29,7 +32,8 @@
       {/each}
     </div>
   </PageContent>
-  <PageGutter side="right" class="border-s border-border">
-    <Toc {items} variant="hover" />
+  <PageGutter side="right" align="center" class="border-s border-border">
+    <Toc {items} variant="hover" scrollEl={() => pageEl} />
   </PageGutter>
-</Page>
+  </Page>
+</div>

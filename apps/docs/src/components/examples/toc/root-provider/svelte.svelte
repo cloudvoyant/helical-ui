@@ -5,6 +5,8 @@
 <script lang="ts">
   import { Page, PageContent, PageGutter, Toc, useToc } from '@cloudvoyant/helical-svelte';
 
+  let pageEl = $state<HTMLDivElement | null>(null);
+
   const items = [
     { value: 'svelte-03-introduction', depth: 2, label: 'Introduction', lines: 12 },
     { value: 'svelte-03-getting-started', depth: 2, label: 'Getting Started', lines: 10 },
@@ -14,10 +16,11 @@
   ];
 
   // The single machine for this example — Toc must not create another.
-  const toc = useToc(() => ({ items }));
+  const toc = useToc(() => ({ items, scrollEl: () => pageEl }));
 </script>
 
-<Page class="bg-background text-foreground">
+<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+  <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each items as item (item.value)}
@@ -38,4 +41,5 @@
     </output>
     <Toc {items} value={toc} />
   </PageGutter>
-</Page>
+  </Page>
+</div>
