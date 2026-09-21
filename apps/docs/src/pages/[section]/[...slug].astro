@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
+const { Content } = await render(entry);
 const currentPath = `${import.meta.env.BASE_URL}${Astro.params.section}/${entry.id}`;
 ---
 
@@ -26,7 +26,6 @@ const currentPath = `${import.meta.env.BASE_URL}${Astro.params.section}/${entry.
   title={`${entry.data.title} — helical-ui`}
   description={entry.data.description}
   currentPath={currentPath}
-  headings={headings}
 >
   <h1 class="text-3xl font-bold tracking-tight">{entry.data.title}</h1>
   <div class="docs-prose mt-6">

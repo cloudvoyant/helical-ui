@@ -173,8 +173,10 @@ for (const framework of FRAMEWORKS) {
     test('basic: tracks the active heading and follows link navigation', async ({ page }) => {
       const frame = await frameFor(page, 'basic', framework);
 
-      await scrollHeadingIntoBand(frame, framework, '01-usage');
-      await expectActive(frame, framework, '01-usage');
+      // Use a middle heading that does not clamp either framework's preview
+      // root to its maximum scroll position.
+      await scrollHeadingIntoBand(frame, framework, '01-getting-started');
+      await expectActive(frame, framework, '01-getting-started');
 
       // Clicking a link scrolls the isolated Page root and updates its hash.
       const scrollRoot = frame.locator(`${scope(framework)} [data-toc-scroll-root]`);
@@ -232,9 +234,9 @@ for (const framework of FRAMEWORKS) {
 
       await scrollHeadingIntoBand(frame, framework, '03-usage');
 
-      // Ark can report a contiguous active range. The machine output and the
-      // high-level Toc must agree on the first active id, proving both read the
-      // same supplied machine without incorrectly forcing one active heading.
+      // Ark can report a contiguous active range. During normal scrolling the
+      // high-level Toc agrees with the machine's first active id, proving both
+      // read the same supplied machine without discarding its range state.
       await expect
         .poll(
           async () => {
@@ -331,15 +333,21 @@ for (const framework of FRAMEWORKS) {
         .not.toBe(firstTop);
 
       // Three content-free headings at the end deliberately occupy the active
-      // band together. Ark may retain the range internally, but the public Toc
-      // must show one current link and one single-row indicator.
+      // band together. Ark retains that range internally, while the public Toc
+      // marks its last item current and aligns one single-row indicator to it.
       await frame
         .locator(`${scope(framework)} [data-toc-scroll-root]`)
         .evaluate((root) => root.scrollTo({ top: root.scrollHeight }));
       await expect.poll(() => frame.locator(`${scope(framework)} nav a[data-active]`).count()).toBeGreaterThan(1);
-      await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
-      await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
+      await expectActive(frame, framework, '06-publish');
       await expect.poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height))).toBe(30);
+      const currentLink = frame.locator(`${scope(framework)} nav a[data-current]`);
+      await expect
+        .poll(async () => {
+          const [markerBox, currentBox] = await Promise.all([marker.boundingBox(), currentLink.boundingBox()]);
+          return markerBox && currentBox ? Math.abs(markerBox.y - currentBox.y) : Number.POSITIVE_INFINITY;
+        })
+        .toBeLessThanOrEqual(2);
     });
 
     test('rail: renders per-item depth geometry with clamped deep levels', async ({ page }) => {

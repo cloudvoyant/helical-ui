@@ -8,7 +8,10 @@
   export type TocVariant = 'default' | 'indicator' | 'hover' | 'rail' | 'tree' | 'collapsible';
 
   export type TocProps = {
-    items: TocItem[];
+    /** Explicit items override automatic heading collection. */
+    items?: TocItem[];
+    /** CSS selector used when collecting headings automatically. */
+    headingSelector?: string;
     variant?: TocVariant;
     /** Existing Ark-compatible machine accessor. When supplied, Toc creates none. */
     value?: UseTocReturn;
@@ -30,6 +33,7 @@
 
   let {
     items,
+    headingSelector,
     variant,
     value,
     scrollEl,
@@ -42,14 +46,21 @@
     autoScroll,
     class: className,
   }: TocProps = $props();
+
+  const machineItems = (machine: ReturnType<UseTocReturn>): TocItem[] =>
+    machine.items.map((item) => ({
+      ...item,
+      label: 'label' in item && typeof item.label === 'string' ? item.label : item.value,
+    }));
 </script>
 
 <!-- Only one branch ever mounts, so the Root Provider path reuses its machine and creates no second one. -->
 {#if value}
-  <TocView {items} {variant} {title} {value} class={className} />
+  <TocView items={items ?? machineItems(value())} {variant} {title} {value} class={className} />
 {:else}
   <TocOwned
     {items}
+    {headingSelector}
     {variant}
     {scrollEl}
     {title}

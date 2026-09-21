@@ -25,6 +25,9 @@ export const useToc = (props?: MaybeFunction<UseTocProps>): UseTocReturn => {
       dir: locale().dir,
       getRootNode: env().getRootNode,
       ...resolvedProps,
+      // Keep the bottom of the real viewport observable so a short final
+      // heading can become active at the end of the scroll root.
+      rootMargin: resolvedProps?.rootMargin ?? '-20px 0px 0px 0px',
     };
   });
 

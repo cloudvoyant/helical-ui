@@ -7,6 +7,7 @@
   import { ChevronRight } from 'lucide-svelte';
   import { useTocContext } from './internal';
   import TocTreeNode from './TocTreeNode.svelte';
+  import { getCurrentValue } from './current-value';
   import type { TocNode } from './TocView.svelte';
 
   type Props = {
@@ -18,7 +19,7 @@
 
   const toc = useTocContext();
   const linkProps = $derived(toc().getLinkProps({ item: { value: node.value, depth: node.depth } }));
-  const current = $derived(toc().activeItems[0]?.value === node.value);
+  const current = $derived(getCurrentValue(toc()) === node.value);
 </script>
 
 <TreeView.NodeProvider {node} {indexPath}>

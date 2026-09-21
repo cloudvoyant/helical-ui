@@ -46,8 +46,12 @@
   } from './internal';
   import TocTreeNode from './TocTreeNode.svelte';
   import type { TocProps } from './Toc.svelte';
+  import { getCurrentValue } from './current-value';
 
-  type Props = Pick<TocProps, 'items' | 'variant' | 'title' | 'class'> & { value: UseTocReturn };
+  type Props = Omit<Pick<TocProps, 'items' | 'variant' | 'title' | 'class'>, 'items'> & {
+    items: TocItem[];
+    value: UseTocReturn;
+  };
 
   let { items, variant = 'default', title = 'On this page', value, class: className = '' }: Props = $props();
 
@@ -69,19 +73,18 @@
 
   const showTitle = $derived(variant !== 'collapsible');
 
-  const activeIndex = (activeItems: readonly { value: string }[]) =>
-    items.findIndex((item) => item.value === activeItems[0]?.value);
-  const activeLabel = (activeItems: readonly { value: string }[]) =>
-    items[activeIndex(activeItems)]?.label ?? 'On this page';
-  const activeProgress = (activeItems: readonly { value: string }[]) => {
-    const index = activeIndex(activeItems);
+  const activeIndex = () => items.findIndex((item) => item.value === getCurrentValue(value()));
+  const activeLabel = () => items[activeIndex()]?.label ?? 'On this page';
+  const activeProgress = () => {
+    const index = activeIndex();
     return index >= 0 ? (index + 1) / items.length : 0;
   };
 
   let hovered = $state(false);
 
   const activeItems = $derived(value().activeItems);
-  const currentValue = $derived(activeItems[0]?.value);
+  const currentValue = $derived(getCurrentValue(value(), activeItems));
+  const itemIndicator = $derived(variant === 'indicator' && currentValue !== activeItems[0]?.value);
 
   const treeRoots = $derived(pruneLeaves(buildTree(items)));
   const treeCollection = $derived(
@@ -192,11 +195,14 @@
 
       {#if variant === 'default' || variant === 'indicator'}
         <TocList class={tocListVariants({ variant })}>
-          {#if variant === 'indicator'}
+          {#if variant === 'indicator' && !itemIndicator}
             <TocIndicator class={tocIndicatorBase} />
           {/if}
           {#each items as item (item.value)}
-            <TocItemPart {item} class={tocItemBase}>
+            <TocItemPart {item} class={cn(tocItemBase, 'relative')}>
+              {#if itemIndicator && currentValue === item.value}
+                <span data-scope="toc" data-part="indicator" class={cn(tocIndicatorBase, '!top-0')}></span>
+              {/if}
               <TocLink
                 href={`#${item.value}`}
                 aria-current={currentValue === item.value ? 'location' : 'false'}
@@ -264,7 +270,7 @@
             class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-transparent px-3 py-2.5 text-start text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <TocContext>
-              {#snippet render(context)}
+              {#snippet render(_context)}
                 <span class="flex min-w-0 items-center gap-2">
                   <svg viewBox="0 0 36 36" aria-hidden="true" class="size-6 shrink-0">
                     <circle
@@ -284,7 +290,7 @@
                       pathLength="100"
                       class="stroke-primary"
                       stroke-width="2.5"
-                      stroke-dasharray="{activeProgress(context().activeItems) * 100} 100"
+                      stroke-dasharray="{activeProgress() * 100} 100"
                       stroke-linecap="round"
                       transform="rotate(-90 18 18)"
                       style="transition: stroke-dasharray 0.4s ease-out"
@@ -298,11 +304,11 @@
                       font-weight="600"
                       fill="currentColor"
                     >
-                      {activeIndex(context().activeItems) >= 0 ? activeIndex(context().activeItems) + 1 : '—'}
+                      {activeIndex() >= 0 ? activeIndex() + 1 : '—'}
                     </text>
                   </svg>
                   <span class="truncate text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    {activeLabel(context().activeItems)}
+                    {activeLabel()}
                   </span>
                 </span>
               {/snippet}

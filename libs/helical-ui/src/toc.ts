@@ -14,6 +14,19 @@ export interface TocItem {
   label: string;
 }
 
+export const tocHeadingSelector = 'h2[id], h3[id], h4[id], h5[id], h6[id]';
+
+/** Collect heading metadata without making consumers parse Markdown or HTML. */
+export function collectTocItems(root: ParentNode, selector = tocHeadingSelector): TocItem[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(selector))
+    .filter((heading) => /^H[2-6]$/.test(heading.tagName) && heading.id && !heading.closest('[data-scope="toc"]'))
+    .map((heading) => ({
+      value: heading.id,
+      depth: Number(heading.tagName.slice(1)),
+      label: heading.textContent?.trim().replace(/\s+/g, ' ') || heading.id,
+    }));
+}
+
 export const tocNavBase = 'relative w-full min-w-0 text-sm';
 
 export const tocTitleBase =

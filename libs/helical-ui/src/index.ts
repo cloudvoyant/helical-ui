@@ -115,6 +115,8 @@ export {
   type TabsIndicatorVariants,
 } from './tabs';
 export {
+  collectTocItems,
+  tocHeadingSelector,
   tocNavBase,
   tocTitleBase,
   tocListBase,

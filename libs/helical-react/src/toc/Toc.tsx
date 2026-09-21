@@ -14,6 +14,7 @@ import { SwapIndicator, SwapRoot } from '@ark-ui/react/swap';
 import { TreeView, createTreeCollection } from '@ark-ui/react/tree-view';
 import {
   cn,
+  collectTocItems,
   tocIndicatorBase,
   tocItemBase,
   tocLinkVariants,
@@ -24,13 +25,16 @@ import {
   type TocItem,
 } from '@cloudvoyant/helical-ui';
 import { ChevronRight } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Toc as TocPrimitive, useToc, useTocContext, type TocActiveChangeDetails, type UseTocReturn } from './internal';
 
 export type TocVariant = 'default' | 'indicator' | 'hover' | 'rail' | 'tree' | 'collapsible';
 
 export type TocProps = {
-  items: TocItem[];
+  /** Explicit items override automatic heading collection. */
+  items?: TocItem[];
+  /** CSS selector used when collecting headings automatically. */
+  headingSelector?: string;
   variant?: TocVariant;
   /** Existing Ark-compatible machine. When supplied, Toc creates no machine. */
   value?: UseTocReturn;
@@ -47,8 +51,41 @@ export type TocProps = {
 
 const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
+function getCurrentValue(toc: UseTocReturn, activeItems = toc.activeItems) {
+  const firstActiveValue = activeItems[0]?.value;
+  const finalValue = toc.items.at(-1)?.value;
+  if (
+    !finalValue ||
+    !activeItems.some((item) => item.value === finalValue) ||
+    typeof document === 'undefined' ||
+    typeof window === 'undefined'
+  ) {
+    return firstActiveValue;
+  }
+
+  const heading = document.getElementById(finalValue);
+  if (!heading) return firstActiveValue;
+
+  let scrollRoot: HTMLElement | null = null;
+  for (let parent = heading.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+    const overflowY = window.getComputedStyle(parent).overflowY;
+    if (/(auto|scroll)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+      scrollRoot = parent;
+      break;
+    }
+  }
+
+  const scrollingElement = document.scrollingElement;
+  const atEnd = scrollRoot
+    ? Math.ceil(scrollRoot.scrollTop + scrollRoot.clientHeight) >= scrollRoot.scrollHeight - 1
+    : !!scrollingElement &&
+      Math.ceil(scrollingElement.scrollTop + scrollingElement.clientHeight) >= scrollingElement.scrollHeight - 1;
+
+  return atEnd ? finalValue : firstActiveValue;
+}
+
 function currentLinkProps(toc: UseTocReturn, value: string) {
-  const current = toc.activeItems[0]?.value === value;
+  const current = getCurrentValue(toc) === value;
   return {
     'aria-current': current ? ('location' as const) : ('false' as const),
     'data-current': current || undefined,
@@ -61,19 +98,37 @@ function currentLinkProps(toc: UseTocReturn, value: string) {
  */
 export function Toc(props: TocProps) {
   if (props.value) {
-    return <TocView {...props} value={props.value} />;
+    const items =
+      props.items ??
+      props.value.items.map((item) => ({
+        ...item,
+        label: 'label' in item && typeof item.label === 'string' ? item.label : item.value,
+      }));
+    return <TocView {...props} items={items} value={props.value} />;
   }
-  return <TocOwned {...props} />;
+  return props.items ? <TocOwned {...props} items={props.items} /> : <TocAutoOwned {...props} />;
+}
+
+/** Collects headings before the machine mounts so its observer sees every item. */
+function TocAutoOwned(props: TocProps) {
+  const [items, setItems] = useState<TocItem[]>([]);
+
+  useEffect(() => {
+    const root = props.scrollEl?.() ?? document;
+    setItems(collectTocItems(root, props.headingSelector));
+  }, [props.headingSelector, props.scrollEl]);
+
+  return items.length > 0 ? <TocOwned {...props} items={items} /> : null;
 }
 
 /** The only high-level component that calls the internal `useToc`. */
-function TocOwned(props: TocProps) {
+function TocOwned(props: TocProps & { items: TocItem[] }) {
   const value = useToc({
     items: props.items,
     activeIds: props.activeIds,
     defaultActiveIds: props.defaultActiveIds,
     onActiveChange: props.onActiveChange,
-    rootMargin: props.rootMargin,
+    rootMargin: props.rootMargin ?? '-20px 0px 0px 0px',
     scrollBehavior: props.scrollBehavior,
     autoScroll: props.autoScroll,
     scrollEl: props.scrollEl,
@@ -89,7 +144,7 @@ function TocView({
   title = 'On this page',
   className,
   value,
-}: TocProps & { value: UseTocReturn }) {
+}: TocProps & { items: TocItem[]; value: UseTocReturn }) {
   // The machine labels the nav with `aria-labelledby` → the Title id, so a Title
   // must always render. The hover and collapsible variants carry their own visible
   // label, so theirs is screen-reader only.
@@ -129,12 +184,17 @@ function TocBody({ items, variant }: { items: TocItem[]; variant: Exclude<TocVar
 /** `default` and `indicator`: Ark's Title/List/Item/Link composition. */
 function ItemList({ items, variant }: { items: TocItem[]; variant: 'default' | 'indicator' }) {
   const toc = useTocContext();
+  const currentValue = getCurrentValue(toc);
+  const itemIndicator = variant === 'indicator' && currentValue !== toc.activeItems[0]?.value;
 
   return (
     <TocPrimitive.List className={tocListVariants({ variant })}>
-      {variant === 'indicator' && <TocPrimitive.Indicator className={tocIndicatorBase} />}
+      {variant === 'indicator' && !itemIndicator && <TocPrimitive.Indicator className={tocIndicatorBase} />}
       {items.map((item) => (
-        <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>
+        <TocPrimitive.Item key={item.value} item={item} className={cn(tocItemBase, 'relative')}>
+          {itemIndicator && currentValue === item.value && (
+            <span data-scope="toc" data-part="indicator" className={cn(tocIndicatorBase, '!top-0')} />
+          )}
           <TocPrimitive.Link
             href={`#${item.value}`}
             {...currentLinkProps(toc, item.value)}
@@ -399,7 +459,8 @@ function CollapsibleNav({ items }: { items: TocItem[] }) {
       <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-transparent px-3 py-2.5 text-start text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <TocPrimitive.Context>
           {({ activeItems }) => {
-            const activeIndex = items.findIndex((item) => item.value === activeItems[0]?.value);
+            const currentValue = getCurrentValue(toc, activeItems);
+            const activeIndex = items.findIndex((item) => item.value === currentValue);
             const activeLabel = items[activeIndex]?.label ?? 'On this page';
             return (
               <span className="flex min-w-0 items-center gap-2">

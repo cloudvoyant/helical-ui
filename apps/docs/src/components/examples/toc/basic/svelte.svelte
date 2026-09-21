@@ -32,7 +32,7 @@
     </div>
   </PageContent>
   <PageGutter side="right" class="border-s border-border">
-    <Toc {items} variant="default" scrollEl={() => pageEl} />
+    <Toc variant="default" scrollEl={() => pageEl} />
   </PageGutter>
   </Page>
 </div>

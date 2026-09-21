@@ -27,6 +27,9 @@ export const useToc = (props?: UseTocProps): UseTocReturn => {
     getRootNode,
     items: [],
     ...props,
+    // Keep the bottom of the real viewport observable so a short final heading
+    // can become active at the end of the scroll root.
+    rootMargin: props?.rootMargin ?? '-20px 0px 0px 0px',
   } as toc.Props;
 
   const service = useMachine(toc.machine, machineProps);
