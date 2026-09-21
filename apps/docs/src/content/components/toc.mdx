@@ -42,7 +42,7 @@ The `prose` example is the helical-ui addition. It uses the same Page/gutter com
 
 ## Guide
 
-Give each article heading an `id`. `Toc` collects the headings and labels automatically:
+`Toc` collects headings and labels automatically. Existing heading IDs are preserved; headings without IDs receive unique slug IDs during collection:
 
 ```tsx
 import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
@@ -51,9 +51,9 @@ export function Docs() {
   return (
     <Page>
       <PageContent>
-        <h2 id="overview">Overview</h2>
-        <h2 id="installation">Installation</h2>
-        <h3 id="advanced-config">Advanced configuration</h3>
+        <h2>Overview</h2>
+        <h2>Installation</h2>
+        <h3>Advanced configuration</h3>
       </PageContent>
       <PageGutter side="right">
         <Toc />
@@ -63,7 +63,7 @@ export function Docs() {
 }
 ```
 
-Use `headingSelector` to narrow collection, for example `<Toc headingSelector="article :is(h2, h3)[id]" />`. Pass `items` only when labels or order must differ from the rendered headings, when headings change after mount, or when TOC links must be present in server-rendered HTML.
+Use `headingSelector` to narrow collection by container or maximum depth, for example `<Toc headingSelector="article :is(h2, h3)" />`. Pass `items` only when labels or order must differ from the rendered headings, when headings change after mount, or when TOC links and generated IDs must be present in server-rendered HTML.
 
 `Page` uses document scrolling, so its gutter composition does not need `scrollEl`. When another application tracks a deliberately independent scrolling panel, hand the machine that panel as its scroll root:
 
@@ -110,7 +110,7 @@ Renders a `<div>` wrapping a `<nav>`. The `default`, `indicator`, `rail`, and `t
 | Prop                  | Type                                                                       | Default               | Description                                                                      |
 | --------------------- | -------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------- |
 | `items`               | `TocItem[]`                                                                | auto-collected        | Explicit sections. Omit to collect headings from the document or `scrollEl`.     |
-| `headingSelector`     | `string`                                                                   | `'h2[id], …, h6[id]'` | Selector used by automatic heading collection.                                   |
+| `headingSelector`     | `string`                                                                   | `'h2, …, h6'`         | Selector used by automatic heading collection.                                   |
 | `variant`             | `'default' \| 'indicator' \| 'hover' \| 'rail' \| 'tree' \| 'collapsible'` | `'default'`           | Presentation. All six adapt the matching Ark UI TOC example.                     |
 | `value`               | `UseTocReturn`                                                             | —                     | An existing Ark-compatible machine. When supplied, `Toc` creates none.           |
 | `scrollEl`            | `() => HTMLElement \| null`                                                | —                     | Returns the scrolling container to observe. Omit it to observe document scroll.  |

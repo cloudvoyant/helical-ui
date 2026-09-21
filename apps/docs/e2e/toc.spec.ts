@@ -107,17 +107,17 @@ test('wheel input over the long rail preview can still reach the end of the docs
   if (!box) return;
 
   await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 250));
-  for (let index = 0; index < 20; index += 1) {
-    await page.mouse.wheel(0, 1_000);
-  }
-
   await expect
-    .poll(() =>
-      page.evaluate(() => ({
-        atEnd: Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight,
-      })),
+    .poll(
+      async () => {
+        await page.mouse.wheel(0, 1_000);
+        return page.evaluate(
+          () => Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight,
+        );
+      },
+      { timeout: 15_000, intervals: [50, 100, 250] },
     )
-    .toEqual({ atEnd: true });
+    .toBe(true);
 });
 
 for (const framework of FRAMEWORKS) {

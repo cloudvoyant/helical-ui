@@ -64,6 +64,9 @@ test.describe('Docs shell', () => {
     const links = toc.locator('a[data-value]');
     await expect(links).not.toHaveCount(0);
     await expect(toc.locator('a[data-value="guide"]')).toBeVisible();
+    await expect(toc.locator('a[data-value="nested-headings"]')).toBeVisible();
+    await expect(page.locator('.docs-prose h3#nested-headings')).toBeVisible();
+    await expect(toc.locator('a[data-value="props"]')).toHaveCount(0);
     await expect(toc.locator('a[data-value="usage"]')).toHaveCount(0);
     const lastLink = links.last();
     const lastValue = await lastLink.getAttribute('data-value');

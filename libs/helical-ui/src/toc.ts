@@ -14,17 +14,46 @@ export interface TocItem {
   label: string;
 }
 
-export const tocHeadingSelector = 'h2[id], h3[id], h4[id], h5[id], h6[id]';
+export const tocHeadingSelector = 'h2, h3, h4, h5, h6';
 
-/** Collect heading metadata without making consumers parse Markdown or HTML. */
+function headingId(label: string, index: number): string {
+  return (
+    label
+      .normalize('NFKD')
+      .toLowerCase()
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || `heading-${index + 1}`
+  );
+}
+
+/** Collect heading metadata and make headings without ids anchor-linkable. */
 export function collectTocItems(root: ParentNode, selector = tocHeadingSelector): TocItem[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector))
-    .filter((heading) => /^H[2-6]$/.test(heading.tagName) && heading.id && !heading.closest('[data-scope="toc"]'))
-    .map((heading) => ({
+  const headings = Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+    (heading) => /^H[2-6]$/.test(heading.tagName) && !heading.closest('[data-scope="toc"]'),
+  );
+  const usedValues = new Set(headings.map((heading) => heading.id).filter(Boolean));
+
+  return headings.map((heading, index) => {
+    const label = heading.textContent?.trim().replace(/\s+/g, ' ') || heading.id;
+    if (!heading.id) {
+      const base = headingId(label, index);
+      let value = base;
+      let suffix = 2;
+      while (usedValues.has(value) || heading.ownerDocument?.getElementById(value)) {
+        value = `${base}-${suffix}`;
+        suffix += 1;
+      }
+      heading.id = value;
+      usedValues.add(value);
+    }
+
+    return {
       value: heading.id,
       depth: Number(heading.tagName.slice(1)),
-      label: heading.textContent?.trim().replace(/\s+/g, ' ') || heading.id,
-    }));
+      label: label || heading.id,
+    };
+  });
 }
 
 export const tocNavBase = 'relative w-full min-w-0 text-sm';
