@@ -3,7 +3,7 @@
 import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 import { useRef } from 'react';
 
-const items = [
+const sections = [
   { value: 'react-02-importance', depth: 2, label: 'Importance', lines: 10 },
   { value: 'react-02-integrations', depth: 2, label: 'Integrations', lines: 12 },
   { value: 'react-02-free-blocks', depth: 3, label: 'Free Blocks', lines: 8 },
@@ -22,7 +22,7 @@ export default function ReactTocNestedHeadings() {
       <Page className="bg-background text-foreground">
         <PageContent data-toc-scroll className="px-8 py-10">
           <div className="mx-auto flex max-w-2xl flex-col gap-10">
-            {items.map((item) =>
+            {sections.map((item) =>
               item.depth > 2 ? (
                 <section key={item.value} className="scroll-mt-8 ps-6">
                   <h3 id={item.value} className="text-base font-semibold">
@@ -50,7 +50,7 @@ export default function ReactTocNestedHeadings() {
           </div>
         </PageContent>
         <PageGutter side="right" className="border-s border-border">
-          <Toc items={items} variant="default" scrollEl={() => pageRef.current} />
+          <Toc variant="default" scrollEl={() => pageRef.current} />
         </PageGutter>
       </Page>
     </div>

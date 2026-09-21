@@ -6,13 +6,6 @@
 
   let pageEl = $state<HTMLDivElement | null>(null);
 
-  const items = [
-    { value: 'svelte-prose-overview', depth: 2, label: 'Overview' },
-    { value: 'svelte-prose-installation', depth: 2, label: 'Installation' },
-    { value: 'svelte-prose-authoring', depth: 2, label: 'Authoring' },
-    { value: 'svelte-prose-theming', depth: 2, label: 'Theming' },
-    { value: 'svelte-prose-next-steps', depth: 2, label: 'Next Steps' },
-  ];
 </script>
 
 <div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
@@ -41,9 +34,8 @@
       </p>
       <h2 id="svelte-prose-authoring">Authoring</h2>
       <p>
-        Give each heading an <code>id</code> that matches the item's <code>value</code>, describe the heading level with
-        <code>depth</code>, and provide the visible <code>label</code>. Depth drives indentation; the six high-level
-        variants drive presentation.
+        Give each heading a stable <code>id</code>. Toc collects its text and heading level automatically, while the six
+        high-level variants control presentation.
       </p>
       <h2 id="svelte-prose-theming">Theming</h2>
       <p>
@@ -59,7 +51,7 @@
     </Prose>
   </PageContent>
   <PageGutter side="right">
-    <Toc {items} scrollEl={() => pageEl} />
+    <Toc scrollEl={() => pageEl} />
   </PageGutter>
   </Page>
 </div>

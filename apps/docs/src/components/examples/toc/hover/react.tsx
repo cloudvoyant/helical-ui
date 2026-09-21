@@ -4,7 +4,7 @@
 import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 import { useRef } from 'react';
 
-const items = [
+const sections = [
   { value: 'react-05-analytics-dashboard', depth: 2, label: 'Real-time Analytics', lines: 55 },
   { value: 'react-05-cloud-storage', depth: 2, label: 'S3 Cloud Storage', lines: 14 },
   { value: 'react-05-automation-tools', depth: 2, label: 'Workflow Automation', lines: 32 },
@@ -20,7 +20,7 @@ export default function ReactTocHover() {
       <Page className="bg-background text-foreground">
         <PageContent data-toc-scroll className="px-8 py-10">
           <div className="mx-auto flex max-w-2xl flex-col gap-10">
-            {items.map((item) => (
+            {sections.map((item) => (
               <section key={item.value} className="scroll-mt-8">
                 <h2 id={item.value} className="text-lg font-semibold">
                   {item.label}
@@ -35,7 +35,7 @@ export default function ReactTocHover() {
           </div>
         </PageContent>
         <PageGutter side="right" align="center" className="border-s border-border">
-          <Toc items={items} variant="hover" scrollEl={() => pageRef.current} />
+          <Toc variant="hover" scrollEl={() => pageRef.current} />
         </PageGutter>
       </Page>
     </div>

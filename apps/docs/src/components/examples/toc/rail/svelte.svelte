@@ -6,7 +6,7 @@
 
   let pageEl = $state<HTMLDivElement | null>(null);
 
-  const items = [
+  const sections = [
     { value: 'svelte-07-overview', depth: 2, label: 'Overview', lines: 10 },
     { value: 'svelte-07-installation', depth: 2, label: 'Installation', lines: 8 },
     { value: 'svelte-07-package-manager', depth: 3, label: 'Package Manager', lines: 12 },
@@ -24,14 +24,15 @@
   <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
-      {#each items as item (item.value)}
+      {#each sections as item (item.value)}
         <section class="scroll-mt-8" data-depth={item.depth}>
-          <h2
+          <svelte:element
+            this={`h${item.depth}`}
             id={item.value}
             class={item.depth > 2 ? 'ps-6 text-base font-semibold' : 'text-lg font-semibold'}
           >
             {item.label}
-          </h2>
+          </svelte:element>
           <div class="mt-3 flex flex-col gap-2">
             {#each Array.from({ length: item.lines }) as _, i (i)}
               <div class="h-2.5 rounded bg-muted"></div>
@@ -42,7 +43,7 @@
     </div>
   </PageContent>
   <PageGutter side="right" class="border-s border-border">
-    <Toc {items} variant="rail" scrollEl={() => pageEl} />
+    <Toc variant="rail" scrollEl={() => pageEl} />
   </PageGutter>
   </Page>
 </div>

@@ -4,14 +4,6 @@
 import { Page, PageContent, PageGutter, Prose, Toc } from '@cloudvoyant/helical-react';
 import { useRef } from 'react';
 
-const items = [
-  { value: 'react-prose-overview', depth: 2, label: 'Overview' },
-  { value: 'react-prose-installation', depth: 2, label: 'Installation' },
-  { value: 'react-prose-authoring', depth: 2, label: 'Authoring' },
-  { value: 'react-prose-theming', depth: 2, label: 'Theming' },
-  { value: 'react-prose-next-steps', depth: 2, label: 'Next Steps' },
-];
-
 export default function ReactTocProse() {
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -42,9 +34,8 @@ export default function ReactTocProse() {
             </p>
             <h2 id="react-prose-authoring">Authoring</h2>
             <p>
-              Give each heading an <code>id</code> that matches the item&apos;s <code>value</code>, describe the heading
-              level with <code>depth</code>, and provide the visible <code>label</code>. Depth drives indentation; the
-              six high-level variants drive presentation.
+              Give each heading a stable <code>id</code>. Toc collects its text and heading level automatically, while
+              the six high-level variants control presentation.
             </p>
             <h2 id="react-prose-theming">Theming</h2>
             <p>
@@ -59,7 +50,7 @@ export default function ReactTocProse() {
           </Prose>
         </PageContent>
         <PageGutter side="right">
-          <Toc items={items} scrollEl={() => pageRef.current} />
+          <Toc scrollEl={() => pageRef.current} />
         </PageGutter>
       </Page>
     </div>

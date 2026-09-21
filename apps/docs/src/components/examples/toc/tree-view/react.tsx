@@ -1,8 +1,7 @@
 // apps/docs/src/components/examples/toc/tree-view/react.tsx
-// Mirrors Ark UI's TOC "With Tree View" example. The section hierarchy below
-// drives the article content only; it is flattened into the public flat
-// `TocItem[]`, and the high-level `variant="tree"` derives the TreeView
-// collection and its expansion state.
+// Mirrors Ark UI's TOC "With Tree View" example. The section hierarchy drives
+// article content; Toc collects the rendered heading depths and derives the
+// TreeView collection and its expansion state.
 import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 import { useRef } from 'react';
 
@@ -44,12 +43,6 @@ const sections: Section[] = [
   },
 ];
 
-// Flattened to the public flat item list — no tree structure crosses the API.
-const items = sections.flatMap((section) => [
-  { value: section.id, depth: 2, label: section.name },
-  ...(section.children ?? []).map((child) => ({ value: child.id, depth: 3, label: child.name })),
-]);
-
 export default function ReactTocTreeView() {
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +78,7 @@ export default function ReactTocTreeView() {
           </div>
         </PageContent>
         <PageGutter side="right" className="border-s border-border">
-          <Toc items={items} variant="tree" scrollEl={() => pageRef.current} />
+          <Toc variant="tree" scrollEl={() => pageRef.current} />
         </PageGutter>
       </Page>
     </div>

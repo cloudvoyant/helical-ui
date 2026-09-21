@@ -3,7 +3,7 @@
 import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
 import { useRef } from 'react';
 
-const items = [
+const sections = [
   { value: 'react-01-introduction', depth: 2, label: 'Introduction', lines: 12 },
   { value: 'react-01-getting-started', depth: 2, label: 'Getting Started', lines: 10 },
   { value: 'react-01-installation', depth: 2, label: 'Installation', lines: 8 },
@@ -19,7 +19,7 @@ export default function ReactTocBasic() {
       <Page className="bg-background text-foreground">
         <PageContent data-toc-scroll className="px-8 py-10">
           <div className="mx-auto flex max-w-2xl flex-col gap-10">
-            {items.map((item) => (
+            {sections.map((item) => (
               <section key={item.value} className="scroll-mt-8">
                 <h2 id={item.value} className="text-lg font-semibold">
                   {item.label}

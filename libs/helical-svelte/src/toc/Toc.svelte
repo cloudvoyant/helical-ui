@@ -28,6 +28,7 @@
 </script>
 
 <script lang="ts">
+  import TocAutoOwned from './TocAutoOwned.svelte';
   import TocOwned from './TocOwned.svelte';
   import TocView from './TocView.svelte';
 
@@ -57,9 +58,22 @@
 <!-- Only one branch ever mounts, so the Root Provider path reuses its machine and creates no second one. -->
 {#if value}
   <TocView items={items ?? machineItems(value())} {variant} {title} {value} class={className} />
-{:else}
+{:else if items}
   <TocOwned
     {items}
+    {variant}
+    {scrollEl}
+    {title}
+    {activeIds}
+    {defaultActiveIds}
+    {onActiveChange}
+    {rootMargin}
+    {scrollBehavior}
+    {autoScroll}
+    class={className}
+  />
+{:else}
+  <TocAutoOwned
     {headingSelector}
     {variant}
     {scrollEl}
