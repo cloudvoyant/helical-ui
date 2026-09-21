@@ -1,11 +1,11 @@
 ---
 // apps/docs/src/components/Toc.astro
-// Renders the docs shell's "On this page" navigation with the published Toc.
+// Renders the docs shell's "On this page" navigation with the published TableOfContents.
 // The containing aside/sticky/scroll comes from the Page layout's right gutter
-// (see Shell.astro); Toc collects document headings after hydration.
-import { Toc } from '@cloudvoyant/helical-react';
+// (see Shell.astro); TableOfContents collects document headings after hydration.
+import { TableOfContents } from '@cloudvoyant/helical-react';
 ---
 
 <div data-docs-toc>
-  <Toc client:load headingSelector=".docs-prose :is(h2, h3)" variant="indicator" />
+  <TableOfContents client:load headingSelector=".docs-prose :is(h2, h3)" variant="indicator" />
 </div>

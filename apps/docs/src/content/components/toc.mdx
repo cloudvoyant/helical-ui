@@ -1,5 +1,5 @@
 ---
-title: Toc
+title: Table of Contents
 description: A table of contents that tracks and highlights the active section as you scroll, for React and Svelte.
 order: 9
 group: navigation
@@ -8,7 +8,7 @@ group: navigation
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`Toc` renders a table of contents for headings that already exist on the page. By default, it collects `h2` through `h6` elements with an `id` from the document or supplied scroll root, using each heading's text as its label. The Ark-compatible TOC machine then watches those headings. The machine can retain an active range when several headings occupy its observation band, while the high-level renderer identifies exactly one item as current through `data-current` and `aria-current="location"`. It normally presents the first active item, but the final heading wins at the end of the scroll root when it is still visible. Scrolling and hash updates still come from that machine — you never parse Markdown or HTML, write an observer, add a scroll listener, or maintain active-section state yourself.
+`TableOfContents` renders a table of contents for headings that already exist on the page. By default, it collects `h2` through `h6` elements from the document or supplied scroll root, using each heading's text as its label and generating a unique anchor ID when one is missing. The Ark-compatible TOC machine then watches those headings. The machine can retain an active range when several headings are visible, while the high-level renderer identifies exactly one item as current through `data-current` and `aria-current="location"`: the last visible heading in document order. Scrolling and hash updates still come from that machine — you never parse Markdown or HTML, write an observer, add a scroll listener, or maintain active-section state yourself.
 
 The navigation is standalone and never renders or owns article content. That is what lets it live beside the content it tracks, in a gutter or a sidebar, instead of wrapping it.
 
@@ -24,28 +24,28 @@ The navigation is standalone and never renders or owns article content. That is 
 
 Every Ark UI TOC example is reachable through the high-level API — the migrated examples are one-for-one with upstream, not approximations:
 
-| Ark UI example   | Docs example      | High-level API                                                                                                                                       |
-| ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Basic            | `basic`           | `<Toc />` collects headings and owns the machine internally.                                                                                         |
-| Nested Headings  | `nested-headings` | `<Toc />` collects mixed heading levels; indentation follows each rendered level.                                                                    |
-| Root Provider    | `root-provider`   | One external `useToc` machine passed to `<Toc items={items} value={toc} />`; this advanced pattern supplies machine items explicitly.                |
-| With Collapsible | `collapsible`     | A sticky `<Toc variant="collapsible" />` above the article, with the progress ring in its trigger and numbered links inside its collapsible content. |
-| With Hover       | `hover`           | `<Toc variant="hover" />` with skeleton bars that expand to links on hover.                                                                          |
-| With Indicator   | `indicator`       | `<Toc variant="indicator" />` with the sliding active marker.                                                                                        |
-| With Rail        | `rail`            | `<Toc variant="rail" />` with the depth rail and bezier turns.                                                                                       |
-| With Tree View   | `tree-view`       | `<Toc variant="tree" />` with a TreeView derived from collected heading levels.                                                                      |
-| helical-ui extra | `prose`           | `<Toc />` in a `PageGutter` beside the published `Prose` component.                                                                                  |
+| Ark UI example   | Docs example      | High-level API                                                                                                                                                   |
+| ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basic            | `basic`           | `<TableOfContents />` collects headings and owns the machine internally.                                                                                         |
+| Nested Headings  | `nested-headings` | `<TableOfContents />` collects mixed heading levels; indentation follows each rendered level.                                                                    |
+| Root Provider    | `root-provider`   | One external `useToc` machine passed to `<TableOfContents items={items} value={toc} />`; this advanced pattern supplies machine items explicitly.                |
+| With Collapsible | `collapsible`     | A sticky `<TableOfContents variant="collapsible" />` above the article, with the progress ring in its trigger and numbered links inside its collapsible content. |
+| With Hover       | `hover`           | `<TableOfContents variant="hover" />` with skeleton bars that expand to links on hover.                                                                          |
+| With Indicator   | `indicator`       | `<TableOfContents variant="indicator" />` with the sliding active marker.                                                                                        |
+| With Rail        | `rail`            | `<TableOfContents variant="rail" />` with the depth rail and bezier turns.                                                                                       |
+| With Tree View   | `tree-view`       | `<TableOfContents variant="tree" />` with a TreeView derived from collected heading levels.                                                                      |
+| helical-ui extra | `prose`           | `<TableOfContents />` in a `PageGutter` beside the published `Prose` component.                                                                                  |
 
-Every example runs on its own `/preview/toc/<example>` page inside the existing `PreviewFrame` web view. A full-height preview wrapper is the explicit `scrollEl`, so moving the surrounding docs page cannot change the iframe machine's intersection calculations. Inside that isolated root, each example uses the published `Page` layout and puts article content in `PageContent`. Gutter variants put navigation in the right `PageGutter`; the stacked Collapsible example pins its disclosure above the article, matching Ark's composition.
+Every example runs on its own `/preview/toc/<example>` page inside the existing `PreviewFrame` web view. Each machine observes its iframe document, so moving the surrounding docs page cannot change the preview's intersection calculations. The automatic examples scope `headingSelector` to their framework island because React and Svelte mount together in the preview route. Each example uses the published `Page` layout and puts article content in `PageContent`. Gutter variants put navigation in the right `PageGutter`; the stacked Collapsible example pins its disclosure above the article, matching Ark's composition.
 
 The `prose` example is the helical-ui addition. It uses the same Page/gutter composition with the published `Prose` component for article typography. Every owned-machine example omits `items` and exercises automatic heading collection; only the Root Provider example supplies items because it constructs `useToc` directly.
 
 ## Guide
 
-`Toc` collects headings and labels automatically. Existing heading IDs are preserved; headings without IDs receive unique slug IDs during collection:
+`TableOfContents` collects headings and labels automatically. Existing heading IDs are preserved; headings without IDs receive unique slug IDs during collection:
 
 ```tsx
-import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-react';
+import { Page, PageContent, PageGutter, TableOfContents } from '@cloudvoyant/helical-react';
 
 export function Docs() {
   return (
@@ -56,14 +56,14 @@ export function Docs() {
         <h3>Advanced configuration</h3>
       </PageContent>
       <PageGutter side="right">
-        <Toc />
+        <TableOfContents />
       </PageGutter>
     </Page>
   );
 }
 ```
 
-Use `headingSelector` to narrow collection by container or maximum depth, for example `<Toc headingSelector="article :is(h2, h3)" />`. Pass `items` only when labels or order must differ from the rendered headings, when headings change after mount, or when TOC links and generated IDs must be present in server-rendered HTML.
+Use `headingSelector` to narrow collection by container or maximum depth, for example `<TableOfContents headingSelector="article :is(h2, h3)" />`. Pass `items` only when labels or order must differ from the rendered headings, when headings change after mount, or when TOC links and generated IDs must be present in server-rendered HTML.
 
 `Page` uses document scrolling, so its gutter composition does not need `scrollEl`. When another application tracks a deliberately independent scrolling panel, hand the machine that panel as its scroll root:
 
@@ -74,54 +74,54 @@ const contentRef = useRef<HTMLElement | null>(null);
   <main ref={contentRef} className="h-dvh overflow-y-auto">
     {/* headings with matching ids */}
   </main>
-  <Toc scrollEl={() => contentRef.current} />
+  <TableOfContents scrollEl={() => contentRef.current} />
 </div>;
 ```
 
 Svelte takes the same props with `class` in place of `className` and `bind:this` for the scroll root:
 
 ```svelte
-<Toc scrollEl={() => contentRef} variant="rail" />
+<TableOfContents scrollEl={() => contentRef} variant="rail" />
 ```
 
 ### The Root Provider pattern
 
-`useToc` returns the Ark-compatible machine so you can share one instance. Pass it to `Toc` through `value`, and `Toc` renders from it without creating a second machine:
+`useToc` returns the Ark-compatible machine so you can share one instance. Pass it to `TableOfContents` through `value`, and `TableOfContents` renders from it without creating a second machine:
 
 ```tsx
-import { Toc, useToc } from '@cloudvoyant/helical-react';
+import { TableOfContents, useToc } from '@cloudvoyant/helical-react';
 
-const toc = useToc({ items, scrollEl: () => contentRef.current });
+const toc = useToc({ items });
 
 <output>activeIds: {JSON.stringify(toc.activeIds)}</output>
-<Toc items={items} value={toc} />
+<TableOfContents items={items} value={toc} />
 ```
 
-This is the one place `Toc` does not own its machine. `Toc` is a hook-free dispatcher: with `value` it renders the view directly, and only without `value` does it mount the internal owner that calls `useToc` exactly once. So every TOC on a page has exactly one machine — the one you passed, or the one it made.
+This is the one place `TableOfContents` does not own its machine. `TableOfContents` is a hook-free dispatcher: with `value` it renders the view directly, and only without `value` does it mount the internal owner that calls `useToc` exactly once. So every TOC on a page has exactly one machine — the one you passed, or the one it made.
 
 ## API Reference
 
-### Toc
+### TableOfContents
 
-Renders a `<div>` wrapping a `<nav>`. The `default`, `indicator`, `rail`, and `tree` variants also render a title heading (default `On this page`); `hover` and `collapsible` label themselves, so they render no title.
+Renders a `<div>` wrapping a labelled `<nav>`. The `default`, `indicator`, `rail`, and `tree` variants show the title heading (default `On this page`); `hover` and `collapsible` keep the same title available to assistive technology.
 
 #### Props
 
-| Prop                  | Type                                                                       | Default               | Description                                                                      |
-| --------------------- | -------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------- |
-| `items`               | `TocItem[]`                                                                | auto-collected        | Explicit sections. Omit to collect headings from the document or `scrollEl`.     |
-| `headingSelector`     | `string`                                                                   | `'h2, …, h6'`         | Selector used by automatic heading collection.                                   |
-| `variant`             | `'default' \| 'indicator' \| 'hover' \| 'rail' \| 'tree' \| 'collapsible'` | `'default'`           | Presentation. All six adapt the matching Ark UI TOC example.                     |
-| `value`               | `UseTocReturn`                                                             | —                     | An existing Ark-compatible machine. When supplied, `Toc` creates none.           |
-| `scrollEl`            | `() => HTMLElement \| null`                                                | —                     | Returns the scrolling container to observe. Omit it to observe document scroll.  |
-| `title`               | `ReactNode` / `string \| Snippet`                                          | `'On this page'`      | The title above the list.                                                        |
-| `activeIds`           | `string[]`                                                                 | —                     | Controlled active heading ids.                                                   |
-| `defaultActiveIds`    | `string[]`                                                                 | —                     | Initial active heading ids when uncontrolled.                                    |
-| `onActiveChange`      | `(details: TocActiveChangeDetails) => void`                                | —                     | Called when the visible headings change. Receives `activeIds` and `activeItems`. |
-| `rootMargin`          | `string`                                                                   | `'-20px 0px 0px 0px'` | IntersectionObserver root margin — the effective viewport for "active".          |
-| `scrollBehavior`      | `ScrollBehavior`                                                           | `'smooth'`            | Used when auto-scrolling the nav and when scrolling to a heading.                |
-| `autoScroll`          | `boolean`                                                                  | `true`                | Scroll the nav so the first active item stays visible.                           |
-| `className` / `class` | `string`                                                                   | —                     | Merged via `cn` with the variant's classes.                                      |
+| Prop                  | Type                                                                       | Default               | Description                                                                        |
+| --------------------- | -------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- |
+| `items`               | `TocItem[]`                                                                | auto-collected        | Explicit sections. Omit to collect headings from the document or `scrollEl`.       |
+| `headingSelector`     | `string`                                                                   | `'h2, …, h6'`         | Selector used by automatic heading collection.                                     |
+| `variant`             | `'default' \| 'indicator' \| 'hover' \| 'rail' \| 'tree' \| 'collapsible'` | `'default'`           | Presentation. All six adapt the matching Ark UI TOC example.                       |
+| `value`               | `UseTocReturn`                                                             | —                     | An existing Ark-compatible machine. When supplied, `TableOfContents` creates none. |
+| `scrollEl`            | `() => HTMLElement \| null`                                                | —                     | Returns the scrolling container to observe. Omit it to observe document scroll.    |
+| `title`               | `ReactNode` / `string \| Snippet`                                          | `'On this page'`      | The title above the list.                                                          |
+| `activeIds`           | `string[]`                                                                 | —                     | Controlled active heading ids.                                                     |
+| `defaultActiveIds`    | `string[]`                                                                 | —                     | Initial active heading ids when uncontrolled.                                      |
+| `onActiveChange`      | `(details: TocActiveChangeDetails) => void`                                | —                     | Called when the visible headings change. Receives `activeIds` and `activeItems`.   |
+| `rootMargin`          | `string`                                                                   | `'-20px 0px 0px 0px'` | IntersectionObserver root margin — the effective viewport for "active".            |
+| `scrollBehavior`      | `ScrollBehavior`                                                           | `'smooth'`            | Used when auto-scrolling the nav and when scrolling to a heading.                  |
+| `autoScroll`          | `boolean`                                                                  | `true`                | Scroll the nav so the first active item stays visible.                             |
+| `className` / `class` | `string`                                                                   | —                     | Merged via `cn` with the variant's classes.                                        |
 
 ### TocItem
 
@@ -137,16 +137,16 @@ Returns the Ark-compatible machine — `activeIds`, `activeItems`, `setActiveIds
 
 #### Props
 
-`useToc` accepts the same machine props as `Toc` (`items`, `scrollEl`, `activeIds`, `defaultActiveIds`, `onActiveChange`, `rootMargin`, `scrollBehavior`, `autoScroll`), minus presentation.
+`useToc` accepts the same machine props as `TableOfContents` (`items`, `scrollEl`, `activeIds`, `defaultActiveIds`, `onActiveChange`, `rootMargin`, `scrollBehavior`, `autoScroll`), minus presentation.
 
 ## Accessibility
 
-`Toc` renders a native `<nav>` and a `<ul>`/`<li>` list, and links to the headings by `id`. Exactly one link carries `data-current` and `aria-current="location"`, so the current section is announced rather than only coloured, and the nav is labelled by its title heading. Machine-range state remains available through `data-active`, while items also expose `data-depth`, `data-first`, and `data-last`. Because headings are found by `id`, use unique `id`s and make sure the linked headings exist — a missing heading simply never becomes active.
+`TableOfContents` renders a native `<nav>` and a `<ul>`/`<li>` list, and links to the headings by `id`. Exactly one link carries `data-current` and `aria-current="location"`, so the current section is announced rather than only coloured, and the nav is labelled by its title heading. Machine-range state remains available through `data-active`, while items also expose `data-depth`, `data-first`, and `data-last`. Because headings are found by `id`, use unique `id`s and make sure the linked headings exist — a missing heading simply never becomes active.
 
 ## Theming
 
-Every class comes from the shared cva layer in `@cloudvoyant/helical-ui`, so `Toc` follows the same theme tokens as the rest of the library — `text-muted-foreground` for links, `text-foreground` for the active one, `bg-primary` for the indicator, and `border-border` for the default list rail. Depth indentation uses the `--depth` custom property the machine sets on each item.
+Every class comes from the shared cva layer in `@cloudvoyant/helical-ui`, so `TableOfContents` follows the same theme tokens as the rest of the library — `text-muted-foreground` for links, `text-foreground` for the active one, `bg-primary` for the indicator, and `border-border` for the default list rail. Depth indentation uses the `--depth` custom property the machine sets on each item.
 
 ## Implementation note
 
-Ark UI has not published its TOC primitives to npm yet, so each framework package vendors them behind a private compatibility barrel (`src/toc/internal/`). The examples on this page use the public high-level API only — the copied primitives are internal implementation details and are not exported from the package root. When Ark ships stable TOC exports, the barrel is replaced and the vendored files are deleted, with no change to the `Toc` or `useToc` API.
+Ark UI has not published its TOC primitives to npm yet, so each framework package vendors them behind a private compatibility barrel (`src/toc/internal/`). The examples on this page use the public high-level API only — the copied primitives are internal implementation details and are not exported from the package root. When Ark ships stable TOC exports, the barrel is replaced and the vendored files are deleted, with no change to the `TableOfContents` or `useToc` API.

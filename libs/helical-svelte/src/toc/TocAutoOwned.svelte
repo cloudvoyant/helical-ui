@@ -3,7 +3,7 @@
   import * as helicalUi from '@cloudvoyant/helical-ui';
   import type { TocItem } from '@cloudvoyant/helical-ui';
   import { onMount } from 'svelte';
-  import type { TocProps } from './Toc.svelte';
+  import type { TocProps } from './types';
   import TocOwned from './TocOwned.svelte';
 
   type Props = Omit<TocProps, 'items' | 'value'>;

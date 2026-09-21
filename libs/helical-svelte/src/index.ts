@@ -60,4 +60,6 @@ export * from './prose';
 export * from './toggle-group';
 export * from './listbox';
 export * from './editor';
-export * from './toc';
+export { default as TableOfContents } from './toc/TableOfContents.svelte';
+export type { TableOfContentsProps, TocVariant } from './toc/types';
+export { useToc, type TocActiveChangeDetails, type UseTocProps, type UseTocReturn } from './toc/internal';

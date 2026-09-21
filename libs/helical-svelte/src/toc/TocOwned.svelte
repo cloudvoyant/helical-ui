@@ -4,7 +4,7 @@
   import type { TocItem } from '@cloudvoyant/helical-ui';
   import { useToc } from './internal';
   import TocView from './TocView.svelte';
-  import type { TocProps } from './Toc.svelte';
+  import type { TocProps } from './types';
 
   type Props = Omit<TocProps, 'items' | 'value'> & { items: TocItem[] };
 

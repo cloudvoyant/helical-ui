@@ -1,6 +1,6 @@
 <!-- libs/helical-svelte/src/toc/TocView.svelte -->
 <!-- Renders the received machine through the private compatibility barrel. Never creates one.
-     Mirrors @cloudvoyant/helical-react Toc's `TocView`. -->
+     Mirrors @cloudvoyant/helical-react TableOfContents's internal `TocView`. -->
 <script module lang="ts">
   import type { TocItem } from '@cloudvoyant/helical-ui';
 
@@ -45,7 +45,7 @@
     type UseTocReturn,
   } from './internal';
   import TocTreeNode from './TocTreeNode.svelte';
-  import type { TocProps } from './Toc.svelte';
+  import type { TocProps } from './types';
   import { getCurrentValue } from './current-value';
 
   type Props = Omit<Pick<TocProps, 'items' | 'variant' | 'title' | 'class'>, 'items'> & {
@@ -73,18 +73,18 @@
 
   const showTitle = $derived(variant !== 'collapsible');
 
-  const activeIndex = () => items.findIndex((item) => item.value === getCurrentValue(value()));
-  const activeLabel = () => items[activeIndex()]?.label ?? 'On this page';
-  const activeProgress = () => {
-    const index = activeIndex();
-    return index >= 0 ? (index + 1) / items.length : 0;
-  };
-
   let hovered = $state(false);
 
   const activeItems = $derived(value().activeItems);
   const currentValue = $derived(getCurrentValue(value(), activeItems));
   const itemIndicator = $derived(variant === 'indicator' && currentValue !== activeItems[0]?.value);
+
+  const activeIndex = () => items.findIndex((item) => item.value === currentValue);
+  const activeLabel = () => items[activeIndex()]?.label ?? 'On this page';
+  const activeProgress = () => {
+    const index = activeIndex();
+    return index >= 0 ? (index + 1) / items.length : 0;
+  };
 
   const treeRoots = $derived(pruneLeaves(buildTree(items)));
   const treeCollection = $derived(

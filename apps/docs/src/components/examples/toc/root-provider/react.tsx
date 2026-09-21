@@ -1,8 +1,7 @@
 // apps/docs/src/components/examples/toc/root-provider/react.tsx
 // Mirrors Ark UI's TOC "Root Provider" example: one external machine, passed
-// through `value`. The high-level Toc creates none on this path.
-import { Page, PageContent, PageGutter, Toc, useToc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+// through `value`. The high-level TableOfContents creates none on this path.
+import { Page, PageContent, PageGutter, TableOfContents, useToc } from '@cloudvoyant/helical-react';
 
 const items = [
   { value: 'react-03-introduction', depth: 2, label: 'Introduction', lines: 12 },
@@ -13,14 +12,13 @@ const items = [
 ];
 
 export default function ReactTocRootProvider() {
-  const pageRef = useRef<HTMLDivElement>(null);
-  // The single machine for this example — Toc must not create another.
-  const toc = useToc({ items, scrollEl: () => pageRef.current });
+  // The single machine for this example — TableOfContents must not create another.
+  const toc = useToc({ items });
 
   return (
-    <div ref={pageRef} data-toc-scroll-root className="h-svh overflow-y-auto overscroll-y-auto">
+    <div className="min-h-dvh">
       <Page className="bg-background text-foreground">
-        <PageContent data-toc-scroll className="px-8 py-10">
+        <PageContent className="px-8 py-10">
           <div className="mx-auto flex max-w-2xl flex-col gap-10">
             {items.map((item) => (
               <section key={item.value} className="scroll-mt-8">
@@ -37,10 +35,10 @@ export default function ReactTocRootProvider() {
           </div>
         </PageContent>
         <PageGutter side="right" className="border-s border-border">
-          <output data-toc-active-ids className="mb-3 block truncate font-mono text-xs text-muted-foreground">
+          <output className="mb-3 block truncate font-mono text-xs text-muted-foreground">
             activeIds: {JSON.stringify(toc.activeIds)}
           </output>
-          <Toc items={items} value={toc} />
+          <TableOfContents items={items} value={toc} />
         </PageGutter>
       </Page>
     </div>

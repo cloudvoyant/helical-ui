@@ -1,21 +1,18 @@
 // apps/docs/src/components/examples/toc/prose/react.tsx
-// helical-ui specific: the machine observes the isolated full-preview scroll root,
-// while the nav sits in a `PageGutter` beside the published `Prose` component.
-import { Page, PageContent, PageGutter, Prose, Toc } from '@cloudvoyant/helical-react';
-import { useRef } from 'react';
+// helical-ui specific: the machine observes the iframe document while the nav
+// sits in a `PageGutter` beside the published `Prose` component.
+import { Page, PageContent, PageGutter, Prose, TableOfContents } from '@cloudvoyant/helical-react';
 
 export default function ReactTocProse() {
-  const pageRef = useRef<HTMLDivElement>(null);
-
   return (
-    <div ref={pageRef} data-toc-scroll-root className="h-svh overflow-y-auto overscroll-y-auto">
+    <div className="min-h-dvh">
       <Page>
         <PageContent className="px-8 py-10">
           <Prose as="article" className="mx-auto max-w-2xl">
             <h1>Prose with a table of contents</h1>
             <p>
-              This example composes the published <code>Prose</code> component with <code>Toc</code> in a{' '}
-              <code>PageGutter</code>. The existing machine observes this preview&apos;s explicit scroll root, which
+              This example composes the published <code>Prose</code> component with <code>TableOfContents</code> in a{' '}
+              <code>PageGutter</code>. The existing machine observes this iframe&apos;s document viewport, which
               isolates active headings from movement on the surrounding docs page.
             </p>
             <h2 id="react-prose-overview">Overview</h2>
@@ -29,13 +26,13 @@ export default function ReactTocProse() {
             </p>
             <h2 id="react-prose-installation">Installation</h2>
             <p>
-              Install the package for your framework and import <code>Toc</code> from the package root. The vendored
-              Ark-compatible primitives stay private, so only the high-level API appears here.
+              Install the package for your framework and import <code>TableOfContents</code> from the package root. The
+              vendored Ark-compatible primitives stay private, so only the high-level API appears here.
             </p>
             <h2 id="react-prose-authoring">Authoring</h2>
             <p>
-              Give each heading a stable <code>id</code>. Toc collects its text and heading level automatically, while
-              the six high-level variants control presentation.
+              Give each heading a stable <code>id</code>. TableOfContents collects its text and heading level
+              automatically, while the six high-level variants control presentation.
             </p>
             <h2 id="react-prose-theming">Theming</h2>
             <p>
@@ -50,7 +47,7 @@ export default function ReactTocProse() {
           </Prose>
         </PageContent>
         <PageGutter side="right">
-          <Toc scrollEl={() => pageRef.current} />
+          <TableOfContents headingSelector='[data-fw="react"] :is(h2, h3, h4, h5, h6)' />
         </PageGutter>
       </Page>
     </div>

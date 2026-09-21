@@ -1,5 +1,5 @@
 // libs/helical-react/src/toc/Toc.tsx
-// High-level Toc. Composed only from the private Ark-compatible barrel in
+// High-level TableOfContents. Composed only from the private Ark-compatible barrel in
 // `./internal` plus stable Ark subcomponents used by the upstream TOC examples
 // (@ark-ui/react/collapsible, /swap, /tree-view). The vendored primitives stay
 // private so replacing them with stable `@ark-ui/react/toc` exports is a barrel
@@ -30,13 +30,13 @@ import { Toc as TocPrimitive, useToc, useTocContext, type TocActiveChangeDetails
 
 export type TocVariant = 'default' | 'indicator' | 'hover' | 'rail' | 'tree' | 'collapsible';
 
-export type TocProps = {
+export type TableOfContentsProps = {
   /** Explicit items override automatic heading collection. */
   items?: TocItem[];
   /** CSS selector used when collecting headings automatically. */
   headingSelector?: string;
   variant?: TocVariant;
-  /** Existing Ark-compatible machine. When supplied, Toc creates no machine. */
+  /** Existing Ark-compatible machine. When supplied, TableOfContents creates no machine. */
   value?: UseTocReturn;
   scrollEl?: () => HTMLElement | null;
   title?: ReactNode;
@@ -51,41 +51,13 @@ export type TocProps = {
 
 const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
+/** Select the last active heading in document order. */
 function getCurrentValue(toc: UseTocReturn, activeItems = toc.activeItems) {
-  const firstActiveValue = activeItems[0]?.value;
-  if (!firstActiveValue || typeof document === 'undefined' || typeof window === 'undefined') {
-    return firstActiveValue;
-  }
-
-  // The active heading that appears last in item (document) order. When several
-  // same-level headings share the viewport at scroll end, the topmost one would
-  // otherwise stick as current even though you can no longer scroll to isolate
-  // the lower ones — so there the bottommost visible heading wins.
+  if (activeItems.length === 0) return undefined;
   const order = new Map(toc.items.map((item, index) => [item.value, index]));
-  const lastActiveValue = activeItems.reduce((last, item) =>
+  return activeItems.reduce((last, item) =>
     (order.get(item.value) ?? -1) > (order.get(last.value) ?? -1) ? item : last,
   ).value;
-  if (lastActiveValue === firstActiveValue) return firstActiveValue;
-
-  const heading = document.getElementById(lastActiveValue);
-  if (!heading) return firstActiveValue;
-
-  let scrollRoot: HTMLElement | null = null;
-  for (let parent = heading.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
-    const overflowY = window.getComputedStyle(parent).overflowY;
-    if (/(auto|scroll)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
-      scrollRoot = parent;
-      break;
-    }
-  }
-
-  const scrollingElement = document.scrollingElement;
-  const atEnd = scrollRoot
-    ? Math.ceil(scrollRoot.scrollTop + scrollRoot.clientHeight) >= scrollRoot.scrollHeight - 1
-    : !!scrollingElement &&
-      Math.ceil(scrollingElement.scrollTop + scrollingElement.clientHeight) >= scrollingElement.scrollHeight - 1;
-
-  return atEnd ? lastActiveValue : firstActiveValue;
 }
 
 function currentLinkProps(toc: UseTocReturn, value: string) {
@@ -100,7 +72,7 @@ function currentLinkProps(toc: UseTocReturn, value: string) {
  * Hook-free dispatcher. With `value` the supplied machine is rendered directly
  * and no machine is created; without it, `TocOwned` owns exactly one machine.
  */
-export function Toc(props: TocProps) {
+export function TableOfContents(props: TableOfContentsProps) {
   if (props.value) {
     const items =
       props.items ??
@@ -114,7 +86,7 @@ export function Toc(props: TocProps) {
 }
 
 /** Collects headings before the machine mounts so its observer sees every item. */
-function TocAutoOwned(props: TocProps) {
+function TocAutoOwned(props: TableOfContentsProps) {
   const [items, setItems] = useState<TocItem[]>([]);
 
   useEffect(() => {
@@ -126,7 +98,7 @@ function TocAutoOwned(props: TocProps) {
 }
 
 /** The only high-level component that calls the internal `useToc`. */
-function TocOwned(props: TocProps & { items: TocItem[] }) {
+function TocOwned(props: TableOfContentsProps & { items: TocItem[] }) {
   const value = useToc({
     items: props.items,
     activeIds: props.activeIds,
@@ -148,7 +120,7 @@ function TocView({
   title = 'On this page',
   className,
   value,
-}: TocProps & { items: TocItem[]; value: UseTocReturn }) {
+}: TableOfContentsProps & { items: TocItem[]; value: UseTocReturn }) {
   // The machine labels the nav with `aria-labelledby` → the Title id, so a Title
   // must always render. The hover and collapsible variants carry their own visible
   // label, so theirs is screen-reader only.
