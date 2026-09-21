@@ -8,28 +8,15 @@ import Sidebar from '../components/Sidebar.astro';
 import Toc from '../components/Toc.astro';
 import Footer from '../components/Footer.astro';
 
-interface TocHeading {
-  depth: number;
-  slug: string;
-  text: string;
-}
-
 interface Props {
   title?: string;
   description?: string;
   currentPath?: string;
-  headings?: TocHeading[];
   /** `landing` renders the Page landing variant (no gutters) for full-screen pages such as the home hero. */
   variant?: 'default' | 'landing';
 }
 
-const {
-  title = 'helical-ui',
-  description,
-  currentPath = import.meta.env.BASE_URL,
-  headings = [],
-  variant = 'default',
-} = Astro.props;
+const { title = 'helical-ui', description, currentPath = import.meta.env.BASE_URL, variant = 'default' } = Astro.props;
 
 const general = (await getCollection('general')).sort((a, b) => a.data.order - b.data.order);
 const components = (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
@@ -130,7 +117,7 @@ const groups = NAV_GROUPS.map((g) => {
           className="top-16 hidden h-[calc(100svh-4rem)] xl:block xl:w-64 xl:p-0"
         >
           <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pr-4 xl:pr-8">
-            <Toc headings={headings} />
+            <Toc />
           </div>
         </PageGutter>
         <PageFooter>

@@ -9,8 +9,12 @@ import { test, expect, type Page, type FrameLocator } from '@playwright/test';
 const FRAMEWORKS = ['react', 'svelte'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
-function exampleFrame(page: Page, index: number): FrameLocator {
-  return page.locator('[data-example]').nth(index).frameLocator('iframe[data-preview]');
+async function exampleFrame(page: Page, index: number): Promise<FrameLocator> {
+  const example = page.locator('[data-example]').nth(index);
+  await example.scrollIntoViewIfNeeded();
+  const iframe = example.locator('iframe[data-preview]');
+  await expect(iframe).toHaveAttribute('src', /\/preview\/sidebar\//);
+  return example.frameLocator('iframe[data-preview]');
 }
 
 function sidebar(frame: FrameLocator, framework: Framework) {
@@ -31,7 +35,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('collapses to an icon rail (container narrows, icon remains)', async ({ page }) => {
-      const frame = exampleFrame(page, 0); // icon example
+      const frame = await exampleFrame(page, 0); // icon example
       const sb = sidebar(frame, framework);
       const container = frame.locator(`[data-fw="${framework}"] [data-slot="sidebar-container"]`).first();
       const menuButton = frame.locator(`[data-fw="${framework}"] [data-sidebar="menu-button"]:has(svg)`).first();
@@ -60,7 +64,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('completely disappears on collapse (offcanvas)', async ({ page }) => {
-      const frame = exampleFrame(page, 1); // offcanvas example
+      const frame = await exampleFrame(page, 1); // offcanvas example
       const sb = sidebar(frame, framework);
       const gap = frame.locator(`[data-fw="${framework}"] [data-slot="sidebar-gap"]`).first();
       const trigger = frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first();
@@ -83,7 +87,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('toggles expanded/collapsed with the rail handle', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await exampleFrame(page, 2); // rail example
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
@@ -107,7 +111,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('rail activates with the Enter key', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await exampleFrame(page, 2); // rail example
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
@@ -120,7 +124,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('trigger and rail carry accessible labels', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await exampleFrame(page, 2); // rail example
       await expect(frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first()).toHaveAttribute(
         'aria-label',
         'Toggle Sidebar',

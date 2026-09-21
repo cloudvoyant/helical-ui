@@ -30,7 +30,7 @@ const title = example
   .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
   .join(' ');
 
-const isPreviewFrame = ['sidebar', 'page'].includes(component);
+const isPreviewFrame = ['sidebar', 'page', 'toc'].includes(component);
 
 const SSR_EXAMPLES = new Set([
   'mermaid/prerendered',
@@ -60,6 +60,15 @@ const FULLSCREEN_EXAMPLES = new Set([
   'navbar/scroll',
   'navbar/hide',
   'dialog/fullscreen',
+  'toc/basic',
+  'toc/nested-headings',
+  'toc/root-provider',
+  'toc/collapsible',
+  'toc/hover',
+  'toc/indicator',
+  'toc/rail',
+  'toc/tree-view',
+  'toc/prose',
 ]);
 const isFullscreen = FULLSCREEN_EXAMPLES.has(`${component}/${example}`);
 ---

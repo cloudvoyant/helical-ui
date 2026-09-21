@@ -117,6 +117,15 @@ catalogs:
     '@typescript-eslint/parser':
       specifier: ^8.0.0
       version: 8.67.0
+    '@zag-js/react':
+      specifier: 1.43.1
+      version: 1.43.1
+    '@zag-js/svelte':
+      specifier: 1.43.1
+      version: 1.43.1
+    '@zag-js/toc':
+      specifier: 1.43.1
+      version: 1.43.1
     astro:
       specifier: ^7.2.3
       version: 7.2.3
@@ -353,6 +362,12 @@ importers:
       '@tiptap/suggestion':
         specifier: 'catalog:'
         version: 3.31.3(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
+      '@zag-js/react':
+        specifier: 'catalog:'
+        version: 1.43.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@zag-js/toc':
+        specifier: 'catalog:'
+        version: 1.43.1
       lucide-react:
         specifier: 'catalog:'
         version: 1.32.0(react@19.2.8)
@@ -405,6 +420,12 @@ importers:
       '@tiptap/suggestion':
         specifier: 'catalog:'
         version: 3.31.3(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
+      '@zag-js/svelte':
+        specifier: 'catalog:'
+        version: 1.43.1(svelte@5.56.9(@typescript-eslint/types@8.67.0))
+      '@zag-js/toc':
+        specifier: 'catalog:'
+        version: 1.43.1
       lowlight:
         specifier: 'catalog:'
         version: 3.3.0
@@ -3699,6 +3720,10 @@ packages:
   '@zag-js/toast@1.43.1':
     resolution:
       { integrity: sha512-I3rGEppExDWrhJbpe1UY2HVDTO1wS2BiZf0pStSBjDUNhDohDpYlxpfvL0nL/P6uihUPmwJ4zOjz05mILGViRw== }
+
+  '@zag-js/toc@1.43.1':
+    resolution:
+      { integrity: sha512-+3CAznlV66qY5/xukht2hq951FgVSTzbbALRlnhS1CCXZJmA7Ufz0ItFZOQ2dRdVQYCyODyay1UHKpKZwvSEkw== }
 
   '@zag-js/toggle-group@1.43.1':
     resolution:
@@ -11948,6 +11973,14 @@ snapshots:
       '@zag-js/anatomy': 1.43.1
       '@zag-js/core': 1.43.1
       '@zag-js/dismissable': 1.43.1
+      '@zag-js/dom-query': 1.43.1
+      '@zag-js/types': 1.43.1
+      '@zag-js/utils': 1.43.1
+
+  '@zag-js/toc@1.43.1':
+    dependencies:
+      '@zag-js/anatomy': 1.43.1
+      '@zag-js/core': 1.43.1
       '@zag-js/dom-query': 1.43.1
       '@zag-js/types': 1.43.1
       '@zag-js/utils': 1.43.1
