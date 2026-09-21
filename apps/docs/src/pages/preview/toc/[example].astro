@@ -8,7 +8,7 @@
 // framework's island is hidden with the same `html[data-framework]` CSS the docs
 // shell uses.
 //
-// Both islands mount at once, and the Toc machine resolves each heading with
+// Both islands mount at once, and the table-of-contents machine resolves each heading with
 // `document.getElementById`. Heading ids are therefore namespaced per framework
 // in the examples (`react-…` / `svelte-…`) so the hidden island's headings can
 // never shadow the active one's.
@@ -48,7 +48,7 @@ export function getStaticPaths() {
 }
 
 const { example } = Astro.params;
-const title = `Toc preview — ${example}`;
+const title = `Table of Contents preview — ${example}`;
 ---
 
 <html lang="en" data-framework="react" class="theme-helical-ui">

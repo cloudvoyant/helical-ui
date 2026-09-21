@@ -1,6 +1,6 @@
 # Vendored Ark UI TOC primitives (private)
 
-This folder is **not** part of the public API of `@cloudvoyant/helical-react`. It exists so the public high-level `Toc` can be composed from Ark's TOC primitives before Ark publishes them to npm.
+This folder is **not** part of the public API of `@cloudvoyant/helical-react`. It exists so the public high-level `TableOfContents` can be composed from Ark's TOC primitives before Ark publishes them to npm.
 
 ## Why this exists
 
@@ -33,7 +33,7 @@ File extensions in upstream's `./x.ts` / `./x.tsx` specifiers were dropped to ma
 ## Rules
 
 - No helical-ui styles or variant logic belong in this folder. `toc.*` files here are behavior and props only; all classes come from `@cloudvoyant/helical-ui` and are applied by the high-level component.
-- Nothing in this folder may be exported from `libs/helical-react/src/index.ts`. The only public surface is `Toc`, `useToc`, `TocProps`, `UseTocProps`, and `UseTocReturn` via `../index.ts`.
+- Nothing in this folder may be exported from `libs/helical-react/src/index.ts`. The only public surface is `TableOfContents`, `useToc`, `TableOfContentsProps`, `UseTocProps`, and `UseTocReturn` via `../index.ts`.
 - Keep the barrel shape (`index.ts`, `toc.ts`) identical to upstream so the swap below is a barrel replacement.
 
 ## Stable migration steps
@@ -43,4 +43,4 @@ When Ark publishes a stable TOC export:
 1. Confirm `@ark-ui/react/toc` resolves (add `@ark-ui/react` at the version that exports `./toc`).
 2. Replace the internals of `../internal/index.ts` and `../internal/toc.ts` with re-exports from `@ark-ui/react/toc`.
 3. Delete every other file in this folder, including `utils/` and this README.
-4. Run `pnpm -C libs/helical-react lint` and the TOC docs e2e suite. No public `Toc` / `useToc` API change, and no change to variant code, should be required.
+4. Run `pnpm -C libs/helical-react lint` and the TOC docs e2e suite. No public `TableOfContents` / `useToc` API change, and no change to variant code, should be required.

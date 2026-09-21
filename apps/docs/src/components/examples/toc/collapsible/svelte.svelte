@@ -2,37 +2,50 @@
 <!-- Mirrors Ark UI's TOC "With Collapsible" example — the disclosure trigger with
      the progress ring and numbered links is owned by the high-level component. -->
 <script lang="ts">
-  import { Page, PageContent, Toc } from '@cloudvoyant/helical-svelte';
-
-  let pageEl = $state<HTMLDivElement | null>(null);
-
-  const sections = [
-    { value: 'svelte-04-overview', depth: 2, label: 'Overview', lines: 8 },
-    { value: 'svelte-04-prerequisites', depth: 2, label: 'Prerequisites', lines: 5 },
-    { value: 'svelte-04-quick-start', depth: 2, label: 'Quick Start', lines: 20 },
-    { value: 'svelte-04-commands', depth: 2, label: 'Core Commands', lines: 15 },
-    { value: 'svelte-04-troubleshooting', depth: 2, label: 'Troubleshooting', lines: 12 },
-  ];
+  import { Page, PageContent } from '@cloudvoyant/helical-svelte';
+  import TableOfContents from '@cloudvoyant/helical-svelte/table-of-contents';
 
 </script>
 
-<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+{#snippet filler(lines: number)}
+  <div class="mt-3 flex flex-col gap-2">
+    {#each Array.from({ length: lines }) as _, index (index)}
+      <div class="h-2.5 rounded bg-muted"></div>
+    {/each}
+  </div>
+{/snippet}
+
+<div class="min-h-dvh">
   <Page class="bg-background text-foreground">
-  <PageContent data-toc-scroll class="px-8">
-    <div data-toc-sticky class="sticky top-0 z-10 mx-auto max-w-2xl bg-background py-4">
-      <Toc variant="collapsible" scrollEl={() => pageEl} class="max-w-[22rem]" />
+  <PageContent class="px-8">
+    <div class="sticky top-0 z-10 mx-auto max-w-2xl bg-background py-4">
+      <TableOfContents
+        variant="collapsible"
+        headingSelector='[data-fw="svelte"] :is(h2, h3, h4, h5, h6)'
+        class="max-w-[22rem]"
+      />
     </div>
     <div class="mx-auto flex max-w-2xl flex-col gap-10 pb-10">
-      {#each sections as item (item.value)}
-        <section class="scroll-mt-24">
-          <h2 id={item.value} class="text-lg font-semibold">{item.label}</h2>
-          <div class="mt-3 flex flex-col gap-2">
-            {#each Array.from({ length: item.lines }) as _, i (i)}
-              <div class="h-2.5 rounded bg-muted"></div>
-            {/each}
-          </div>
-        </section>
-      {/each}
+      <section class="scroll-mt-24">
+        <h2 id="svelte-04-overview" class="text-lg font-semibold">Overview</h2>
+        {@render filler(8)}
+      </section>
+      <section class="scroll-mt-24">
+        <h2 id="svelte-04-prerequisites" class="text-lg font-semibold">Prerequisites</h2>
+        {@render filler(5)}
+      </section>
+      <section class="scroll-mt-24">
+        <h2 id="svelte-04-quick-start" class="text-lg font-semibold">Quick Start</h2>
+        {@render filler(20)}
+      </section>
+      <section class="scroll-mt-24">
+        <h2 id="svelte-04-commands" class="text-lg font-semibold">Core Commands</h2>
+        {@render filler(15)}
+      </section>
+      <section class="scroll-mt-24">
+        <h2 id="svelte-04-troubleshooting" class="text-lg font-semibold">Troubleshooting</h2>
+        {@render filler(12)}
+      </section>
     </div>
   </PageContent>
   </Page>

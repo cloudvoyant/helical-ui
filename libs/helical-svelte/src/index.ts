@@ -76,4 +76,6 @@ export type {
   CommandStyle,
 } from '@cloudvoyant/helical-ui';
 export * from './which-key';
-export * from './toc';
+export { default as TableOfContents } from './toc/TableOfContents.svelte';
+export type { TableOfContentsProps, TocVariant } from './toc/types';
+export { useToc, type TocActiveChangeDetails, type UseTocProps, type UseTocReturn } from './toc/internal';

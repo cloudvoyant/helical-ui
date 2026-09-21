@@ -10,7 +10,8 @@
       "@/*": ["src/*"],
       "@cloudvoyant/helical-ui": ["../../libs/helical-ui/src/index.ts"],
       "@cloudvoyant/helical-react": ["../../libs/helical-react/src/index.ts"],
-      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"]
+      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"],
+      "@cloudvoyant/helical-svelte/table-of-contents": ["../../libs/helical-svelte/src/toc/TableOfContents.svelte"]
     }
   }
 }

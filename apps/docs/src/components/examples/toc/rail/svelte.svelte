@@ -2,48 +2,66 @@
 <!-- Mirrors Ark UI's TOC "With Rail" example — the depth rail, bezier turns, and
      per-item SVG geometry live in the high-level component, not here. -->
 <script lang="ts">
-  import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
-
-  let pageEl = $state<HTMLDivElement | null>(null);
-
-  const sections = [
-    { value: 'svelte-07-overview', depth: 2, label: 'Overview', lines: 10 },
-    { value: 'svelte-07-installation', depth: 2, label: 'Installation', lines: 8 },
-    { value: 'svelte-07-package-manager', depth: 3, label: 'Package Manager', lines: 12 },
-    { value: 'svelte-07-peer-dependencies', depth: 3, label: 'Peer Dependencies', lines: 6 },
-    { value: 'svelte-07-usage', depth: 2, label: 'Usage', lines: 14 },
-    { value: 'svelte-07-server-components', depth: 3, label: 'Server Components', lines: 9 },
-    { value: 'svelte-07-styling', depth: 3, label: 'Styling', lines: 11 },
-    { value: 'svelte-07-theming', depth: 4, label: 'Theming', lines: 7 },
-    { value: 'svelte-07-api-reference', depth: 2, label: 'API Reference', lines: 12 },
-  ];
+  import { Page, PageContent, PageGutter } from '@cloudvoyant/helical-svelte';
+  import TableOfContents from '@cloudvoyant/helical-svelte/table-of-contents';
 
 </script>
 
-<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+{#snippet filler(lines: number)}
+  <div class="mt-3 flex flex-col gap-2">
+    {#each Array.from({ length: lines }) as _, index (index)}
+      <div class="h-2.5 rounded bg-muted"></div>
+    {/each}
+  </div>
+{/snippet}
+
+<div class="min-h-dvh">
   <Page class="bg-background text-foreground">
-  <PageContent data-toc-scroll class="px-8 py-10">
+  <PageContent class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
-      {#each sections as item (item.value)}
-        <section class="scroll-mt-8" data-depth={item.depth}>
-          <svelte:element
-            this={`h${item.depth}`}
-            id={item.value}
-            class={item.depth > 2 ? 'ps-6 text-base font-semibold' : 'text-lg font-semibold'}
-          >
-            {item.label}
-          </svelte:element>
-          <div class="mt-3 flex flex-col gap-2">
-            {#each Array.from({ length: item.lines }) as _, i (i)}
-              <div class="h-2.5 rounded bg-muted"></div>
-            {/each}
-          </div>
-        </section>
-      {/each}
+      <section class="scroll-mt-8">
+        <h2 id="svelte-07-overview" class="text-lg font-semibold">Overview</h2>
+        {@render filler(10)}
+      </section>
+      <section class="scroll-mt-8">
+        <h2 id="svelte-07-installation" class="text-lg font-semibold">Installation</h2>
+        {@render filler(8)}
+      </section>
+      <section class="scroll-mt-8 ps-6">
+        <h3 id="svelte-07-package-manager" class="text-base font-semibold">Package Manager</h3>
+        {@render filler(12)}
+      </section>
+      <section class="scroll-mt-8 ps-6">
+        <h3 id="svelte-07-peer-dependencies" class="text-base font-semibold">Peer Dependencies</h3>
+        {@render filler(6)}
+      </section>
+      <section class="scroll-mt-8">
+        <h2 id="svelte-07-usage" class="text-lg font-semibold">Usage</h2>
+        {@render filler(14)}
+      </section>
+      <section class="scroll-mt-8 ps-6">
+        <h3 id="svelte-07-server-components" class="text-base font-semibold">Server Components</h3>
+        {@render filler(9)}
+      </section>
+      <section class="scroll-mt-8 ps-6">
+        <h3 id="svelte-07-styling" class="text-base font-semibold">Styling</h3>
+        {@render filler(11)}
+      </section>
+      <section class="scroll-mt-8 ps-6">
+        <h4 id="svelte-07-theming" class="text-base font-semibold">Theming</h4>
+        {@render filler(7)}
+      </section>
+      <section class="scroll-mt-8">
+        <h2 id="svelte-07-api-reference" class="text-lg font-semibold">API Reference</h2>
+        {@render filler(12)}
+      </section>
     </div>
   </PageContent>
   <PageGutter side="right" class="border-s border-border">
-    <Toc variant="rail" scrollEl={() => pageEl} />
+    <TableOfContents
+      variant="rail"
+      headingSelector='[data-fw="svelte"] :is(h2, h3, h4, h5, h6)'
+    />
   </PageGutter>
   </Page>
 </div>
