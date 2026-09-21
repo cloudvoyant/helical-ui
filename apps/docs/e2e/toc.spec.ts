@@ -348,6 +348,15 @@ for (const framework of FRAMEWORKS) {
           return markerBox && currentBox ? Math.abs(markerBox.y - currentBox.y) : Number.POSITIVE_INFINITY;
         })
         .toBeLessThanOrEqual(2);
+      const databaseLink = frame.locator(
+        `${scope(framework)} nav a[data-value="${idOf(framework, '06-database-health')}"]`,
+      );
+      await expect
+        .poll(async () => {
+          const [markerBox, databaseBox] = await Promise.all([marker.boundingBox(), databaseLink.boundingBox()]);
+          return markerBox && databaseBox ? markerBox.y > databaseBox.y + 2 : false;
+        })
+        .toBe(true);
     });
 
     test('rail: renders per-item depth geometry with clamped deep levels', async ({ page }) => {

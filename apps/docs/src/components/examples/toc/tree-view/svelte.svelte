@@ -1,8 +1,7 @@
 <!-- apps/docs/src/components/examples/toc/tree-view/svelte.svelte -->
-<!-- Mirrors Ark UI's TOC "With Tree View" example. The section hierarchy below
-     drives the article content only; it is flattened into the public flat
-     `TocItem[]`, and the high-level `variant="tree"` derives the TreeView
-     collection and its expansion state. -->
+<!-- Mirrors Ark UI's TOC "With Tree View" example. The section hierarchy drives
+     article content; Toc collects the rendered heading depths and derives the
+     TreeView collection and its expansion state. -->
 <script lang="ts">
   import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
 
@@ -46,12 +45,6 @@
     },
   ];
 
-  // Flattened to the public flat item list — no tree structure crosses the API.
-  const items = sections.flatMap((section) => [
-    { value: section.id, depth: 2, label: section.name },
-    ...(section.children ?? []).map((child) => ({ value: child.id, depth: 3, label: child.name })),
-  ]);
-
 </script>
 
 <div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
@@ -81,7 +74,7 @@
     </div>
   </PageContent>
   <PageGutter side="right" class="border-s border-border">
-    <Toc {items} variant="tree" scrollEl={() => pageEl} />
+    <Toc variant="tree" scrollEl={() => pageEl} />
   </PageGutter>
   </Page>
 </div>

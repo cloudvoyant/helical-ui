@@ -6,7 +6,7 @@
 
   let pageEl = $state<HTMLDivElement | null>(null);
 
-  const items = [
+  const sections = [
     { value: 'svelte-05-analytics-dashboard', depth: 2, label: 'Real-time Analytics', lines: 55 },
     { value: 'svelte-05-cloud-storage', depth: 2, label: 'S3 Cloud Storage', lines: 14 },
     { value: 'svelte-05-automation-tools', depth: 2, label: 'Workflow Automation', lines: 32 },
@@ -20,7 +20,7 @@
   <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
-      {#each items as item (item.value)}
+      {#each sections as item (item.value)}
         <section class="scroll-mt-8">
           <h2 id={item.value} class="text-lg font-semibold">{item.label}</h2>
           <div class="mt-3 flex flex-col gap-2">
@@ -33,7 +33,7 @@
     </div>
   </PageContent>
   <PageGutter side="right" align="center" class="border-s border-border">
-    <Toc {items} variant="hover" scrollEl={() => pageEl} />
+    <Toc variant="hover" scrollEl={() => pageEl} />
   </PageGutter>
   </Page>
 </div>

@@ -6,7 +6,7 @@
 
   let pageEl = $state<HTMLDivElement | null>(null);
 
-  const items = [
+  const sections = [
     { value: 'svelte-04-overview', depth: 2, label: 'Overview', lines: 8 },
     { value: 'svelte-04-prerequisites', depth: 2, label: 'Prerequisites', lines: 5 },
     { value: 'svelte-04-quick-start', depth: 2, label: 'Quick Start', lines: 20 },
@@ -20,10 +20,10 @@
   <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8">
     <div data-toc-sticky class="sticky top-0 z-10 mx-auto max-w-2xl bg-background py-4">
-      <Toc {items} variant="collapsible" scrollEl={() => pageEl} class="max-w-[22rem]" />
+      <Toc variant="collapsible" scrollEl={() => pageEl} class="max-w-[22rem]" />
     </div>
     <div class="mx-auto flex max-w-2xl flex-col gap-10 pb-10">
-      {#each items as item (item.value)}
+      {#each sections as item (item.value)}
         <section class="scroll-mt-24">
           <h2 id={item.value} class="text-lg font-semibold">{item.label}</h2>
           <div class="mt-3 flex flex-col gap-2">

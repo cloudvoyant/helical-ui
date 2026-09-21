@@ -27,18 +27,18 @@ Every Ark UI TOC example is reachable through the high-level API — the migrate
 | Ark UI example   | Docs example      | High-level API                                                                                                                                       |
 | ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Basic            | `basic`           | `<Toc />` collects headings and owns the machine internally.                                                                                         |
-| Nested Headings  | `nested-headings` | `<Toc items={items} />` with mixed depths; indentation follows `depth`.                                                                              |
-| Root Provider    | `root-provider`   | One external `useToc` machine passed to `<Toc items={items} value={toc} />`; no duplicate machine.                                                   |
+| Nested Headings  | `nested-headings` | `<Toc />` collects mixed heading levels; indentation follows each rendered level.                                                                    |
+| Root Provider    | `root-provider`   | One external `useToc` machine passed to `<Toc items={items} value={toc} />`; this advanced pattern supplies machine items explicitly.                |
 | With Collapsible | `collapsible`     | A sticky `<Toc variant="collapsible" />` above the article, with the progress ring in its trigger and numbered links inside its collapsible content. |
 | With Hover       | `hover`           | `<Toc variant="hover" />` with skeleton bars that expand to links on hover.                                                                          |
 | With Indicator   | `indicator`       | `<Toc variant="indicator" />` with the sliding active marker.                                                                                        |
 | With Rail        | `rail`            | `<Toc variant="rail" />` with the depth rail and bezier turns.                                                                                       |
-| With Tree View   | `tree-view`       | `<Toc variant="tree" />` with a TreeView derived from the flat items.                                                                                |
+| With Tree View   | `tree-view`       | `<Toc variant="tree" />` with a TreeView derived from collected heading levels.                                                                      |
 | helical-ui extra | `prose`           | `<Toc />` in a `PageGutter` beside the published `Prose` component.                                                                                  |
 
 Every example runs on its own `/preview/toc/<example>` page inside the existing `PreviewFrame` web view. A full-height preview wrapper is the explicit `scrollEl`, so moving the surrounding docs page cannot change the iframe machine's intersection calculations. Inside that isolated root, each example uses the published `Page` layout and puts article content in `PageContent`. Gutter variants put navigation in the right `PageGutter`; the stacked Collapsible example pins its disclosure above the article, matching Ark's composition.
 
-The `prose` example is the helical-ui addition. It uses the same Page/gutter composition with the published `Prose` component for article typography.
+The `prose` example is the helical-ui addition. It uses the same Page/gutter composition with the published `Prose` component for article typography. Every owned-machine example omits `items` and exercises automatic heading collection; only the Root Provider example supplies items because it constructs `useToc` directly.
 
 ## Guide
 
