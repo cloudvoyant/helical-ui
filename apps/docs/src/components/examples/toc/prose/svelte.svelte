@@ -1,8 +1,10 @@
 <!-- apps/docs/src/components/examples/toc/prose/svelte.svelte -->
-<!-- helical-ui specific: the machine observes document scroll (no `scrollEl`), so
-     the nav sits in a `PageGutter` beside the published `Prose` component. -->
+<!-- helical-ui specific: the machine observes the isolated full-preview scroll root,
+     while the nav sits in a `PageGutter` beside the published `Prose` component. -->
 <script lang="ts">
   import { Page, PageContent, PageGutter, Prose, Toc } from '@cloudvoyant/helical-svelte';
+
+  let pageEl = $state<HTMLDivElement | null>(null);
 
   const items = [
     { value: 'svelte-prose-overview', depth: 2, label: 'Overview' },
@@ -13,14 +15,15 @@
   ];
 </script>
 
-<Page>
+<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+  <Page>
   <PageContent class="px-8 py-10">
     <Prose element="article" class="mx-auto max-w-2xl">
       <h1>Prose with a table of contents</h1>
       <p>
         This example composes the published <code>Prose</code> component with <code>Toc</code> in a
-        <code>PageGutter</code>. Because no <code>scrollEl</code> is passed, the existing machine observes the
-        document scrollbar — the same one the article uses.
+        <code>PageGutter</code>. The existing machine observes this preview's explicit scroll root, which isolates
+        active headings from movement on the surrounding docs page.
       </p>
       <h2 id="svelte-prose-overview">Overview</h2>
       <p>
@@ -52,9 +55,11 @@
         The other examples on this page show each visual variant on its own full-page preview, including the externally
         owned machine and the TreeView composition.
       </p>
+
     </Prose>
   </PageContent>
   <PageGutter side="right">
-    <Toc {items} />
+    <Toc {items} scrollEl={() => pageEl} />
   </PageGutter>
-</Page>
+  </Page>
+</div>

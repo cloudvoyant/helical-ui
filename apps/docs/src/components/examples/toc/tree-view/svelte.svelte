@@ -6,6 +6,8 @@
 <script lang="ts">
   import { Page, PageContent, PageGutter, Toc } from '@cloudvoyant/helical-svelte';
 
+  let pageEl = $state<HTMLDivElement | null>(null);
+
   type Section = {
     id: string;
     name: string;
@@ -52,7 +54,8 @@
 
 </script>
 
-<Page class="bg-background text-foreground">
+<div bind:this={pageEl} data-toc-scroll-root class="h-svh overflow-y-auto overscroll-y-auto">
+  <Page class="bg-background text-foreground">
   <PageContent data-toc-scroll class="px-8 py-10">
     <div class="mx-auto flex max-w-2xl flex-col gap-10">
       {#each sections as section (section.id)}
@@ -78,6 +81,7 @@
     </div>
   </PageContent>
   <PageGutter side="right" class="border-s border-border">
-    <Toc {items} variant="tree" />
+    <Toc {items} variant="tree" scrollEl={() => pageEl} />
   </PageGutter>
-</Page>
+  </Page>
+</div>

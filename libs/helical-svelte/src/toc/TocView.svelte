@@ -81,6 +81,7 @@
   let hovered = $state(false);
 
   const activeItems = $derived(value().activeItems);
+  const currentValue = $derived(activeItems[0]?.value);
 
   const treeRoots = $derived(pruneLeaves(buildTree(items)));
   const treeCollection = $derived(
@@ -145,7 +146,7 @@
     <!-- Ark's hover nav *is* the root nav (pointer handlers + Swap), so it is the only <nav>;
          nesting a second one would add a duplicate landmark. -->
     <TocNav
-      class="absolute end-2 top-1/2 z-10 w-6 -translate-y-1/2 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
+      class="relative z-10 ms-auto w-6 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
       data-expanded={hovered || undefined}
       onmouseenter={() => (hovered = true)}
       onmouseleave={() => (hovered = false)}
@@ -165,7 +166,12 @@
         <SwapIndicator type="on" class={cn(tocListVariants({ variant: 'hover' }), 'w-full')}>
           {#each items as item (item.value)}
             <TocItemPart {item} class={tocItemBase}>
-              <TocLink href={`#${item.value}`} class={tocLinkVariants({ variant: 'hover' })}>{item.label}</TocLink>
+              <TocLink
+                href={`#${item.value}`}
+                aria-current={currentValue === item.value ? 'location' : 'false'}
+                data-current={currentValue === item.value || undefined}
+                class={tocLinkVariants({ variant: 'hover' })}>{item.label}</TocLink
+              >
             </TocItemPart>
           {/each}
         </SwapIndicator>
@@ -191,7 +197,12 @@
           {/if}
           {#each items as item (item.value)}
             <TocItemPart {item} class={tocItemBase}>
-              <TocLink href={`#${item.value}`} class={tocLinkVariants({ variant })}>{item.label}</TocLink>
+              <TocLink
+                href={`#${item.value}`}
+                aria-current={currentValue === item.value ? 'location' : 'false'}
+                data-current={currentValue === item.value || undefined}
+                class={tocLinkVariants({ variant })}>{item.label}</TocLink
+              >
             </TocItemPart>
           {/each}
         </TocList>
@@ -205,11 +216,13 @@
             <TocItemPart {item} class={tocItemBase}>
               <TocLink
                 href={`#${item.value}`}
+                aria-current={currentValue === item.value ? 'location' : 'false'}
+                data-current={currentValue === item.value || undefined}
                 class={tocLinkVariants({ variant: 'rail' })}
                 style="padding-inline-start: {railTextOffset(item.depth)}px"
               >
                 <svg
-                  class="pointer-events-none absolute start-0 overflow-visible text-border group-data-[active]/link:text-primary"
+                  class="pointer-events-none absolute start-0 overflow-visible text-border group-data-[current]/link:text-primary"
                   style="top: {-RAIL_BRIDGE}px; width: {Math.max(prevLine, line) + 9}px; height: {line === nextLine
                     ? `calc(100% + ${RAIL_BRIDGE}px)`
                     : '100%'}"
@@ -304,7 +317,12 @@
             <TocList class={tocListVariants({ variant: 'collapsible' })}>
               {#each items as item, index (item.value)}
                 <TocItemPart {item} class={tocItemBase}>
-                  <TocLink href={`#${item.value}`} class={cn(tocLinkVariants({ variant: 'collapsible' }), 'gap-2')}>
+                  <TocLink
+                    href={`#${item.value}`}
+                    aria-current={currentValue === item.value ? 'location' : 'false'}
+                    data-current={currentValue === item.value || undefined}
+                    class={cn(tocLinkVariants({ variant: 'collapsible' }), 'gap-2')}
+                  >
                     <span class="text-xs tabular-nums opacity-60">{String(index + 1).padStart(2, '0')}</span>
                     {item.label}
                   </TocLink>

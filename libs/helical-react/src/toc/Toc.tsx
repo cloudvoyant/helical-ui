@@ -47,6 +47,14 @@ export type TocProps = {
 
 const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
+function currentLinkProps(toc: UseTocReturn, value: string) {
+  const current = toc.activeItems[0]?.value === value;
+  return {
+    'aria-current': current ? ('location' as const) : ('false' as const),
+    'data-current': current || undefined,
+  };
+}
+
 /**
  * Hook-free dispatcher. With `value` the supplied machine is rendered directly
  * and no machine is created; without it, `TocOwned` owns exactly one machine.
@@ -120,12 +128,18 @@ function TocBody({ items, variant }: { items: TocItem[]; variant: Exclude<TocVar
 
 /** `default` and `indicator`: Ark's Title/List/Item/Link composition. */
 function ItemList({ items, variant }: { items: TocItem[]; variant: 'default' | 'indicator' }) {
+  const toc = useTocContext();
+
   return (
     <TocPrimitive.List className={tocListVariants({ variant })}>
       {variant === 'indicator' && <TocPrimitive.Indicator className={tocIndicatorBase} />}
       {items.map((item) => (
         <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>
-          <TocPrimitive.Link href={`#${item.value}`} className={tocLinkVariants({ variant })}>
+          <TocPrimitive.Link
+            href={`#${item.value}`}
+            {...currentLinkProps(toc, item.value)}
+            className={tocLinkVariants({ variant })}
+          >
             {item.label}
           </TocPrimitive.Link>
         </TocPrimitive.Item>
@@ -141,10 +155,11 @@ function ItemList({ items, variant }: { items: TocItem[]; variant: 'default' | '
  */
 function HoverNav({ items, title }: { items: TocItem[]; title?: ReactNode }) {
   const [hovered, setHovered] = useState(false);
+  const toc = useTocContext();
 
   return (
     <TocPrimitive.Nav
-      className="absolute end-2 top-1/2 z-10 w-6 -translate-y-1/2 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
+      className="relative z-10 ms-auto w-6 cursor-pointer overflow-hidden rounded-xl bg-background p-4 transition-[width,box-shadow,border-radius] duration-200 data-[expanded]:w-48 data-[expanded]:cursor-default data-[expanded]:rounded-2xl data-[expanded]:shadow-lg"
       data-expanded={hovered || undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -163,7 +178,11 @@ function HoverNav({ items, title }: { items: TocItem[]; title?: ReactNode }) {
         <SwapIndicator type="on" className={cn(tocListVariants({ variant: 'hover' }), 'w-full')}>
           {items.map((item) => (
             <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>
-              <TocPrimitive.Link href={`#${item.value}`} className={tocLinkVariants({ variant: 'hover' })}>
+              <TocPrimitive.Link
+                href={`#${item.value}`}
+                {...currentLinkProps(toc, item.value)}
+                className={tocLinkVariants({ variant: 'hover' })}
+              >
                 {item.label}
               </TocPrimitive.Link>
             </TocPrimitive.Item>
@@ -203,7 +222,7 @@ function Rail({
 
   return (
     <svg
-      className="pointer-events-none absolute start-0 overflow-visible text-border group-data-[active]/link:text-primary"
+      className="pointer-events-none absolute start-0 overflow-visible text-border group-data-[current]/link:text-primary"
       style={{
         top: -RAIL_BRIDGE,
         width: Math.max(prevLine, line) + 9,
@@ -223,12 +242,15 @@ function Rail({
 }
 
 function RailList({ items }: { items: TocItem[] }) {
+  const toc = useTocContext();
+
   return (
     <TocPrimitive.List className={tocListVariants({ variant: 'rail' })}>
       {items.map((item, index) => (
         <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>
           <TocPrimitive.Link
             href={`#${item.value}`}
+            {...currentLinkProps(toc, item.value)}
             className={tocLinkVariants({ variant: 'rail' })}
             style={{ paddingInlineStart: railTextOffset(item.depth) }}
           >
@@ -329,6 +351,7 @@ function TreeNav({ items }: { items: TocItem[] }) {
 function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNode>) {
   const toc = useTocContext();
   const linkProps = toc.getLinkProps({ item: { value: node.value, depth: node.depth } });
+  const currentProps = currentLinkProps(toc, node.value);
 
   return (
     <TreeView.NodeProvider node={node} indexPath={indexPath}>
@@ -339,7 +362,7 @@ function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNo
               <ChevronRight className="size-3.5" aria-hidden="true" />
             </TreeView.BranchIndicator>
             <TreeView.BranchText className="min-w-0 flex-1">
-              <a {...linkProps} className={cn(tocLinkVariants({ variant: 'tree' }), 'flex-1')}>
+              <a {...linkProps} {...currentProps} className={cn(tocLinkVariants({ variant: 'tree' }), 'flex-1')}>
                 {node.label}
               </a>
             </TreeView.BranchText>
@@ -354,7 +377,7 @@ function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNo
       ) : (
         <TreeView.Item className="min-w-0">
           <TreeView.ItemText className="min-w-0">
-            <a {...linkProps} className={tocLinkVariants({ variant: 'tree' })}>
+            <a {...linkProps} {...currentProps} className={tocLinkVariants({ variant: 'tree' })}>
               {node.label}
             </a>
           </TreeView.ItemText>
@@ -369,6 +392,8 @@ function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNo
  * links and the active label in the trigger.
  */
 function CollapsibleNav({ items }: { items: TocItem[] }) {
+  const toc = useTocContext();
+
   return (
     <CollapsibleRoot className="flex w-full flex-col gap-2">
       <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-transparent px-3 py-2.5 text-start text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
@@ -396,6 +421,7 @@ function CollapsibleNav({ items }: { items: TocItem[] }) {
             <TocPrimitive.Item key={item.value} item={item} className={tocItemBase}>
               <TocPrimitive.Link
                 href={`#${item.value}`}
+                {...currentLinkProps(toc, item.value)}
                 className={cn(tocLinkVariants({ variant: 'collapsible' }), 'gap-2')}
               >
                 <span className="text-xs tabular-nums opacity-60">{String(index + 1).padStart(2, '0')}</span>
