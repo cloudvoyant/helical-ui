@@ -53,17 +53,21 @@ const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
 function getCurrentValue(toc: UseTocReturn, activeItems = toc.activeItems) {
   const firstActiveValue = activeItems[0]?.value;
-  const finalValue = toc.items.at(-1)?.value;
-  if (
-    !finalValue ||
-    !activeItems.some((item) => item.value === finalValue) ||
-    typeof document === 'undefined' ||
-    typeof window === 'undefined'
-  ) {
+  if (!firstActiveValue || typeof document === 'undefined' || typeof window === 'undefined') {
     return firstActiveValue;
   }
 
-  const heading = document.getElementById(finalValue);
+  // The active heading that appears last in item (document) order. When several
+  // same-level headings share the viewport at scroll end, the topmost one would
+  // otherwise stick as current even though you can no longer scroll to isolate
+  // the lower ones — so there the bottommost visible heading wins.
+  const order = new Map(toc.items.map((item, index) => [item.value, index]));
+  const lastActiveValue = activeItems.reduce((last, item) =>
+    (order.get(item.value) ?? -1) > (order.get(last.value) ?? -1) ? item : last,
+  ).value;
+  if (lastActiveValue === firstActiveValue) return firstActiveValue;
+
+  const heading = document.getElementById(lastActiveValue);
   if (!heading) return firstActiveValue;
 
   let scrollRoot: HTMLElement | null = null;
@@ -81,7 +85,7 @@ function getCurrentValue(toc: UseTocReturn, activeItems = toc.activeItems) {
     : !!scrollingElement &&
       Math.ceil(scrollingElement.scrollTop + scrollingElement.clientHeight) >= scrollingElement.scrollHeight - 1;
 
-  return atEnd ? finalValue : firstActiveValue;
+  return atEnd ? lastActiveValue : firstActiveValue;
 }
 
 function currentLinkProps(toc: UseTocReturn, value: string) {
