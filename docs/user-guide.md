@@ -55,6 +55,7 @@ Components accept the same `variant` and `size` props across frameworks. Availab
 - `NavbarMenu` — the Navbar's menu, with composed parts for dropdown panels
 - `Tabs` — composed parts for tabbed content
 - `Pagination` — composed parts for paging through content
+- `Toc` — composed parts for table-of-contents navigation, with `default`/`indicator`/`hover`/`rail`/`tree`/`collapsible` variants
 - `Tooltip` — composed parts for trigger and content, with an optional arrow
 - `Popover` — composed parts for anchor, trigger, title, description, and content, with an optional arrow
 - `Dialog` — composed parts for backdrop, trigger, content, title, description, header, and footer

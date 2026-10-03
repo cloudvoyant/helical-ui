@@ -44,28 +44,28 @@
             <NavbarMenuItem value="docs" variant="link">
               <NavbarMenuTrigger>Docs</NavbarMenuTrigger>
               <NavbarMenuContent>
-                <NavbarMenuLink href="#">Components</NavbarMenuLink>
-                <NavbarMenuLink href="#">Theming</NavbarMenuLink>
+                <NavbarMenuLink href="#components">Components</NavbarMenuLink>
+                <NavbarMenuLink href="#theming">Theming</NavbarMenuLink>
               </NavbarMenuContent>
             </NavbarMenuItem>
             <NavbarMenuItem value="blog" variant="link">
-              <NavbarMenuLink href="#">Blog</NavbarMenuLink>
+              <NavbarMenuLink href="#blog">Blog</NavbarMenuLink>
             </NavbarMenuItem>
           </NavbarMenuList>
         </NavbarMenu>
         <NavbarActions>
-          <a href="#" class="text-sm font-medium text-muted-foreground hover:text-foreground">Sign in</a>
+          <a href="#sign-in" class="text-sm font-medium text-muted-foreground hover:text-foreground">Sign in</a>
         </NavbarActions>
         <NavbarTrigger />
       <NavbarMobileOverlay>
         <NavbarMobileMenu>
           <NavbarMobileMenuTrigger>Docs</NavbarMobileMenuTrigger>
           <NavbarMobileMenuContent>
-            <a href="#" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Components</a>
-            <a href="#" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Theming</a>
+            <a href="#components" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Components</a>
+            <a href="#theming" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Theming</a>
           </NavbarMobileMenuContent>
         </NavbarMobileMenu>
-        <a href="#" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Blog</a>
+        <a href="#blog" class="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Blog</a>
       </NavbarMobileOverlay>
     </Navbar>
     <Container class="py-6">

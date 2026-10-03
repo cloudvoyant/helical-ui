@@ -114,6 +114,20 @@ export {
   type TabsListVariants,
   type TabsIndicatorVariants,
 } from './tabs';
+export {
+  collectTocItems,
+  tocHeadingSelector,
+  tocNavBase,
+  tocTitleBase,
+  tocListBase,
+  tocListVariants,
+  tocItemBase,
+  tocLinkBase,
+  tocLinkVariants,
+  tocIndicatorBase,
+  tocSkeletonBase,
+  type TocItem,
+} from './toc';
 export { paginationRootBase, paginationTriggerBase, paginationItemBase, paginationEllipsisBase } from './pagination';
 export {
   navbarVariants,

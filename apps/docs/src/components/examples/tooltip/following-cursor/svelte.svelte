@@ -19,6 +19,8 @@
     {#snippet render(tooltip)}
       <div
         bind:this={areaEl}
+        role="group"
+        aria-label="Cursor tracking area"
         class="rounded-md border p-10 text-center"
         onpointermove={(e) => {
           const rect = areaEl?.getBoundingClientRect();

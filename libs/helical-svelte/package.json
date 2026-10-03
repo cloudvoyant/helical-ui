@@ -14,6 +14,11 @@
       "svelte": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./table-of-contents": {
+      "types": "./dist/toc/TableOfContents.svelte.d.ts",
+      "svelte": "./dist/toc/TableOfContents.svelte",
+      "default": "./dist/toc/TableOfContents.svelte"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,6 +53,8 @@
     "@tanstack/charts": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/suggestion": "catalog:",
+    "@zag-js/svelte": "catalog:",
+    "@zag-js/toc": "catalog:",
     "lucide-svelte": "catalog:",
     "lowlight": "catalog:",
     "svelte-tiptap": "catalog:"
