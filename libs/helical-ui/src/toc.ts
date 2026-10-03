@@ -106,4 +106,5 @@ export const tocIndicatorBase =
   'pointer-events-none absolute start-0 [top:var(--top)] h-[1.85rem] w-0.5 rounded-full bg-primary transition-[top] duration-200 ease-out motion-reduce:transition-none';
 
 // Collapsed skeleton bar for the `hover` variant (shown before expansion).
-export const tocSkeletonBase = 'block h-0.5 w-[calc(var(--depth)*12px)] rounded-full bg-muted-foreground opacity-30';
+export const tocSkeletonBase =
+  'block h-0.5 w-[calc(var(--depth)*12px)] rounded-full bg-muted-foreground opacity-30 data-[current]:bg-primary data-[current]:opacity-100';

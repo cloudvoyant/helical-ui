@@ -66,15 +66,17 @@ async function scrollHeadingIntoBand(frame: FrameLocator, framework: Framework, 
   });
 }
 
-/** Ark marks every heading in its active range as current. */
+/** Exactly one link is current, even when Ark observes multiple headings. */
 async function expectActive(frame: FrameLocator, framework: Framework, id: string) {
   await expect(
-    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-active]`),
+    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-current]`),
   ).toBeVisible({ timeout: 10_000 });
   await expect(frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"]`)).toHaveAttribute(
     'aria-current',
     'location',
   );
+  await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
+  await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
 }
 
 /** The requested heading is included in Zag's visible range. */
@@ -84,8 +86,8 @@ async function expectVisibleHeading(frame: FrameLocator, framework: Framework, i
   ).toBeVisible({ timeout: 10_000 });
 }
 
-/** Native item lists mark the full active range; tree links mark its last item. */
-async function expectActiveRange(frame: FrameLocator, framework: Framework, variant: 'list' | 'tree' = 'list') {
+/** The last visible heading is current, while the full active range remains available. */
+async function expectActiveRange(frame: FrameLocator, framework: Framework) {
   await expect
     .poll(
       async () => {
@@ -96,7 +98,7 @@ async function expectActiveRange(frame: FrameLocator, framework: Framework, vari
           .locator(`${scope(framework)} nav a[aria-current="location"]`)
           .evaluateAll((links) => links.map((link) => link.getAttribute('data-value')));
         return activeValues.length > 0 &&
-          JSON.stringify(currentValues) === JSON.stringify(variant === 'tree' ? activeValues.slice(-1) : activeValues);
+          currentValues.length === 1 && currentValues[0] === activeValues.at(-1);
       },
       { timeout: 10_000 },
     )
@@ -114,6 +116,16 @@ async function outputIds(frame: FrameLocator, framework: Framework): Promise<str
     return [];
   }
 }
+
+test('docs shell highlights only its final heading at the page bottom', async ({ page }) => {
+  await page.goto('components/toc');
+  const toc = page.locator('[data-docs-toc] nav');
+  await expect(toc.locator('a')).not.toHaveCount(0);
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await expect(toc.locator('a[href="#implementation-note"][data-current]')).toBeVisible();
+  await expect(toc.locator('a[data-current]')).toHaveCount(1);
+  await expect(toc.locator('a[aria-current="location"]')).toHaveCount(1);
+});
 
 test('wheel input scrolls the long rail preview document', async ({ page }) => {
   await page.goto('components/toc');
@@ -225,8 +237,8 @@ for (const framework of FRAMEWORKS) {
 
       await scrollHeadingIntoBand(frame, framework, '03-usage');
 
-      // Ark reports a contiguous visible range. Native links mark every item
-      // in that range current, using the same machine as the output.
+      // Ark reports a contiguous visible range. The last item is current,
+      // using the same machine as the output.
       await expect
         .poll(
           async () => {
@@ -236,12 +248,12 @@ for (const framework of FRAMEWORKS) {
             const ids = await outputIds(frame, framework);
             return {
               includesUsage: ids.includes(idOf(framework, '03-usage')),
-              linksMatchVisible: JSON.stringify(links) === JSON.stringify(ids),
+              linkIsLastVisible: links.length === 1 && links[0] === ids.at(-1),
             };
           },
           { timeout: 10_000 },
         )
-        .toEqual({ includesUsage: true, linksMatchVisible: true });
+        .toEqual({ includesUsage: true, linkIsLastVisible: true });
     });
 
     test('collapsible: reveals numbered links from the progress-ring trigger', async ({ page }) => {
@@ -277,6 +289,17 @@ for (const framework of FRAMEWORKS) {
       const links = frame.locator(`${scope(framework)} [data-type="on"]`);
       await expect(skeleton).toBeVisible();
       await expect(links).toBeHidden();
+
+      // Collapsed bars use the shared accent for the one current heading.
+      await scrollHeadingIntoBand(frame, framework, '05-cloud-storage');
+      await expect(skeleton.locator('[data-current]')).toHaveCount(1);
+      const currentValue = await frame.locator(`${scope(framework)} nav a[data-current]`).getAttribute('data-value');
+      const activeBar = skeleton.locator(`[data-value="${currentValue}"]`);
+      await expect(activeBar).toHaveAttribute('data-current', 'true');
+      await expect(activeBar).toHaveClass(/data-\[current\]:bg-primary/);
+      const accent = await activeBar.evaluate((el) => getComputedStyle(el).backgroundColor);
+      const inactive = await skeleton.locator('li:not([data-current])').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(accent).not.toBe(inactive);
 
       const nav = frame.locator(`${scope(framework)} nav`);
       await nav.hover();
@@ -323,21 +346,19 @@ for (const framework of FRAMEWORKS) {
         .poll(() => root.evaluate((el) => (el as HTMLElement).style.getPropertyValue('--top')))
         .not.toBe(firstTop);
 
-      // At the scroll boundary several headings are active. The native
-      // indicator spans that range rather than a single current row.
+      // At the scroll boundary several headings are active. The indicator
+      // stays on the single current row, including the last short section.
       await frame
         .locator('html')
         .evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
       await expect.poll(() => frame.locator(`${scope(framework)} nav a[data-active]`).count()).toBeGreaterThan(1);
-      await expectActiveRange(frame, framework);
-      await expect
-        .poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height)))
-        .toBeGreaterThan(30);
+      await expectActive(frame, framework, '06-publish');
+      await expect.poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height))).toBe(30);
       await expect
         .poll(async () => {
-          const firstActive = frame.locator(`${scope(framework)} nav a[data-active]`).first();
-          const [markerBox, firstBox] = await Promise.all([marker.boundingBox(), firstActive.boundingBox()]);
-          return markerBox && firstBox ? Math.abs(markerBox.y - firstBox.y) : Number.POSITIVE_INFINITY;
+          const current = frame.locator(`${scope(framework)} nav a[data-current]`);
+          const [markerBox, currentBox] = await Promise.all([marker.boundingBox(), current.boundingBox()]);
+          return markerBox && currentBox ? Math.abs(markerBox.y - currentBox.y) : Number.POSITIVE_INFINITY;
         })
         .toBeLessThanOrEqual(2);
     });
@@ -373,7 +394,7 @@ for (const framework of FRAMEWORKS) {
       // may be current, but it must be the last item in Zag's visible range.
       await scrollHeadingIntoBand(frame, framework, '09-toc-events');
       await expectVisibleHeading(frame, framework, '09-toc-events');
-      await expectActiveRange(frame, framework, 'tree');
+      await expectActiveRange(frame, framework);
       await expect(childLink).toBeVisible();
       await expect(
         frame.locator(`${scope(framework)} [data-part="branch-control"]`).filter({ hasText: 'Core Concepts' }),
