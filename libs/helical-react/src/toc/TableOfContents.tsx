@@ -1,4 +1,4 @@
-// libs/helical-react/src/toc/Toc.tsx
+// libs/helical-react/src/toc/TableOfContents.tsx
 // High-level TableOfContents. Composed only from the private Ark-compatible barrel in
 // `./internal` plus stable Ark subcomponents used by the upstream TOC examples
 // (@ark-ui/react/collapsible, /swap, /tree-view). The vendored primitives stay
@@ -48,6 +48,8 @@ export type TableOfContentsProps = {
   autoScroll?: boolean;
   className?: string;
 };
+
+const USE_NATIVE_ITEM_LIST_BEHAVIOR = true;
 
 const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
@@ -104,9 +106,9 @@ function TocOwned(props: TableOfContentsProps & { items: TocItem[] }) {
     activeIds: props.activeIds,
     defaultActiveIds: props.defaultActiveIds,
     onActiveChange: props.onActiveChange,
-    rootMargin: props.rootMargin ?? '-20px 0px 0px 0px',
+    rootMargin: props.rootMargin ?? (USE_NATIVE_ITEM_LIST_BEHAVIOR ? '-20px 0% -40% 0%' : '-20px 0px 0px 0px'),
     scrollBehavior: props.scrollBehavior,
-    autoScroll: props.autoScroll,
+    autoScroll: props.autoScroll ?? false,
     scrollEl: props.scrollEl,
   });
 
@@ -161,20 +163,29 @@ function TocBody({ items, variant }: { items: TocItem[]; variant: Exclude<TocVar
 function ItemList({ items, variant }: { items: TocItem[]; variant: 'default' | 'indicator' }) {
   const toc = useTocContext();
   const currentValue = getCurrentValue(toc);
-  const itemIndicator = variant === 'indicator' && currentValue !== toc.activeItems[0]?.value;
+  const itemIndicator =
+    !USE_NATIVE_ITEM_LIST_BEHAVIOR && variant === 'indicator' && currentValue !== toc.activeItems[0]?.value;
 
   return (
     <TocPrimitive.List className={tocListVariants({ variant })}>
-      {variant === 'indicator' && !itemIndicator && <TocPrimitive.Indicator className={tocIndicatorBase} />}
+      {variant === 'indicator' && (USE_NATIVE_ITEM_LIST_BEHAVIOR || !itemIndicator) && (
+        <TocPrimitive.Indicator
+          className={tocIndicatorBase}
+          style={USE_NATIVE_ITEM_LIST_BEHAVIOR ? { height: 'var(--height)' } : undefined}
+        />
+      )}
       {items.map((item) => (
         <TocPrimitive.Item key={item.value} item={item} className={cn(tocItemBase, 'relative')}>
-          {itemIndicator && currentValue === item.value && (
+          {!USE_NATIVE_ITEM_LIST_BEHAVIOR && itemIndicator && currentValue === item.value && (
             <span data-scope="toc" data-part="indicator" className={cn(tocIndicatorBase, '!top-0')} />
           )}
           <TocPrimitive.Link
             href={`#${item.value}`}
-            {...currentLinkProps(toc, item.value)}
-            className={tocLinkVariants({ variant })}
+            {...(USE_NATIVE_ITEM_LIST_BEHAVIOR ? {} : currentLinkProps(toc, item.value))}
+            className={cn(
+              tocLinkVariants({ variant }),
+              USE_NATIVE_ITEM_LIST_BEHAVIOR && 'data-[active]:font-medium data-[active]:text-primary',
+            )}
           >
             {item.label}
           </TocPrimitive.Link>
