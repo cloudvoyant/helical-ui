@@ -66,30 +66,15 @@ async function scrollHeadingIntoBand(frame: FrameLocator, framework: Framework, 
   });
 }
 
-/** Put one heading near the viewport bottom while keeping the next heading below it. */
-async function scrollHeadingToViewportBottom(frame: FrameLocator, framework: Framework, id: string) {
-  await frame.locator(`${scope(framework)} [id="${idOf(framework, id)}"]`).evaluate((el) => {
-    const view = el.ownerDocument.defaultView;
-    if (!view) return;
-    const headingBottom = el.getBoundingClientRect().bottom;
-    const targetBottom = view.innerHeight - 24;
-    view.scrollBy({ top: headingBottom - targetBottom, behavior: 'instant' });
-  });
-}
-
-/** The high-level renderer exposes exactly one current link from Ark's active range. */
+/** Ark marks every heading in its active range as current. */
 async function expectActive(frame: FrameLocator, framework: Framework, id: string) {
   await expect(
-    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-current]`),
-  ).toBeVisible({
-    timeout: 10_000,
-  });
+    frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"][data-active]`),
+  ).toBeVisible({ timeout: 10_000 });
   await expect(frame.locator(`${scope(framework)} nav a[data-value="${idOf(framework, id)}"]`)).toHaveAttribute(
     'aria-current',
     'location',
   );
-  await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
-  await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
 }
 
 /** The requested heading is included in Zag's visible range. */
@@ -99,22 +84,23 @@ async function expectVisibleHeading(frame: FrameLocator, framework: Framework, i
   ).toBeVisible({ timeout: 10_000 });
 }
 
-/** The renderer exposes the last heading in Zag's visible range as current. */
-async function expectLastVisibleCurrent(frame: FrameLocator, framework: Framework) {
+/** Native item lists mark the full active range; tree links mark its last item. */
+async function expectActiveRange(frame: FrameLocator, framework: Framework, variant: 'list' | 'tree' = 'list') {
   await expect
     .poll(
       async () => {
         const activeValues = await frame
           .locator(`${scope(framework)} nav a[data-active]`)
           .evaluateAll((links) => links.map((link) => link.getAttribute('data-value')));
-        const currentValue = await frame.locator(`${scope(framework)} nav a[data-current]`).getAttribute('data-value');
-        return activeValues.length > 0 && currentValue === activeValues.at(-1);
+        const currentValues = await frame
+          .locator(`${scope(framework)} nav a[aria-current="location"]`)
+          .evaluateAll((links) => links.map((link) => link.getAttribute('data-value')));
+        return activeValues.length > 0 &&
+          JSON.stringify(currentValues) === JSON.stringify(variant === 'tree' ? activeValues.slice(-1) : activeValues);
       },
       { timeout: 10_000 },
     )
     .toBe(true);
-  await expect(frame.locator(`${scope(framework)} nav a[data-current]`)).toHaveCount(1);
-  await expect(frame.locator(`${scope(framework)} nav a[aria-current="location"]`)).toHaveCount(1);
 }
 
 /** The `activeIds` the Root Provider example renders from its own machine. */
@@ -179,7 +165,7 @@ for (const framework of FRAMEWORKS) {
       // root to its maximum scroll position.
       await scrollHeadingIntoBand(frame, framework, '01-getting-started');
       await expectVisibleHeading(frame, framework, '01-getting-started');
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework);
 
       // Clicking a link scrolls the iframe document and updates its hash.
       const documentElement = frame.locator('html');
@@ -196,20 +182,14 @@ for (const framework of FRAMEWORKS) {
       // position before asserting IntersectionObserver-derived current state.
       await scrollHeadingIntoBand(frame, framework, '01-installation');
       await expectVisibleHeading(frame, framework, '01-installation');
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework);
 
-      // Moving the surrounding docs page must not alter the iframe machine's
-      // current item when the preview document's own scroll position is unchanged.
+      // Moving the surrounding docs page must not scroll the iframe document.
+      // The active range may settle after the link's smooth-scroll animation.
       const innerTop = await documentElement.evaluate(() => window.scrollY);
-      const currentBeforeOuterScroll = await frame
-        .locator(`${scope(framework)} nav a[data-current]`)
-        .getAttribute('data-value');
       await page.evaluate(() => window.scrollBy(0, 250));
       await expect.poll(() => documentElement.evaluate(() => window.scrollY)).toBe(innerTop);
-      await expect
-        .poll(() => frame.locator(`${scope(framework)} nav a[data-current]`).getAttribute('data-value'))
-        .toBe(currentBeforeOuterScroll);
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework);
     });
 
     test('nested headings: keeps depth data and tracks nested headings', async ({ page }) => {
@@ -230,11 +210,10 @@ for (const framework of FRAMEWORKS) {
           .evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingInlineStart));
       expect(await indentOf('02-free-blocks')).toBeGreaterThan(await indentOf('02-importance'));
 
-      // Active tracking works for a nested (depth 3) heading, while the last
-      // visible heading remains the one public current item.
+      // Active tracking works for a nested (depth 3) heading in the native range.
       await scrollHeadingIntoBand(frame, framework, '02-configuration');
       await expectVisibleHeading(frame, framework, '02-configuration');
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework);
     });
 
     test('root provider: one machine drives both the output and the active link', async ({ page }) => {
@@ -246,21 +225,23 @@ for (const framework of FRAMEWORKS) {
 
       await scrollHeadingIntoBand(frame, framework, '03-usage');
 
-      // Ark can report a contiguous visible range. TableOfContents marks the
-      // last item in that range current while preserving the machine's full list.
+      // Ark reports a contiguous visible range. Native links mark every item
+      // in that range current, using the same machine as the output.
       await expect
         .poll(
           async () => {
-            const link = await frame.locator(`${scope(framework)} nav a[data-current]`).getAttribute('data-value');
+            const links = await frame
+              .locator(`${scope(framework)} nav a[aria-current="location"]`)
+              .evaluateAll((elements) => elements.map((link) => link.getAttribute('data-value')));
             const ids = await outputIds(frame, framework);
             return {
               includesUsage: ids.includes(idOf(framework, '03-usage')),
-              linkIsLastVisible: link === ids.at(-1),
+              linksMatchVisible: JSON.stringify(links) === JSON.stringify(ids),
             };
           },
           { timeout: 10_000 },
         )
-        .toEqual({ includesUsage: true, linkIsLastVisible: true });
+        .toEqual({ includesUsage: true, linksMatchVisible: true });
     });
 
     test('collapsible: reveals numbered links from the progress-ring trigger', async ({ page }) => {
@@ -342,39 +323,23 @@ for (const framework of FRAMEWORKS) {
         .poll(() => root.evaluate((el) => (el as HTMLElement).style.getPropertyValue('--top')))
         .not.toBe(firstTop);
 
-      // The final short sections advance one at a time as each becomes the last
-      // visible heading. This guards against jumping directly from Database to
-      // Publish before Final Draft and Final Review enter the viewport.
-      for (const id of ['06-database-health', '06-final-draft', '06-final-review'] as const) {
-        await scrollHeadingToViewportBottom(frame, framework, id);
-        await expectActive(frame, framework, id);
-      }
-
-      // At the scroll boundary all trailing headings are visible. Ark retains the
-      // full range internally, while TableOfContents marks its last item current
-      // and aligns one single-row indicator to it.
+      // At the scroll boundary several headings are active. The native
+      // indicator spans that range rather than a single current row.
       await frame
         .locator('html')
         .evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
       await expect.poll(() => frame.locator(`${scope(framework)} nav a[data-active]`).count()).toBeGreaterThan(1);
-      await expectActive(frame, framework, '06-publish');
-      await expect.poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height))).toBe(30);
-      const currentLink = frame.locator(`${scope(framework)} nav a[data-current]`);
+      await expectActiveRange(frame, framework);
+      await expect
+        .poll(() => marker.evaluate((el) => Math.round(el.getBoundingClientRect().height)))
+        .toBeGreaterThan(30);
       await expect
         .poll(async () => {
-          const [markerBox, currentBox] = await Promise.all([marker.boundingBox(), currentLink.boundingBox()]);
-          return markerBox && currentBox ? Math.abs(markerBox.y - currentBox.y) : Number.POSITIVE_INFINITY;
+          const firstActive = frame.locator(`${scope(framework)} nav a[data-active]`).first();
+          const [markerBox, firstBox] = await Promise.all([marker.boundingBox(), firstActive.boundingBox()]);
+          return markerBox && firstBox ? Math.abs(markerBox.y - firstBox.y) : Number.POSITIVE_INFINITY;
         })
         .toBeLessThanOrEqual(2);
-      const databaseLink = frame.locator(
-        `${scope(framework)} nav a[data-value="${idOf(framework, '06-database-health')}"]`,
-      );
-      await expect
-        .poll(async () => {
-          const [markerBox, databaseBox] = await Promise.all([marker.boundingBox(), databaseLink.boundingBox()]);
-          return markerBox && databaseBox ? markerBox.y > databaseBox.y + 2 : false;
-        })
-        .toBe(true);
     });
 
     test('rail: renders per-item depth geometry with clamped deep levels', async ({ page }) => {
@@ -408,7 +373,7 @@ for (const framework of FRAMEWORKS) {
       // may be current, but it must be the last item in Zag's visible range.
       await scrollHeadingIntoBand(frame, framework, '09-toc-events');
       await expectVisibleHeading(frame, framework, '09-toc-events');
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework, 'tree');
       await expect(childLink).toBeVisible();
       await expect(
         frame.locator(`${scope(framework)} [data-part="branch-control"]`).filter({ hasText: 'Core Concepts' }),
@@ -425,7 +390,7 @@ for (const framework of FRAMEWORKS) {
 
       await scrollHeadingIntoBand(frame, framework, 'prose-authoring');
       await expectVisibleHeading(frame, framework, 'prose-authoring');
-      await expectLastVisibleCurrent(frame, framework);
+      await expectActiveRange(frame, framework);
     });
 
     test('framework and theme switching reach the preview frame', async ({ page }) => {
