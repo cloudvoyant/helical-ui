@@ -63,7 +63,6 @@
   const RAIL_TEXT_STEP = 12;
   const RAIL_MAX_LEVEL = 2;
   const RAIL_BRIDGE = 6;
-  const USE_NATIVE_ITEM_LIST_BEHAVIOR = true;
 
   const railLevel = (depth: number) => Math.min(Math.max(depth - 2, 0), RAIL_MAX_LEVEL);
   const railLineOffset = (depth: number) => RAIL_BASE + railLevel(depth) * RAIL_STEP;
@@ -78,16 +77,7 @@
 
   const activeItems = $derived(value().activeItems);
   const currentValue = $derived(getCurrentValue(value(), activeItems));
-  const itemIndicator = $derived(
-    !USE_NATIVE_ITEM_LIST_BEHAVIOR && variant === 'indicator' && currentValue !== activeItems[0]?.value,
-  );
-  const itemListCurrentProps = (value: string) =>
-    USE_NATIVE_ITEM_LIST_BEHAVIOR
-      ? {}
-      : {
-          'aria-current': currentValue === value ? ('location' as const) : ('false' as const),
-          'data-current': currentValue === value || undefined,
-        };
+  const itemIndicator = $derived(variant === 'indicator' && currentValue !== activeItems[0]?.value);
 
   const activeIndex = () => items.findIndex((item) => item.value === currentValue);
   const activeLabel = () => items[activeIndex()]?.label ?? 'On this page';
@@ -173,7 +163,7 @@
           class={cn(tocListVariants({ variant: 'hover' }), 'w-full items-end gap-2 px-1 py-0.5')}
         >
           {#each items as item (item.value)}
-            <TocItemPart {item} class={tocSkeletonBase} />
+            <TocItemPart {item} data-current={currentValue === item.value || undefined} class={tocSkeletonBase} />
           {/each}
         </SwapIndicator>
         <SwapIndicator type="on" class={cn(tocListVariants({ variant: 'hover' }), 'w-full')}>
@@ -205,24 +195,19 @@
 
       {#if variant === 'default' || variant === 'indicator'}
         <TocList class={tocListVariants({ variant })}>
-          {#if variant === 'indicator' && (USE_NATIVE_ITEM_LIST_BEHAVIOR || !itemIndicator)}
-            <TocIndicator
-              class={tocIndicatorBase}
-              style={USE_NATIVE_ITEM_LIST_BEHAVIOR ? 'height: var(--height)' : undefined}
-            />
+          {#if variant === 'indicator' && !itemIndicator}
+            <TocIndicator class={tocIndicatorBase} />
           {/if}
           {#each items as item (item.value)}
             <TocItemPart {item} class={cn(tocItemBase, 'relative')}>
-              {#if !USE_NATIVE_ITEM_LIST_BEHAVIOR && itemIndicator && currentValue === item.value}
+              {#if itemIndicator && currentValue === item.value}
                 <span data-scope="toc" data-part="indicator" class={cn(tocIndicatorBase, '!top-0')}></span>
               {/if}
               <TocLink
                 href={`#${item.value}`}
-                {...itemListCurrentProps(item.value)}
-                class={cn(
-                  tocLinkVariants({ variant }),
-                  USE_NATIVE_ITEM_LIST_BEHAVIOR && 'data-[active]:font-medium data-[active]:text-primary',
-                )}>{item.label}</TocLink
+                aria-current={currentValue === item.value ? 'location' : 'false'}
+                data-current={currentValue === item.value || undefined}
+                class={tocLinkVariants({ variant })}>{item.label}</TocLink
               >
             </TocItemPart>
           {/each}

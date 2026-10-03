@@ -120,7 +120,7 @@ Renders a `<div>` wrapping a labelled `<nav>`. The `default`, `indicator`, `rail
 | `onActiveChange`      | `(details: TocActiveChangeDetails) => void`                                | —                     | Called when the visible headings change. Receives `activeIds` and `activeItems`.   |
 | `rootMargin`          | `string`                                                                   | `'-20px 0px 0px 0px'` | IntersectionObserver root margin — the effective viewport for "active".            |
 | `scrollBehavior`      | `ScrollBehavior`                                                           | `'smooth'`            | Used when auto-scrolling the nav and when scrolling to a heading.                  |
-| `autoScroll`          | `boolean`                                                                  | `true`                | Scroll the nav so the first active item stays visible.                             |
+| `autoScroll`          | `boolean`                                                                  | `false`               | Scroll the nav so the first active item stays visible when enabled.                |
 | `className` / `class` | `string`                                                                   | —                     | Merged via `cn` with the variant's classes.                                        |
 
 ### TocItem
@@ -145,7 +145,7 @@ Returns the Ark-compatible machine — `activeIds`, `activeItems`, `setActiveIds
 
 ## Theming
 
-Every class comes from the shared cva layer in `@cloudvoyant/helical-ui`, so `TableOfContents` follows the same theme tokens as the rest of the library — `text-muted-foreground` for links, `text-foreground` for the active one, `bg-primary` for the indicator, and `border-border` for the default list rail. Depth indentation uses the `--depth` custom property the machine sets on each item.
+Every class comes from the shared cva layer in `@cloudvoyant/helical-ui`, so `TableOfContents` follows the same theme tokens as the rest of the library — `text-muted-foreground` for links, `text-primary` for the current one and the collapsed hover bar, `bg-primary` for the indicator, and `border-border` for the default list rail. Depth indentation uses the `--depth` custom property the machine sets on each item.
 
 ## Implementation note
 

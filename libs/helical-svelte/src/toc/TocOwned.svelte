@@ -8,8 +8,6 @@
 
   type Props = Omit<TocProps, 'items' | 'value'> & { items: TocItem[] };
 
-  const USE_NATIVE_ITEM_LIST_BEHAVIOR = true;
-
   let {
     items,
     variant,
@@ -30,7 +28,7 @@
     activeIds,
     defaultActiveIds,
     onActiveChange,
-    rootMargin: rootMargin ?? (USE_NATIVE_ITEM_LIST_BEHAVIOR ? '-20px 0% -40% 0%' : '-20px 0px 0px 0px'),
+    rootMargin: rootMargin ?? '-20px 0px 0px 0px',
     scrollBehavior,
     autoScroll: autoScroll ?? false,
   }));
