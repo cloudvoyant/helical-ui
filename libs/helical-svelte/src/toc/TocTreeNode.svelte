@@ -3,12 +3,10 @@
      context/link getter, mirroring the upstream Ark TreeView example. -->
 <script lang="ts">
   import { TreeView } from '@ark-ui/svelte/tree-view';
-  import { cn, tocLinkVariants } from '@cloudvoyant/helical-ui';
+  import { cn, getTocCurrentValue, tocLinkVariants, type TocNode } from '@cloudvoyant/helical-ui';
   import { ChevronRight } from 'lucide-svelte';
   import { useTocContext } from './internal';
   import TocTreeNode from './TocTreeNode.svelte';
-  import { getCurrentValue } from './current-value';
-  import type { TocNode } from './TocView.svelte';
 
   type Props = {
     node: TocNode;
@@ -19,7 +17,9 @@
 
   const toc = useTocContext();
   const linkProps = $derived(toc().getLinkProps({ item: { value: node.value, depth: node.depth } }));
-  const current = $derived(getCurrentValue(toc()) === node.value);
+  const current = $derived(
+    getTocCurrentValue(toc().items, toc().activeItems) === node.value,
+  );
 </script>
 
 <TreeView.NodeProvider {node} {indexPath}>

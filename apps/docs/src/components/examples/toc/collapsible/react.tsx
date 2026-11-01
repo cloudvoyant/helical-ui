@@ -3,14 +3,8 @@
 // the progress ring and numbered links is owned by the high-level component.
 import { Page, PageContent, TableOfContents } from '@cloudvoyant/helical-react';
 
-function Filler({ lines }: { lines: number }) {
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className="h-2.5 rounded bg-muted" />
-      ))}
-    </div>
-  );
+function Filler() {
+  return <div className="mt-3 min-h-96 rounded bg-muted/30" />;
 }
 
 export default function ReactTocCollapsible() {
@@ -30,31 +24,31 @@ export default function ReactTocCollapsible() {
               <h2 id="react-04-overview" className="text-lg font-semibold">
                 Overview
               </h2>
-              <Filler lines={8} />
+              <Filler />
             </section>
             <section className="scroll-mt-24">
               <h2 id="react-04-prerequisites" className="text-lg font-semibold">
                 Prerequisites
               </h2>
-              <Filler lines={5} />
+              <Filler />
             </section>
             <section className="scroll-mt-24">
               <h2 id="react-04-quick-start" className="text-lg font-semibold">
                 Quick Start
               </h2>
-              <Filler lines={20} />
+              <Filler />
             </section>
             <section className="scroll-mt-24">
               <h2 id="react-04-commands" className="text-lg font-semibold">
                 Core Commands
               </h2>
-              <Filler lines={15} />
+              <Filler />
             </section>
             <section className="scroll-mt-24">
               <h2 id="react-04-troubleshooting" className="text-lg font-semibold">
                 Troubleshooting
               </h2>
-              <Filler lines={12} />
+              <Filler />
             </section>
           </div>
         </PageContent>

@@ -108,3 +108,45 @@ export const tocIndicatorBase =
 // Collapsed skeleton bar for the `hover` variant (shown before expansion).
 export const tocSkeletonBase =
   'block h-0.5 w-[calc(var(--depth)*12px)] rounded-full bg-muted-foreground opacity-30 data-[current]:bg-primary data-[current]:opacity-100';
+
+/** Selects the final active item in document order for the single current link. */
+export function getTocCurrentValue(
+  items: readonly Pick<TocItem, 'value'>[],
+  activeItems: readonly Pick<TocItem, 'value'>[],
+): string | undefined {
+  if (activeItems.length === 0) return undefined;
+  const order = new Map(items.map((item, index) => [item.value, index]));
+  return activeItems.reduce((last, item) =>
+    (order.get(item.value) ?? -1) > (order.get(last.value) ?? -1) ? item : last,
+  ).value;
+}
+
+export interface TocNode extends TocItem {
+  children?: TocNode[];
+}
+
+/** Builds the nested heading tree used by the tree presentation. */
+export function buildTocTree(items: readonly TocItem[]): TocNode[] {
+  const roots: TocNode[] = [];
+  const stack: TocNode[] = [];
+  for (const item of items) {
+    const node: TocNode = { ...item, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1]!.depth >= item.depth) stack.pop();
+    (stack[stack.length - 1]?.children ?? roots).push(node);
+    stack.push(node);
+  }
+  return roots;
+}
+
+/** Removes empty children arrays because TreeView uses their presence as branch state. */
+export function pruneTocLeaves(nodes: readonly TocNode[]): TocNode[] {
+  return nodes.map(({ children, ...node }) => {
+    const next = children ? pruneTocLeaves(children) : [];
+    return next.length > 0 ? { ...node, children: next } : node;
+  });
+}
+
+export const tocRailLevel = (depth: number) => Math.min(Math.max(depth - 2, 0), 2);
+export const tocRailLineOffset = (depth: number) => 8 + tocRailLevel(depth) * 8;
+export const tocRailTextOffset = (depth: number) => 8 + (tocRailLevel(depth) + 1) * 12;
+export const tocRailBridge = 6;

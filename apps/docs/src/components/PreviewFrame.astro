@@ -1,12 +1,4 @@
 ---
-// apps/docs/src/components/PreviewFrame.astro
-// Full-window iframe demo for layout components. Lazily loads the component near
-// the viewport (so 100svh / position: sticky behave as in production), styled flush
-// like the other examples — no fake browser chrome. A desktop/mobile width
-// toggle floats as icon buttons in the top-right corner, and the framework and
-// theme sync with the docs shell via postMessage. Only adopted for Page
-// (layout) for now — see the preview/[component]/[example] routes and the
-// deferred ticket for other components.
 interface Props {
   component: string;
   example: string;
@@ -97,10 +89,6 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 </div>
 
 <style>
-  /* Desktop mode: the iframe runs flush to the card edges (the card's own
-     border is the only one; the frame clips corners via overflow-hidden +
-     rounded-t-lg). Mobile mode: a phone-width screen with rounder corners and a
-     subtle border so it reads as a device on the muted canvas. */
   [data-preview-window][data-preview-mode='mobile'] {
     border-radius: 1rem;
     border: 1px solid var(--border);
@@ -113,9 +101,6 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 </style>
 
 <script is:inline define:vars={{ uid, base: import.meta.env.BASE_URL }}>
-  // Mirrors FRAMEWORK_EVENT in lib/framework.ts. A define:vars script is inlined
-  // as a non-module script, so it can't use imports or import.meta — base comes
-  // in via define:vars and the event name is duplicated here on purpose.
   const FRAMEWORK_EVENT = 'vortex:framework';
 
   const root = document.getElementById(uid);
@@ -152,10 +137,6 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
     frame.addEventListener('load', sendState);
     window.addEventListener(FRAMEWORK_EVENT, sendState);
 
-    // A native lazy iframe can begin loading several viewports early. Keep src
-    // unset until the preview is close enough to be useful, then let the browser
-    // handle the actual lazy navigation. This avoids hydrating every framework
-    // preview during the initial docs-page load.
     if ('IntersectionObserver' in window) {
       const loadObserver = new IntersectionObserver(
         (entries) => {

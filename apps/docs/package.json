@@ -24,6 +24,7 @@
     "@cloudvoyant/helical-ui": "workspace:*",
     "@cloudvoyant/helical-react": "workspace:*",
     "@cloudvoyant/helical-svelte": "workspace:*",
+    "@cloudvoyant/testing": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "astro": "catalog:",
     "lucide-react": "catalog:",

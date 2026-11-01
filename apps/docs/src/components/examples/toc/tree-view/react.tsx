@@ -4,14 +4,8 @@
 // derives the TreeView collection and its expansion state.
 import { Page, PageContent, PageGutter, TableOfContents } from '@cloudvoyant/helical-react';
 
-function Filler({ lines }: { lines: number }) {
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className="h-2.5 rounded bg-muted" />
-      ))}
-    </div>
-  );
+function Filler() {
+  return <div className="mt-3 min-h-96 rounded bg-muted/30" />;
 }
 
 export default function ReactTocTreeView() {
@@ -24,60 +18,60 @@ export default function ReactTocTreeView() {
               <h2 id="react-09-guides" className="text-lg font-semibold">
                 Guides
               </h2>
-              <Filler lines={10} />
+              <Filler />
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-quick-start" className="text-base font-semibold">
                   Quick Start
                 </h3>
-                <Filler lines={6} />
+                <Filler />
               </div>
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-manual-setup" className="text-base font-semibold">
                   Manual Setup
                 </h3>
-                <Filler lines={5} />
+                <Filler />
               </div>
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-09-core-concepts" className="text-lg font-semibold">
                 Core Concepts
               </h2>
-              <Filler lines={9} />
+              <Filler />
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-toc-props" className="text-base font-semibold">
                   Props
                 </h3>
-                <Filler lines={7} />
+                <Filler />
               </div>
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-toc-events" className="text-base font-semibold">
                   Events
                 </h3>
-                <Filler lines={6} />
+                <Filler />
               </div>
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-toc-context" className="text-base font-semibold">
                   Context
                 </h3>
-                <Filler lines={8} />
+                <Filler />
               </div>
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-09-advanced" className="text-lg font-semibold">
                 Advanced
               </h2>
-              <Filler lines={11} />
+              <Filler />
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-root-api" className="text-base font-semibold">
                   Root Provider
                 </h3>
-                <Filler lines={7} />
+                <Filler />
               </div>
               <div className="mt-6 scroll-mt-8 ps-6">
                 <h3 id="react-09-custom-rendering" className="text-base font-semibold">
                   Custom Rendering
                 </h3>
-                <Filler lines={6} />
+                <Filler />
               </div>
             </section>
           </div>

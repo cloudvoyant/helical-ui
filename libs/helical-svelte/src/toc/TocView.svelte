@@ -1,17 +1,6 @@
 <!-- libs/helical-svelte/src/toc/TocView.svelte -->
 <!-- Renders the received machine through the private compatibility barrel. Never creates one.
      Mirrors @cloudvoyant/helical-react TableOfContents's internal `TocView`. -->
-<script module lang="ts">
-  import type { TocItem } from '@cloudvoyant/helical-ui';
-
-  /** Hierarchy derived from the public flat item list by depth. */
-  export type TocNode = {
-    value: string;
-    label: string;
-    depth: number;
-    children?: TocNode[];
-  };
-</script>
 
 <script lang="ts">
   import {
@@ -23,12 +12,17 @@
   import { SwapIndicator, SwapRoot } from '@ark-ui/svelte/swap';
   import { TreeView, createTreeCollection } from '@ark-ui/svelte/tree-view';
   import {
+    buildTocTree,
     cn,
     tocIndicatorBase,
     tocItemBase,
     tocLinkVariants,
     tocListVariants,
+    pruneTocLeaves,
     tocNavBase,
+    tocRailBridge,
+    tocRailLineOffset,
+    tocRailTextOffset,
     tocSkeletonBase,
     tocTitleBase,
   } from '@cloudvoyant/helical-ui';
@@ -44,9 +38,10 @@
     TocTitle,
     type UseTocReturn,
   } from './internal';
+  import type { TocItem, TocNode } from '@cloudvoyant/helical-ui';
   import TocTreeNode from './TocTreeNode.svelte';
   import type { TocProps } from './types';
-  import { getCurrentValue } from './current-value';
+  import { getTocCurrentValue } from '@cloudvoyant/helical-ui';
 
   type Props = Omit<Pick<TocProps, 'items' | 'variant' | 'title' | 'class'>, 'items'> & {
     items: TocItem[];
@@ -54,19 +49,6 @@
   };
 
   let { items, variant = 'default', title = 'On this page', value, class: className = '' }: Props = $props();
-
-  // Ark's rail geometry, copied from the upstream example. h2 sits at level 0;
-  // deeper headings step in, clamped so h5+ share h4's indent. The rail overlaps
-  // the row above by RAIL_BRIDGE px so a turn can straddle the boundary.
-  const RAIL_BASE = 8;
-  const RAIL_STEP = 8;
-  const RAIL_TEXT_STEP = 12;
-  const RAIL_MAX_LEVEL = 2;
-  const RAIL_BRIDGE = 6;
-
-  const railLevel = (depth: number) => Math.min(Math.max(depth - 2, 0), RAIL_MAX_LEVEL);
-  const railLineOffset = (depth: number) => RAIL_BASE + railLevel(depth) * RAIL_STEP;
-  const railTextOffset = (depth: number) => RAIL_BASE + (railLevel(depth) + 1) * RAIL_TEXT_STEP;
 
   const titleText = $derived(typeof title === 'string' ? title : 'On this page');
   const titleSnippet = $derived(typeof title === 'function' ? title : undefined);
@@ -76,7 +58,7 @@
   let hovered = $state(false);
 
   const activeItems = $derived(value().activeItems);
-  const currentValue = $derived(getCurrentValue(value(), activeItems));
+  const currentValue = $derived(getTocCurrentValue(value().items, activeItems));
   const itemIndicator = $derived(variant === 'indicator' && currentValue !== activeItems[0]?.value);
 
   const activeIndex = () => items.findIndex((item) => item.value === currentValue);
@@ -86,7 +68,7 @@
     return index >= 0 ? (index + 1) / items.length : 0;
   };
 
-  const treeRoots = $derived(pruneLeaves(buildTree(items)));
+  const treeRoots = $derived(pruneTocLeaves(buildTocTree(items)));
   const treeCollection = $derived(
     createTreeCollection<TocNode>({
       nodeToValue: (node) => node.value,
@@ -111,37 +93,6 @@
       .filter((value) => (value in treeToggled ? treeToggled[value] : autoExpanded.includes(value))),
   );
 
-  /** TreeView treats any `children` array as a branch, so leaves must drop the key. */
-  function pruneLeaves(nodes: TocNode[]): TocNode[] {
-    return nodes.map((node) => {
-      const children = node.children ? pruneLeaves(node.children) : [];
-      if (children.length === 0) {
-        return { value: node.value, label: node.label, depth: node.depth };
-      }
-      return { value: node.value, label: node.label, depth: node.depth, children };
-    });
-  }
-
-  function buildTree(list: TocItem[]): TocNode[] {
-    const roots: TocNode[] = [];
-    const stack: TocNode[] = [];
-
-    for (const item of list) {
-      const node: TocNode = { value: item.value, label: item.label, depth: item.depth, children: [] };
-      while (stack.length > 0 && stack[stack.length - 1]!.depth >= item.depth) {
-        stack.pop();
-      }
-      const parent = stack[stack.length - 1];
-      if (parent) {
-        parent.children!.push(node);
-      } else {
-        roots.push(node);
-      }
-      stack.push(node);
-    }
-
-    return roots;
-  }
 </script>
 
 <TocRootProvider {value} class={cn(tocNavBase, className)}>
@@ -215,9 +166,9 @@
       {:else if variant === 'rail'}
         <TocList class={tocListVariants({ variant: 'rail' })}>
           {#each items as item, index (item.value)}
-            {@const line = railLineOffset(item.depth)}
-            {@const prevLine = railLineOffset(items[index - 1]?.depth ?? item.depth)}
-            {@const nextLine = railLineOffset(items[index + 1]?.depth ?? item.depth)}
+            {@const line = tocRailLineOffset(item.depth)}
+            {@const prevLine = tocRailLineOffset(items[index - 1]?.depth ?? item.depth)}
+            {@const nextLine = tocRailLineOffset(items[index + 1]?.depth ?? item.depth)}
             {@const turns = prevLine !== line}
             <TocItemPart {item} class={tocItemBase}>
               <TocLink
@@ -225,12 +176,12 @@
                 aria-current={currentValue === item.value ? 'location' : 'false'}
                 data-current={currentValue === item.value || undefined}
                 class={tocLinkVariants({ variant: 'rail' })}
-                style="padding-inline-start: {railTextOffset(item.depth)}px"
+                style="padding-inline-start: {tocRailTextOffset(item.depth)}px"
               >
                 <svg
                   class="pointer-events-none absolute start-0 overflow-visible text-border group-data-[current]/link:text-primary"
-                  style="top: {-RAIL_BRIDGE}px; width: {Math.max(prevLine, line) + 9}px; height: {line === nextLine
-                    ? `calc(100% + ${RAIL_BRIDGE}px)`
+                  style="top: {-tocRailBridge}px; width: {Math.max(prevLine, line) + 9}px; height: {line === nextLine
+                    ? `calc(100% + ${tocRailBridge}px)`
                     : '100%'}"
                   aria-hidden="true"
                   fill="none"
@@ -238,9 +189,9 @@
                   stroke-width="1"
                 >
                   {#if turns}
-                    <path d="M {prevLine + 0.5} 0 C {prevLine + 0.5} 8 {line + 0.5} 4 {line + 0.5} {RAIL_BRIDGE * 2}" />
+                    <path d="M {prevLine + 0.5} 0 C {prevLine + 0.5} 8 {line + 0.5} 4 {line + 0.5} {tocRailBridge * 2}" />
                   {/if}
-                  <line x1={line + 0.5} y1={turns ? RAIL_BRIDGE * 2 : RAIL_BRIDGE} x2={line + 0.5} y2="100%" />
+                  <line x1={line + 0.5} y1={turns ? tocRailBridge * 2 : tocRailBridge} x2={line + 0.5} y2="100%" />
                 </svg>
                 {item.label}
               </TocLink>

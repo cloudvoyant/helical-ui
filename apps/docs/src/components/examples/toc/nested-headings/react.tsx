@@ -2,14 +2,8 @@
 // Mirrors Ark UI's TOC "Nested Headings" example — mixed depths, indented links.
 import { Page, PageContent, PageGutter, TableOfContents } from '@cloudvoyant/helical-react';
 
-function Filler({ lines }: { lines: number }) {
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className="h-2.5 rounded bg-muted" />
-      ))}
-    </div>
-  );
+function Filler() {
+  return <div className="mt-3 min-h-96 rounded bg-muted/30" />;
 }
 
 export default function ReactTocNestedHeadings() {
@@ -22,49 +16,49 @@ export default function ReactTocNestedHeadings() {
               <h2 id="react-02-importance" className="text-lg font-semibold">
                 Importance
               </h2>
-              <Filler lines={10} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-02-integrations" className="text-lg font-semibold">
                 Integrations
               </h2>
-              <Filler lines={12} />
+              <Filler />
             </section>
             <section className="scroll-mt-8 ps-6">
               <h3 id="react-02-free-blocks" className="text-base font-semibold">
                 Free Blocks
               </h3>
-              <Filler lines={8} />
+              <Filler />
             </section>
             <section className="scroll-mt-8 ps-6">
               <h3 id="react-02-configuration" className="text-base font-semibold">
                 Configuration
               </h3>
-              <Filler lines={14} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-02-api-reference" className="text-lg font-semibold">
                 API Reference
               </h2>
-              <Filler lines={10} />
+              <Filler />
             </section>
             <section className="scroll-mt-8 ps-6">
               <h3 id="react-02-hooks" className="text-base font-semibold">
                 Hooks
               </h3>
-              <Filler lines={8} />
+              <Filler />
             </section>
             <section className="scroll-mt-8 ps-6">
               <h3 id="react-02-components" className="text-base font-semibold">
                 Components
               </h3>
-              <Filler lines={12} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-02-examples" className="text-lg font-semibold">
                 Examples
               </h2>
-              <Filler lines={10} />
+              <Filler />
             </section>
           </div>
         </PageContent>

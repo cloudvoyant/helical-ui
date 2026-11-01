@@ -5,15 +5,9 @@
 // examples (gutters, gutter-scroll, footer, landing) render in PreviewFrame
 // iframes, so assertions target the iframe document; the default example
 // stays inline.
-import { test, expect, type FrameLocator, type Locator } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { previewFrameFor } from '@cloudvoyant/testing';
 import { FRAMEWORKS } from './helpers';
-
-async function previewFrameFor(card: Locator): Promise<FrameLocator> {
-  await card.scrollIntoViewIfNeeded();
-  const iframe = card.locator('iframe[data-preview]');
-  await expect(iframe).toHaveAttribute('src', /\/preview\/page\//);
-  return card.frameLocator('iframe[data-preview]');
-}
 
 for (const framework of FRAMEWORKS) {
   test.describe(`Page docs page · ${framework}`, () => {
@@ -27,7 +21,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('renders page landmarks (main content and footer)', async ({ page }) => {
-      const frame = await previewFrameFor(page.locator('[data-preview-frame]').first());
+      const frame = await previewFrameFor(page.locator('[data-preview-frame]').first(), 'page');
       const fw = `[data-fw="${framework}"]`;
       await expect(frame.locator(`${fw} [data-slot="page-content"]`).first()).toBeVisible();
       await expect(frame.locator(`${fw} [data-slot="page-footer"]`).first()).toBeVisible();
@@ -35,7 +29,7 @@ for (const framework of FRAMEWORKS) {
 
     test('keeps gutters sticky while scrolling the page body', async ({ page }) => {
       const guttersCard = page.getByRole('heading', { name: 'Gutters' }).locator('..');
-      const frame = await previewFrameFor(guttersCard);
+      const frame = await previewFrameFor(guttersCard, 'page');
       const gutter = frame.locator(`[data-fw="${framework}"] [data-slot="page-gutter"]`).first();
       await expect(gutter).toHaveCSS('position', 'sticky');
       await frame
@@ -55,7 +49,7 @@ for (const framework of FRAMEWORKS) {
     test('footer appears and gutters scroll up once the page body is past', async ({ page }) => {
       const guttersCard = page.getByRole('heading', { name: 'Gutters' }).locator('..');
       const iframeEl = guttersCard.locator('iframe[data-preview]');
-      const frame = await previewFrameFor(guttersCard);
+      const frame = await previewFrameFor(guttersCard, 'page');
       const gutter = frame.locator(`[data-fw="${framework}"] [data-slot="page-gutter"]`).first();
       const footer = frame.locator(`[data-fw="${framework}"] [data-slot="page-footer"]`).first();
       await frame
@@ -78,7 +72,7 @@ for (const framework of FRAMEWORKS) {
 
     test('hides gutter content on narrow screens', async ({ page }) => {
       const guttersCard = page.getByRole('heading', { name: 'Gutters' }).locator('..');
-      const frame = await previewFrameFor(guttersCard);
+      const frame = await previewFrameFor(guttersCard, 'page');
       await guttersCard.locator('button[data-preview-width="mobile"]').click();
       const gutterContent = frame.locator(`[data-fw="${framework}"] [data-slot="page-gutter-content"]`).first();
       await expect(gutterContent).toBeHidden();
@@ -86,7 +80,7 @@ for (const framework of FRAMEWORKS) {
 
     test('landing variant stacks viewport-height sections above the footer', async ({ page }) => {
       const landingCard = page.getByRole('heading', { name: 'Landing' }).locator('..');
-      const frame = await previewFrameFor(landingCard);
+      const frame = await previewFrameFor(landingCard, 'page');
       const sections = frame.locator(`[data-fw="${framework}"] [data-slot="page-section"]`);
       const section = sections.first();
       await expect(section).toBeVisible();

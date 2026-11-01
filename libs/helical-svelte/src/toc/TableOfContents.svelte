@@ -5,7 +5,7 @@
   import type { UseTocReturn } from './internal';
   import type { TableOfContentsProps } from './types';
   import TocAutoOwned from './TocAutoOwned.svelte';
-  import TocOwned from './TocOwned.svelte';
+  import OwnedTableOfContents from './OwnedTableOfContents.svelte';
   import TocView from './TocView.svelte';
 
   let {
@@ -35,7 +35,7 @@
 {#if value}
   <TocView items={items ?? machineItems(value())} {variant} {title} {value} class={className} />
 {:else if items}
-  <TocOwned
+  <OwnedTableOfContents
     {items}
     {variant}
     {scrollEl}

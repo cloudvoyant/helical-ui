@@ -141,7 +141,7 @@ Returns the Ark-compatible machine — `activeIds`, `activeItems`, `setActiveIds
 
 ## Accessibility
 
-`TableOfContents` renders a native `<nav>` and a `<ul>`/`<li>` list, and links to the headings by `id`. Exactly one link carries `data-current` and `aria-current="location"`, so the current section is announced rather than only coloured, and the nav is labelled by its title heading. Machine-range state remains available through `data-active`, while items also expose `data-depth`, `data-first`, and `data-last`. Because headings are found by `id`, use unique `id`s and make sure the linked headings exist — a missing heading simply never becomes active.
+`TableOfContents` renders a native `<nav>` and a `<ul>`/`<li>` list, and links to headings by `id`. The current link exposes `aria-current="location"` so assistive technology can announce the active section. You only need to provide normal headings with unique `id`s; the component owns collection, observation, scrolling, and presentation state. A missing heading simply never becomes active.
 
 ## Theming
 
@@ -149,4 +149,4 @@ Every class comes from the shared cva layer in `@cloudvoyant/helical-ui`, so `Ta
 
 ## Implementation note
 
-Ark UI has not published its TOC primitives to npm yet, so each framework package vendors them behind a private compatibility barrel (`src/toc/internal/`). The examples on this page use the public high-level API only — the copied primitives are internal implementation details and are not exported from the package root. When Ark ships stable TOC exports, the barrel is replaced and the vendored files are deleted, with no change to the `TableOfContents` or `useToc` API.
+The versions used by this repository do not publish a TOC export: `@ark-ui/react` 5.38.2 and `@ark-ui/svelte` 5.23.1 have no `./toc` package export, while the TOC machine is supplied separately by `@zag-js/toc` 1.43.1. The framework packages therefore keep Ark's TOC parts behind private compatibility barrels in `src/toc/internal/`; those parts are not part of the public package API. The examples use only `TableOfContents` and `useToc`. When a supported Ark release publishes `./toc`, the private barrel can be replaced without changing this public API.

@@ -2,14 +2,8 @@
 // Mirrors Ark UI's TOC "Basic" example through helical-ui TableOfContents.
 import { Page, PageContent, PageGutter, TableOfContents } from '@cloudvoyant/helical-react';
 
-function Filler({ lines }: { lines: number }) {
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className="h-2.5 rounded bg-muted" />
-      ))}
-    </div>
-  );
+function Filler() {
+  return <div className="mt-3 min-h-96 rounded bg-muted/30" />;
 }
 
 export default function ReactTocBasic() {
@@ -22,31 +16,31 @@ export default function ReactTocBasic() {
               <h2 id="react-01-introduction" className="text-lg font-semibold">
                 Introduction
               </h2>
-              <Filler lines={12} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-01-getting-started" className="text-lg font-semibold">
                 Getting Started
               </h2>
-              <Filler lines={10} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-01-installation" className="text-lg font-semibold">
                 Installation
               </h2>
-              <Filler lines={8} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-01-usage" className="text-lg font-semibold">
                 Usage
               </h2>
-              <Filler lines={14} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-01-conclusion" className="text-lg font-semibold">
                 Conclusion
               </h2>
-              <Filler lines={10} />
+              <Filler />
             </section>
           </div>
         </PageContent>
