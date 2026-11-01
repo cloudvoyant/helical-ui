@@ -1,12 +1,4 @@
 ---
-// apps/docs/src/components/PreviewFrame.astro
-// Full-window iframe demo for layout components. Loads the component in its own
-// viewport (so 100svh / position: sticky behave as in production), styled flush
-// like the other examples — no fake browser chrome. A desktop/mobile width
-// toggle floats as icon buttons in the top-right corner, and the framework and
-// theme sync with the docs shell via postMessage. Only adopted for Page
-// (layout) for now — see the preview/[component]/[example] routes and the
-// deferred ticket for other components.
 interface Props {
   component: string;
   example: string;
@@ -37,7 +29,7 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       class="relative mx-auto shrink-0 overflow-hidden transition-[width] duration-200"
       style={`width: ${initialWidth}; aspect-ratio: 16 / 9`}
     >
-      <iframe data-preview title={title} class="block h-full w-full border-0"></iframe>
+      <iframe data-preview title={title} loading="lazy" class="block h-full w-full border-0"></iframe>
     </div>
   </div>
   <div
@@ -97,10 +89,6 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 </div>
 
 <style>
-  /* Desktop mode: the iframe runs flush to the card edges (the card's own
-     border is the only one; the frame clips corners via overflow-hidden +
-     rounded-t-lg). Mobile mode: a phone-width screen with rounder corners and a
-     subtle border so it reads as a device on the muted canvas. */
   [data-preview-window][data-preview-mode='mobile'] {
     border-radius: 1rem;
     border: 1px solid var(--border);
@@ -113,9 +101,6 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 </style>
 
 <script is:inline define:vars={{ uid, base: import.meta.env.BASE_URL }}>
-  // Mirrors FRAMEWORK_EVENT in lib/framework.ts. A define:vars script is inlined
-  // as a non-module script, so it can't use imports or import.meta — base comes
-  // in via define:vars and the event name is duplicated here on purpose.
   const FRAMEWORK_EVENT = 'vortex:framework';
 
   const root = document.getElementById(uid);
@@ -149,9 +134,22 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       );
     };
 
-    setSrc();
     frame.addEventListener('load', sendState);
     window.addEventListener(FRAMEWORK_EVENT, sendState);
+
+    if ('IntersectionObserver' in window) {
+      const loadObserver = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          loadObserver.disconnect();
+          setSrc();
+        },
+        { rootMargin: '600px 0px' },
+      );
+      loadObserver.observe(root);
+    } else {
+      setSrc();
+    }
     new MutationObserver(sendState).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],

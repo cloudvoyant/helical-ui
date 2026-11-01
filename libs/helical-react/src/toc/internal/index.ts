@@ -1,0 +1,20 @@
+// libs/helical-react/src/toc/internal/index.ts
+// Vendored from Ark UI (chakra-ui/ark, packages/react/src/components/toc/index.ts).
+// PRIVATE: this barrel backs the public high-level `Toc`, and must never be
+// re-exported from `libs/helical-react/src/index.ts`. See ./README.md.
+export type { ActiveChangeDetails as TocActiveChangeDetails, TocItem as TocItemData } from '@zag-js/toc';
+export { TocContent, type TocContentBaseProps, type TocContentProps } from './toc-content';
+export { TocContext, type TocContextProps } from './toc-context';
+export { TocIndicator, type TocIndicatorBaseProps, type TocIndicatorProps } from './toc-indicator';
+export { TocItem, type TocItemBaseProps, type TocItemProps } from './toc-item';
+export { TocLink, type TocLinkBaseProps, type TocLinkProps } from './toc-link';
+export { TocList, type TocListBaseProps, type TocListProps } from './toc-list';
+export { TocNav, type TocNavBaseProps, type TocNavProps } from './toc-nav';
+export { TocRoot, type TocRootBaseProps, type TocRootProps } from './toc-root';
+export { TocRootProvider, type TocRootProviderBaseProps, type TocRootProviderProps } from './toc-root-provider';
+export { TocTitle, type TocTitleBaseProps, type TocTitleProps } from './toc-title';
+export { tocAnatomy } from './toc.anatomy';
+export { useToc, type UseTocProps, type UseTocReturn } from './use-toc';
+export { useTocContext, type UseTocContext } from './use-toc-context';
+
+export * as Toc from './toc';

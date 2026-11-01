@@ -4,14 +4,12 @@
 // and rail-handle toggling. Asserts observable state (`data-state`) and visibility,
 // never generated class strings. The demos render in PreviewFrame iframes, so
 // assertions target the active framework's island inside each frame.
-import { test, expect, type Page, type FrameLocator } from '@playwright/test';
+import { test, expect, type FrameLocator } from '@playwright/test';
+import { previewFrameFor } from '@cloudvoyant/testing';
 
 const FRAMEWORKS = ['react', 'svelte'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
-function exampleFrame(page: Page, index: number): FrameLocator {
-  return page.locator('[data-example]').nth(index).frameLocator('iframe[data-preview]');
-}
 
 function sidebar(frame: FrameLocator, framework: Framework) {
   // The desktop sidebar (not the mobile drawer, which also carries
@@ -31,7 +29,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('collapses to an icon rail (container narrows, icon remains)', async ({ page }) => {
-      const frame = exampleFrame(page, 0); // icon example
+      const frame = await previewFrameFor(page.locator('[data-example]').nth(0), 'sidebar'); // icon example
       const sb = sidebar(frame, framework);
       const container = frame.locator(`[data-fw="${framework}"] [data-slot="sidebar-container"]`).first();
       const menuButton = frame.locator(`[data-fw="${framework}"] [data-sidebar="menu-button"]:has(svg)`).first();
@@ -60,7 +58,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('completely disappears on collapse (offcanvas)', async ({ page }) => {
-      const frame = exampleFrame(page, 1); // offcanvas example
+      const frame = await previewFrameFor(page.locator('[data-example]').nth(1), 'sidebar'); // offcanvas example
       const sb = sidebar(frame, framework);
       const gap = frame.locator(`[data-fw="${framework}"] [data-slot="sidebar-gap"]`).first();
       const trigger = frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first();
@@ -83,7 +81,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('toggles expanded/collapsed with the rail handle', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await previewFrameFor(page.locator('[data-example]').nth(2), 'sidebar'); // rail example
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
@@ -107,7 +105,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('rail activates with the Enter key', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await previewFrameFor(page.locator('[data-example]').nth(2), 'sidebar'); // rail example
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
@@ -120,7 +118,7 @@ for (const framework of FRAMEWORKS) {
     });
 
     test('trigger and rail carry accessible labels', async ({ page }) => {
-      const frame = exampleFrame(page, 2); // rail example
+      const frame = await previewFrameFor(page.locator('[data-example]').nth(2), 'sidebar'); // rail example
       await expect(frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first()).toHaveAttribute(
         'aria-label',
         'Toggle Sidebar',
