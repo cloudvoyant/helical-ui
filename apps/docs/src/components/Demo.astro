@@ -49,6 +49,8 @@ const FULLSCREEN_EXAMPLES = new Set([
   'sidebar/icon',
   'sidebar/offcanvas',
   'sidebar/rail',
+  'sidebar/right-side',
+  'sidebar/nested',
   'page/default',
   'page/footer',
   'page/gutter-scroll',
@@ -76,7 +78,7 @@ const isFullscreen = FULLSCREEN_EXAMPLES.has(`${component}/${example}`);
     {isSsr ? (
       <SsrRouter component={component} example={example} />
     ) : isPreviewFrame ? (
-      <PreviewFrame component={component} example={example} desktopWidth={component === 'sidebar' ? 1024 : undefined} />
+      <PreviewFrame component={component} example={example} desktopWidth={component === 'sidebar' ? 768 : undefined} />
     ) : isClientOnly ? (
       <>
         <div data-fw="react">

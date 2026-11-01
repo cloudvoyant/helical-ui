@@ -9,6 +9,8 @@
     DrawerTitle,
     DrawerDescription,
     DrawerCloseTrigger,
+    DrawerGrabber,
+    DrawerGrabberIndicator,
   } from '@ark-ui/svelte/drawer';
   import { SIDEBAR_WIDTH_MOBILE, sidebarStyles, cn } from '@cloudvoyant/helical-ui';
   import Col from '../Col.svelte';
@@ -36,8 +38,26 @@
   const sidebar = getSidebarContext();
   const state = $derived(sidebar.state);
   const isMobile = $derived(sidebar.isMobile);
+  const open = $derived(sidebar.open);
+  const setOpen = sidebar.setOpen;
   const openMobile = $derived(sidebar.openMobile);
   const setOpenMobile = sidebar.setOpenMobile;
+  const controlled = $derived(sidebar.controlled);
+
+  // A controlled provider drives the mobile drawer with the same `open` state as
+  // desktop; an uncontrolled one keeps the shadcn split (openMobile for the
+  // drawer). The right sidebar renders as a non-modal "widget" drawer.
+  const drawerOpen = $derived(controlled ? open : openMobile);
+  const isWidget = $derived(side === 'right');
+  const setDrawerOpen = (value: boolean) => (controlled ? setOpen(value) : setOpenMobile(value));
+
+  // Snap points only apply to the widget (bottom-sheet) drawer, where the
+  // grabber resizes between 35% and 50% of the viewport height. The full-height
+  // side sheet must not be handed snap config — Ark would rest it partially
+  // off-canvas at the first snap offset instead of fully in view.
+  const snapPoints = $derived(isWidget ? [0.35, 0.5] : undefined);
+  const defaultSnapPoint = $derived(isWidget ? 0.5 : undefined);
+  const snapToSequentialPoints = $derived(isWidget);
 
   const containerClasses = $derived(
     cn(
@@ -73,20 +93,39 @@
     {@render children?.()}
   </Col>
 {:else if isMobile}
-  <DrawerRoot open={openMobile} onOpenChange={(details) => setOpenMobile(details.open)} {...rest}>
-    <DrawerBackdrop />
-    <DrawerPositioner class="w-(--sidebar-width)">
+  <DrawerRoot
+    open={drawerOpen}
+    onOpenChange={(details) => setDrawerOpen(details.open)}
+    swipeDirection={side === 'left' ? 'start' : 'down'}
+    modal={!isWidget}
+    {snapPoints}
+    {defaultSnapPoint}
+    {snapToSequentialPoints}
+    preventDragOnScroll={false}
+    {...rest}
+  >
+    {#if !isWidget}
+      <DrawerBackdrop class={sidebarStyles.mobileBackdropClass} />
+    {/if}
+    <DrawerPositioner class={sidebarStyles.mobilePositionerClass}>
       <DrawerContent
         data-sidebar="sidebar"
         data-slot="sidebar"
         data-mobile="true"
-        class="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground"
+        class={cn(sidebarStyles.mobileContentClass, className)}
         style={`--sidebar-width: ${SIDEBAR_WIDTH_MOBILE};`}
       >
         <DrawerTitle class="sr-only">Sidebar</DrawerTitle>
         <DrawerDescription class="sr-only">Displays the mobile sidebar.</DrawerDescription>
         <DrawerCloseTrigger class="hidden" />
-        <Col class="h-full w-full">{@render children?.()}</Col>
+        {#if isWidget}
+          <DrawerGrabber class={sidebarStyles.mobileGrabberClass}>
+            <DrawerGrabberIndicator class={sidebarStyles.mobileGrabberIndicatorClass} />
+          </DrawerGrabber>
+        {/if}
+        <div data-no-drag class="flex min-h-0 flex-1 flex-col">
+          <Col class="h-full w-full">{@render children?.()}</Col>
+        </div>
       </DrawerContent>
     </DrawerPositioner>
   </DrawerRoot>

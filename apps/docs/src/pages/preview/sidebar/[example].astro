@@ -13,9 +13,13 @@ import SidebarOffcanvasReact from '../../../components/examples/sidebar/offcanva
 import SidebarOffcanvasSvelte from '../../../components/examples/sidebar/offcanvas/svelte.svelte';
 import SidebarRailReact from '../../../components/examples/sidebar/rail/react.tsx';
 import SidebarRailSvelte from '../../../components/examples/sidebar/rail/svelte.svelte';
+import SidebarRightSideReact from '../../../components/examples/sidebar/right-side/react.tsx';
+import SidebarRightSideSvelte from '../../../components/examples/sidebar/right-side/svelte.svelte';
+import SidebarNestedReact from '../../../components/examples/sidebar/nested/react.tsx';
+import SidebarNestedSvelte from '../../../components/examples/sidebar/nested/svelte.svelte';
 
 export function getStaticPaths() {
-  const EXAMPLES = ['icon', 'offcanvas', 'rail'] as const;
+  const EXAMPLES = ['icon', 'offcanvas', 'rail', 'right-side', 'nested'] as const;
   return EXAMPLES.map((example) => ({ params: { example } }));
 }
 
@@ -23,13 +27,13 @@ const { example } = Astro.params;
 const title = `Sidebar preview — ${example}`;
 ---
 
-<html lang="en" data-framework="react" class="theme-helical-ui">
+<html lang="en" data-framework="react" class="theme-helical-ui overflow-hidden">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
   </head>
-  <body class="min-h-dvh bg-background text-foreground antialiased">
+  <body class="min-h-dvh overflow-hidden bg-background text-foreground antialiased">
     <div data-demo>
       {example === 'icon' && (
         <div data-fw="react">
@@ -59,6 +63,26 @@ const title = `Sidebar preview — ${example}`;
       {example === 'rail' && (
         <div data-fw="svelte">
           <SidebarRailSvelte client:load />
+        </div>
+      )}
+      {example === 'right-side' && (
+        <div data-fw="react">
+          <SidebarRightSideReact client:load />
+        </div>
+      )}
+      {example === 'right-side' && (
+        <div data-fw="svelte">
+          <SidebarRightSideSvelte client:load />
+        </div>
+      )}
+      {example === 'nested' && (
+        <div data-fw="react">
+          <SidebarNestedReact client:load />
+        </div>
+      )}
+      {example === 'nested' && (
+        <div data-fw="svelte">
+          <SidebarNestedSvelte client:load />
         </div>
       )}
     </div>

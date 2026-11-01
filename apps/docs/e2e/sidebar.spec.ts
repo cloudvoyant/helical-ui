@@ -4,13 +4,47 @@
 // and rail-handle toggling. Asserts observable state (`data-state`) and visibility,
 // never generated class strings. The demos render in PreviewFrame iframes, so
 // assertions target the active framework's island inside each frame.
-import { test, expect, type Page, type FrameLocator } from '@playwright/test';
+import { test, expect, type Locator, type Page, type FrameLocator } from '@playwright/test';
 
 const FRAMEWORKS = ['react', 'svelte'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
 function exampleFrame(page: Page, index: number): FrameLocator {
   return page.locator('[data-example]').nth(index).frameLocator('iframe[data-preview]');
+}
+
+// Resolves an example's PreviewFrame card by identity (its `data-preview-example`
+// slug), not by ordinal, so unrelated examples added elsewhere on the page can't
+// shift what a test targets.
+function previewCard(page: Page, example: string): Locator {
+  return page.locator(`[data-preview-frame][data-component="sidebar"][data-preview-example="${example}"]`);
+}
+
+// Shared mobile-sheet flow: switch the example's frame to mobile width, open the
+// drawer via the trigger, assert the sheet's swipe direction and open state,
+// then dismiss with Esc.
+async function assertMobileSheet(page: Page, example: string, framework: Framework, expectedSwipe: 'left' | 'down') {
+  const card = previewCard(page, example);
+  await card.locator('button[data-preview-width="mobile"]').click();
+  const fw = card.frameLocator('iframe[data-preview]').locator(`[data-fw="${framework}"]`);
+  const drawer = fw.locator('[data-slot="sidebar"][data-mobile="true"]');
+  // Drawer positioner only — tooltips also carry data-part="positioner".
+  const positioner = fw.locator('[data-part="positioner"][data-scope="drawer"]');
+  const trigger = fw.locator('[data-sidebar="trigger"]');
+
+  // Closed by default: no overlay is visible.
+  await expect(positioner).toBeHidden();
+
+  await expect(async () => {
+    await trigger.click();
+    await expect(positioner).toBeVisible();
+  }).toPass();
+  await expect(drawer).toHaveAttribute('data-swipe-direction', expectedSwipe);
+  await expect(drawer).toHaveAttribute('data-state', 'open');
+
+  // Esc dismisses it and removes the overlay entirely.
+  await page.keyboard.press('Escape');
+  await expect(positioner).toBeHidden();
 }
 
 function sidebar(frame: FrameLocator, framework: Framework) {
@@ -37,26 +71,59 @@ for (const framework of FRAMEWORKS) {
       const menuButton = frame.locator(`[data-fw="${framework}"] [data-sidebar="menu-button"]:has(svg)`).first();
       const trigger = frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first();
 
-      await expect(sb).toHaveAttribute('data-state', 'expanded');
-      // The desktop sidebar is 16rem (256px) wide when expanded.
-      await expect(container).toHaveCSS('width', '256px');
-
-      await expect(async () => {
-        await trigger.click();
-        await expect(sb).toHaveAttribute('data-state', 'collapsed');
-      }).toPass();
-
-      // The icon rail collapses to the 3rem icon width (48px) while the menu button's icon stays visible.
+      // Starts collapsed (the default) — a 3rem icon rail.
+      await expect(sb).toHaveAttribute('data-state', 'collapsed');
       await expect(container).toHaveCSS('width', '48px');
       await expect(menuButton).toBeVisible();
       await expect(menuButton.locator('svg').first()).toBeVisible();
 
-      // And it can be expanded again.
+      // Opening expands to the full 16rem (256px) desktop sidebar.
       await expect(async () => {
         await trigger.click();
         await expect(sb).toHaveAttribute('data-state', 'expanded');
       }).toPass();
       await expect(container).toHaveCSS('width', '256px');
+
+      // And it collapses back to the icon rail.
+      await expect(async () => {
+        await trigger.click();
+        await expect(sb).toHaveAttribute('data-state', 'collapsed');
+      }).toPass();
+      await expect(container).toHaveCSS('width', '48px');
+    });
+
+    test('renders as a full-height mobile side sheet', async ({ page }) => {
+      // The icon example (side="left") opens a full-height sheet anchored left.
+      await assertMobileSheet(page, 'icon', framework, 'left');
+    });
+
+    test('renders the right sidebar as a bottom sheet', async ({ page }) => {
+      await assertMobileSheet(page, 'right-side', framework, 'down');
+    });
+
+    test('fits right-side and nested sidebars within the desktop preview width without horizontal scrolling', async ({
+      page,
+    }) => {
+      for (const example of ['right-side', 'nested'] as const) {
+        const card = previewCard(page, example);
+        await card.scrollIntoViewIfNeeded();
+        const viewport = card.locator('[data-preview-viewport]');
+        const rightSidebar = card
+          .frameLocator('iframe[data-preview]')
+          .locator(`[data-fw="${framework}"] [data-slot="sidebar"][data-side="right"] [data-slot="sidebar-container"]`);
+
+        await expect(rightSidebar).toBeVisible();
+        const hasOverflow = await viewport.evaluate((el) => el.scrollWidth > el.clientWidth);
+        expect(hasOverflow).toBe(false);
+
+        const viewportBox = await viewport.boundingBox();
+        const sidebarBox = await rightSidebar.boundingBox();
+        expect(viewportBox).not.toBeNull();
+        expect(sidebarBox).not.toBeNull();
+        if (viewportBox && sidebarBox) {
+          expect(sidebarBox.x + sidebarBox.width).toBeLessThanOrEqual(viewportBox.x + viewportBox.width + 1);
+        }
+      }
     });
 
     test('completely disappears on collapse (offcanvas)', async ({ page }) => {
@@ -65,21 +132,22 @@ for (const framework of FRAMEWORKS) {
       const gap = frame.locator(`[data-fw="${framework}"] [data-slot="sidebar-gap"]`).first();
       const trigger = frame.locator(`[data-fw="${framework}"] [data-sidebar="trigger"]`).first();
 
-      await expect(sb).toHaveAttribute('data-state', 'expanded');
-
-      await expect(async () => {
-        await trigger.click();
-        await expect(sb).toHaveAttribute('data-state', 'collapsed');
-      }).toPass();
-
-      // The offcanvas gap collapses to zero width — the sidebar is fully gone.
+      // Starts collapsed (the default): the offcanvas sidebar is fully gone.
+      await expect(sb).toHaveAttribute('data-state', 'collapsed');
       await expect(gap).toHaveCSS('width', '0px');
 
       await expect(async () => {
         await trigger.click();
         await expect(sb).toHaveAttribute('data-state', 'expanded');
       }).toPass();
+      // The offcanvas gap grows to the full 16rem (256px) when open.
       await expect(gap).toHaveCSS('width', '256px');
+
+      await expect(async () => {
+        await trigger.click();
+        await expect(sb).toHaveAttribute('data-state', 'collapsed');
+      }).toPass();
+      await expect(gap).toHaveCSS('width', '0px');
     });
 
     test('toggles expanded/collapsed with the rail handle', async ({ page }) => {
@@ -87,22 +155,32 @@ for (const framework of FRAMEWORKS) {
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
-      await expect(sb).toHaveAttribute('data-state', 'expanded');
+      await expect(sb).toHaveAttribute('data-state', 'collapsed');
       await expect(rail).toHaveAttribute('aria-label', 'Toggle Sidebar');
 
       // Click a point on the rail's right edge: when collapsed (offcanvas) the
       // 16px-wide rail peeks ~8px into the demo box, so the element center can
-      // fall under the card's overflow clip.
-      const clickRail = () => rail.click({ position: { x: 13, y: 100 } });
-
-      await expect(async () => {
-        await clickRail();
-        await expect(sb).toHaveAttribute('data-state', 'collapsed');
-      }).toPass();
+      // fall under the card's overflow clip. Scroll the card into view first and
+      // click by page coordinates — the desktop preview pane scrolls horizontally
+      // (fixed 1024px canvas) and Playwright's iframe hit-testing misses inside a
+      // nested overflow container.
+      const card = page.locator('[data-preview-frame][data-preview-example="rail"]');
+      const clickRail = async () => {
+        await card.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(120);
+        const box = await rail.boundingBox();
+        if (!box) throw new Error('rail handle not visible');
+        await page.mouse.click(box.x + 13, box.y + 100);
+      };
 
       await expect(async () => {
         await clickRail();
         await expect(sb).toHaveAttribute('data-state', 'expanded');
+      }).toPass();
+
+      await expect(async () => {
+        await clickRail();
+        await expect(sb).toHaveAttribute('data-state', 'collapsed');
       }).toPass();
     });
 
@@ -111,11 +189,11 @@ for (const framework of FRAMEWORKS) {
       const sb = sidebar(frame, framework);
       const rail = frame.locator(`[data-fw="${framework}"] [data-sidebar="rail"]`).first();
 
-      await expect(sb).toHaveAttribute('data-state', 'expanded');
+      await expect(sb).toHaveAttribute('data-state', 'collapsed');
       await expect(async () => {
         await rail.focus();
         await page.keyboard.press('Enter');
-        await expect(sb).toHaveAttribute('data-state', 'collapsed');
+        await expect(sb).toHaveAttribute('data-state', 'expanded');
       }).toPass();
     });
 

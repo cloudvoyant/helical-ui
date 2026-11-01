@@ -22,16 +22,17 @@
   ];
 </script>
 
-<div class="relative h-[560px] rounded-lg bg-background [transform:translateZ(0)]">
-  <SidebarProvider class="h-full min-h-0">
+{#snippet logoIcon()}
+  <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+    <HelicalLogo class="size-5" />
+  </div>
+{/snippet}
+
+<div class="relative h-screen w-full overflow-hidden bg-background">
+  <SidebarProvider class="h-screen w-full">
     <Sidebar collapsible="offcanvas" class="h-full">
       <SidebarHeader>
         <SidebarMenu>
-          {#snippet logoIcon()}
-            <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <HelicalLogo class="size-5" />
-            </div>
-          {/snippet}
           <SidebarMenuLink href="#" size="lg" icon={logoIcon}>
             helical-ui
           </SidebarMenuLink>

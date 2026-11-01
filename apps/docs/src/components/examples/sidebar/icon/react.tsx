@@ -70,8 +70,8 @@ function AppSidebar() {
 
 export default function ReactSidebarIcon() {
   return (
-    <div className="relative h-[560px] rounded-lg bg-background [transform:translateZ(0)]">
-      <SidebarProvider className="h-full min-h-0">
+    <div className="relative h-screen w-full overflow-hidden bg-background">
+      <SidebarProvider className="h-screen w-full">
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-12 items-center gap-2 border-b px-4">

@@ -11,6 +11,8 @@ import {
   DrawerTitle,
   DrawerDescription,
   DrawerCloseTrigger,
+  DrawerGrabber,
+  DrawerGrabberIndicator,
   type DrawerRootProps,
 } from '@ark-ui/react/drawer';
 import { SIDEBAR_WIDTH_MOBILE, sidebarStyles, cn } from '@cloudvoyant/helical-ui';
@@ -29,7 +31,7 @@ export function Root({
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { isMobile, state, open, setOpen, openMobile, setOpenMobile, controlled } = useSidebar();
 
   if (collapsible === 'none') {
     return (
@@ -45,25 +47,53 @@ export function Root({
   }
 
   if (isMobile) {
+    // A controlled provider drives the mobile drawer with the same `open` state
+    // as desktop (one state per sidebar); an uncontrolled one keeps the shadcn
+    // split (openMobile for the drawer). The right sidebar renders as a
+    // non-modal "widget" drawer: no backdrop, capped at half the viewport height,
+    // with a drag grabber that resizes it between snap points.
+    const isWidget = side === 'right';
+    const drawerOpen = controlled ? open : openMobile;
+    const setDrawerOpen = (value: boolean) => (controlled ? setOpen(value) : setOpenMobile(value));
+    // Snap points only apply to the widget (bottom-sheet) drawer, where the
+    // grabber resizes between 35% and 50% of the viewport height. The full-height
+    // side sheet must not be handed snap config — Ark would rest it partially
+    // off-canvas at the first snap offset instead of fully in view.
+    const snapProps = isWidget
+      ? { snapPoints: [0.35, 0.5] as number[], defaultSnapPoint: 0.5, snapToSequentialPoints: true }
+      : {};
     return (
       <DrawerRoot
-        open={openMobile}
-        onOpenChange={(details) => setOpenMobile(details.open)}
+        open={drawerOpen}
+        onOpenChange={(details) => setDrawerOpen(details.open)}
+        swipeDirection={side === 'left' ? 'start' : 'down'}
+        modal={!isWidget}
+        {...snapProps}
+        preventDragOnScroll={false}
         {...(props as DrawerRootProps)}
       >
-        <DrawerBackdrop />
-        <DrawerPositioner className="w-(--sidebar-width)">
+        {!isWidget && <DrawerBackdrop className={sidebarStyles.mobileBackdropClass} />}
+        <DrawerPositioner className={sidebarStyles.mobilePositionerClass}>
           <DrawerContent
             data-sidebar="sidebar"
             data-slot="sidebar"
             data-mobile="true"
-            className={cn('w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground', className)}
+            className={cn(sidebarStyles.mobileContentClass, className)}
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
           >
             <DrawerTitle className="sr-only">Sidebar</DrawerTitle>
             <DrawerDescription className="sr-only">Displays the mobile sidebar.</DrawerDescription>
             <DrawerCloseTrigger className="hidden" />
-            <Col className="h-full w-full">{children}</Col>
+            {isWidget && (
+              <DrawerGrabber className={sidebarStyles.mobileGrabberClass}>
+                <DrawerGrabberIndicator className={sidebarStyles.mobileGrabberIndicatorClass} />
+              </DrawerGrabber>
+            )}
+            {/* Keep the nav itself out of the resize drag so menu clicks land on
+                the buttons; only the grabber resizes the widget sheet. */}
+            <div data-no-drag className="flex min-h-0 flex-1 flex-col">
+              <Col className="h-full w-full">{children}</Col>
+            </div>
           </DrawerContent>
         </DrawerPositioner>
       </DrawerRoot>

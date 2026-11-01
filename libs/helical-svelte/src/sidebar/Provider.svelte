@@ -22,13 +22,14 @@
     children?: Snippet;
   } & HTMLAttributes<HTMLDivElement>;
 
-  let { defaultOpen = true, open: openProp, onOpenChange, class: className = '', style, children, ...rest }: Props = $props();
+  let { defaultOpen = false, open: openProp, onOpenChange, class: className = '', style, children, ...rest }: Props = $props();
 
   let isMobile = $state(false);
   let openMobile = $state(false);
   // svelte-ignore state_referenced_locally
   let _open = $state(defaultOpen);
   const open = $derived(openProp ?? _open);
+  const controlled = openProp !== undefined;
   const contextState = $derived<SidebarContextProps['state']>(open ? 'expanded' : 'collapsed');
 
   const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
@@ -44,7 +45,9 @@
   };
 
   const toggleSidebar = () => {
-    if (isMobile) {
+    // When controlled, one `open` state drives both breakpoints (desktop collapse
+    // and the mobile drawer). When uncontrolled, keep the shadcn split.
+    if (isMobile && !controlled) {
       openMobile = !openMobile;
     } else {
       setOpen((o) => !o);
@@ -90,6 +93,9 @@
       return isMobile;
     },
     toggleSidebar,
+    get controlled() {
+      return controlled;
+    },
   });
 </script>
 

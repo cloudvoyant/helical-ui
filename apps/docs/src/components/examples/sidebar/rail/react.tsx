@@ -24,8 +24,8 @@ const NAV = [
 
 export default function ReactSidebarRail() {
   return (
-    <div className="relative h-[560px] rounded-lg bg-background [transform:translateZ(0)]">
-      <SidebarProvider className="h-full min-h-0">
+    <div className="relative h-screen w-full overflow-hidden bg-background">
+      <SidebarProvider className="h-screen w-full">
         <Sidebar collapsible="offcanvas" className="h-full">
           <SidebarHeader>
             <SidebarMenu>

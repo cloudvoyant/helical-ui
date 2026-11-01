@@ -40,6 +40,8 @@ export interface SidebarContextProps {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  /** True when the provider is controlled via the `open` prop (vs internal state). */
+  controlled: boolean;
 }
 
 export const sidebarStyles = {
@@ -51,6 +53,35 @@ export const sidebarStyles = {
   // provided by the Row/Col layout primitives at render time.
   containerClass:
     'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex',
+
+  // Mobile sheet (Ark drawer): positioner/backdrop cover the viewport; content
+  // anchors by the physical direction the machine reports via data-swipe-direction
+  // — a full-height side sheet for start (left) and a rounded bottom sheet for
+  // down. Enter/exit are driven by data-state keyframe animations (helical-drawer-*
+  // keyframes live in components.css) so the presence machine waits for the exit
+  // animation to finish before unmounting (a transition alone gets display:none
+  // via the `hidden` attr before it can play).
+  // RTL reliance: placement is logical (side="left" = inline-start) but Ark
+  // reports the physical direction, so the `left` selectors below match only an
+  // LTR start sheet. Under RTL the start sheet reports `right` and falls back to
+  // the positioner's inline-start flex default (physically right — correct today
+  // only while the positioner sets no justify override). RTL styling is covered
+  // as verified-Ark-guarantee scope in the plan; add explicit
+  // data-[swipe-direction=right] classes here if that fallback ever breaks.
+  mobileBackdropClass:
+    'fixed inset-0 bg-black/50 select-none data-[state=open]:animate-[helical-fade-in_200ms_ease-out] data-[state=closed]:animate-[helical-fade-out_200ms_ease-in]',
+  mobilePositionerClass:
+    'fixed inset-0 z-50 flex data-[swipe-direction=left]:justify-start data-[swipe-direction=left]:items-stretch data-[swipe-direction=down]:justify-center data-[swipe-direction=down]:items-end',
+  mobileContentClass:
+    'relative flex h-full w-full flex-col bg-sidebar p-0 text-sidebar-foreground shadow-xl data-[swipe-direction=left]:w-(--sidebar-width) data-[swipe-direction=down]:max-h-[96svh] data-[swipe-direction=left]:data-[state=open]:animate-[helical-drawer-in-left_200ms_ease-out] data-[swipe-direction=left]:data-[state=closed]:animate-[helical-drawer-out-left_200ms_ease-in] data-[swipe-direction=down]:rounded-t-2xl data-[swipe-direction=down]:data-[state=open]:animate-[helical-drawer-in-down_200ms_ease-out] data-[swipe-direction=down]:data-[state=closed]:animate-[helical-drawer-out-down_200ms_ease-in]',
+
+  // Drag handle for the bottom-sheet (widget) drawer: a grabber sits at the top
+  // edge and is the only draggable region (the nav content below carries
+  // data-no-drag so menu clicks don't resize the sheet). Only rendered for
+  // data-swipe-direction="down".
+  mobileGrabberClass:
+    'flex w-full shrink-0 cursor-grab touch-none select-none items-center justify-center py-3 data-[dragging]:cursor-grabbing',
+  mobileGrabberIndicatorClass: 'h-1 w-10 shrink-0 rounded-full bg-sidebar-border',
 
   gapClass:
     'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear group-data-[collapsible=offcanvas]:w-0',
