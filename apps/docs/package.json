@@ -5,7 +5,6 @@
   "type": "module",
   "description": "helical-ui docs/demo app — Astro site with React + Svelte component demos",
   "scripts": {
-    "predev": "pnpm --filter @cloudvoyant/helical-ui --filter @cloudvoyant/helical-react --filter @cloudvoyant/helical-svelte run build",
     "prebuild": "pnpm --filter @cloudvoyant/helical-ui --filter @cloudvoyant/helical-react --filter @cloudvoyant/helical-svelte run build",
     "dev": "astro dev",
     "build": "astro build",

@@ -1,11 +1,10 @@
 // apps/docs/e2e/select.spec.ts
 // Behavior + accessibility coverage for Select: listbox role, option selection
 // via mouse and arrow keys, and the native-select fallback on coarse pointers.
-import { selectFramework } from './helpers';
+import { expectIslandRendered, selectFramework } from './helpers';
 import { test, expect } from '@playwright/test';
 
 const FRAMEWORKS = ['react', 'svelte'] as const;
-
 
 for (const framework of FRAMEWORKS) {
   test.describe(`Select docs page · ${framework}`, () => {
@@ -53,6 +52,7 @@ test.describe('Select native fallback (coarse pointer)', () => {
       await page.evaluate((fw) => {
         document.documentElement.dataset.framework = fw;
       }, framework);
+      await expectIslandRendered(page, framework);
       const native = page.locator(`[data-demo] [data-fw="${framework}"] select`).first();
       await expect(native).toBeVisible();
       await expect(native.locator('option')).toHaveCount(3);
