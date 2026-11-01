@@ -12,7 +12,13 @@
     DrawerGrabber,
     DrawerGrabberIndicator,
   } from '@ark-ui/svelte/drawer';
-  import { SIDEBAR_WIDTH_MOBILE, sidebarStyles, cn } from '@cloudvoyant/helical-ui';
+  import {
+    SIDEBAR_WIDTH_MOBILE,
+    SIDEBAR_WIDGET_SNAP_POINTS,
+    SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
+    sidebarStyles,
+    cn,
+  } from '@cloudvoyant/helical-ui';
   import Col from '../Col.svelte';
   import { getSidebarContext } from './context.svelte';
   import type { Snippet } from 'svelte';
@@ -42,22 +48,14 @@
   const setOpen = sidebar.setOpen;
   const openMobile = $derived(sidebar.openMobile);
   const setOpenMobile = sidebar.setOpenMobile;
-  const controlled = $derived(sidebar.controlled);
+  const isControlled = $derived(sidebar.isControlled);
 
-  // A controlled provider drives the mobile drawer with the same `open` state as
-  // desktop; an uncontrolled one keeps the shadcn split (openMobile for the
-  // drawer). The right sidebar renders as a non-modal "widget" drawer.
-  const drawerOpen = $derived(controlled ? open : openMobile);
-  const isWidget = $derived(side === 'right');
-  const setDrawerOpen = (value: boolean) => (controlled ? setOpen(value) : setOpenMobile(value));
-
-  // Snap points only apply to the widget (bottom-sheet) drawer, where the
-  // grabber resizes between 35% and 50% of the viewport height. The full-height
-  // side sheet must not be handed snap config — Ark would rest it partially
-  // off-canvas at the first snap offset instead of fully in view.
-  const snapPoints = $derived(isWidget ? [0.35, 0.5] : undefined);
-  const defaultSnapPoint = $derived(isWidget ? 0.5 : undefined);
-  const snapToSequentialPoints = $derived(isWidget);
+  const isBottomWidgetSheet = $derived(side === 'right');
+  const mobileSheetOpen = $derived(isControlled ? open : openMobile);
+  const setMobileSheetOpen = (value: boolean) => (isControlled ? setOpen(value) : setOpenMobile(value));
+  const snapPoints = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_SNAP_POINTS : undefined);
+  const defaultSnapPoint = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_DEFAULT_SNAP_POINT : undefined);
+  const snapToSequentialPoints = $derived(isBottomWidgetSheet);
 
   const containerClasses = $derived(
     cn(
@@ -94,17 +92,17 @@
   </Col>
 {:else if isMobile}
   <DrawerRoot
-    open={drawerOpen}
-    onOpenChange={(details) => setDrawerOpen(details.open)}
+    open={mobileSheetOpen}
+    onOpenChange={(details) => setMobileSheetOpen(details.open)}
     swipeDirection={side === 'left' ? 'start' : 'down'}
-    modal={!isWidget}
+    modal={!isBottomWidgetSheet}
     {snapPoints}
     {defaultSnapPoint}
     {snapToSequentialPoints}
     preventDragOnScroll={false}
     {...rest}
   >
-    {#if !isWidget}
+    {#if !isBottomWidgetSheet}
       <DrawerBackdrop class={sidebarStyles.mobileBackdropClass} />
     {/if}
     <DrawerPositioner class={sidebarStyles.mobilePositionerClass}>
@@ -118,7 +116,7 @@
         <DrawerTitle class="sr-only">Sidebar</DrawerTitle>
         <DrawerDescription class="sr-only">Displays the mobile sidebar.</DrawerDescription>
         <DrawerCloseTrigger class="hidden" />
-        {#if isWidget}
+        {#if isBottomWidgetSheet}
           <DrawerGrabber class={sidebarStyles.mobileGrabberClass}>
             <DrawerGrabberIndicator class={sidebarStyles.mobileGrabberIndicatorClass} />
           </DrawerGrabber>

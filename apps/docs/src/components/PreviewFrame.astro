@@ -8,10 +8,6 @@ interface Props {
   component: string;
   example: string;
   title?: string;
-  /** Minimum layout width (px) for the iframe in desktop mode. Full-screen
-   * layouts (e.g. the Sidebar) need at least their `md` (768px) desktop
-   * breakpoint; the preview window always fits the card's rendered width and
-   * scales the iframe down only when the card column is narrower than this. */
   desktopWidth?: number;
 }
 

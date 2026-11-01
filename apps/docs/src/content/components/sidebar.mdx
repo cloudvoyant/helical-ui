@@ -26,7 +26,7 @@ The sidebar is a composition of named parts; all structural parts accept standar
 
 | Prop           | Type                      | Default | Description                    |
 | -------------- | ------------------------- | ------- | ------------------------------ |
-| `defaultOpen`  | `boolean`                 | `true`  | Default open state.            |
+| `defaultOpen`  | `boolean`                 | `false` | Default open state.            |
 | `open`         | `boolean`                 | —       | Controlled open state.         |
 | `onOpenChange` | `(open: boolean) => void` | —       | Fires when open state changes. |
 
@@ -80,7 +80,7 @@ Accepts all `HTMLButtonProps` plus `className`/`class`, and:
 
 #### Return
 
-`state` (`'expanded' | 'collapsed'`), `open`, `setOpen`, `openMobile`, `setOpenMobile`, `isMobile`, `toggleSidebar`.
+`state` (`'expanded' | 'collapsed'`), `open`, `setOpen`, `openMobile`, `setOpenMobile`, `isMobile`, `toggleSidebar`, `isControlled`.
 
 ### Other parts
 

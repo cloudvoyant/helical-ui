@@ -13,26 +13,18 @@ function exampleFrame(page: Page, index: number): FrameLocator {
   return page.locator('[data-example]').nth(index).frameLocator('iframe[data-preview]');
 }
 
-// Resolves an example's PreviewFrame card by identity (its `data-preview-example`
-// slug), not by ordinal, so unrelated examples added elsewhere on the page can't
-// shift what a test targets.
 function previewCard(page: Page, example: string): Locator {
   return page.locator(`[data-preview-frame][data-component="sidebar"][data-preview-example="${example}"]`);
 }
 
-// Shared mobile-sheet flow: switch the example's frame to mobile width, open the
-// drawer via the trigger, assert the sheet's swipe direction and open state,
-// then dismiss with Esc.
 async function assertMobileSheet(page: Page, example: string, framework: Framework, expectedSwipe: 'left' | 'down') {
   const card = previewCard(page, example);
   await card.locator('button[data-preview-width="mobile"]').click();
   const fw = card.frameLocator('iframe[data-preview]').locator(`[data-fw="${framework}"]`);
   const drawer = fw.locator('[data-slot="sidebar"][data-mobile="true"]');
-  // Drawer positioner only — tooltips also carry data-part="positioner".
   const positioner = fw.locator('[data-part="positioner"][data-scope="drawer"]');
   const trigger = fw.locator('[data-sidebar="trigger"]');
 
-  // Closed by default: no overlay is visible.
   await expect(positioner).toBeHidden();
 
   await expect(async () => {
@@ -42,14 +34,11 @@ async function assertMobileSheet(page: Page, example: string, framework: Framewo
   await expect(drawer).toHaveAttribute('data-swipe-direction', expectedSwipe);
   await expect(drawer).toHaveAttribute('data-state', 'open');
 
-  // Esc dismisses it and removes the overlay entirely.
   await page.keyboard.press('Escape');
   await expect(positioner).toBeHidden();
 }
 
 function sidebar(frame: FrameLocator, framework: Framework) {
-  // The desktop sidebar (not the mobile drawer, which also carries
-  // data-slot="sidebar" but with data-mobile="true").
   return frame.locator(`[data-fw="${framework}"] [data-slot="sidebar"]:not([data-mobile="true"])`).first();
 }
 
@@ -158,12 +147,6 @@ for (const framework of FRAMEWORKS) {
       await expect(sb).toHaveAttribute('data-state', 'collapsed');
       await expect(rail).toHaveAttribute('aria-label', 'Toggle Sidebar');
 
-      // Click a point on the rail's right edge: when collapsed (offcanvas) the
-      // 16px-wide rail peeks ~8px into the demo box, so the element center can
-      // fall under the card's overflow clip. Scroll the card into view first and
-      // click by page coordinates — the desktop preview pane scrolls horizontally
-      // (fixed 1024px canvas) and Playwright's iframe hit-testing misses inside a
-      // nested overflow container.
       const card = page.locator('[data-preview-frame][data-preview-example="rail"]');
       const clickRail = async () => {
         await card.scrollIntoViewIfNeeded();

@@ -29,7 +29,8 @@
   // svelte-ignore state_referenced_locally
   let _open = $state(defaultOpen);
   const open = $derived(openProp ?? _open);
-  const controlled = openProp !== undefined;
+  const isControlled = openProp !== undefined;
+  const usesMobileSheetState = $derived(isMobile && !isControlled);
   const contextState = $derived<SidebarContextProps['state']>(open ? 'expanded' : 'collapsed');
 
   const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
@@ -45,9 +46,7 @@
   };
 
   const toggleSidebar = () => {
-    // When controlled, one `open` state drives both breakpoints (desktop collapse
-    // and the mobile drawer). When uncontrolled, keep the shadcn split.
-    if (isMobile && !controlled) {
+    if (usesMobileSheetState) {
       openMobile = !openMobile;
     } else {
       setOpen((o) => !o);
@@ -93,8 +92,8 @@
       return isMobile;
     },
     toggleSidebar,
-    get controlled() {
-      return controlled;
+    get isControlled() {
+      return isControlled;
     },
   });
 </script>

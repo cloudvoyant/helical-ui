@@ -6,13 +6,7 @@ import Demo from './Demo.astro';
 
 interface Props {
   component?: string;
-  /** The example already shown in the intro — skip it here. */
   exclude?: string | string[];
-  /**
-   * Optional explicit ordering by example id. Ids not listed here follow in
-   * their default (filesystem) order after the listed ones. Lets a docs page
-   * curate a reading order (e.g. nested examples last) without renaming dirs.
-   */
   order?: string[];
 }
 
@@ -36,8 +30,6 @@ const entries = Object.keys(examplePaths)
   .map((m) => ({ id: m[2], title: titleFromId(m[2]) }))
   .filter((e) => !excludedExamples.has(e.id));
 
-// Apply a curated order when the page provides one: listed ids first (in the
-// given order), unlisted ids after in their default filesystem order.
 if (order.length > 0) {
   const rank = new Map(order.map((id, i) => [id, i]));
   entries.sort((a, b) => {

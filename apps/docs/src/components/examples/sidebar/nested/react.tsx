@@ -28,7 +28,6 @@ const RIGHT_NAV = [
   { label: 'Help', icon: HelpCircle },
 ];
 
-// Matches SidebarTrigger's sizing so both header buttons render 16px icons.
 const triggerClass =
   'flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground ring-ring outline-hidden transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0';
 
@@ -38,8 +37,6 @@ export default function ReactSidebarNested() {
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-background">
-      {/* Left sidebar: full viewport height; the topnav lives inside the inset, so
-          it slides right as the left sidebar opens. */}
       <SidebarProvider open={leftOpen} onOpenChange={setLeftOpen} className="h-full min-h-0 w-full">
         <Sidebar collapsible="icon" className="h-full">
           <SidebarHeader>

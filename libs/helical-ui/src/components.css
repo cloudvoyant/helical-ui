@@ -128,11 +128,6 @@
   color: #ffa657;
 }
 
-/* Mobile sidebar sheet animations (Ark drawer). Keyed by data-state on the
-   drawer content/backdrop; the presence machine waits for `animationend` of
-   these before unmounting, so enter AND exit both animate. Animate the
-   `translate` property (not `transform`) so they compose with the machine's
-   inline translate3d(var(--drawer-translate-x), …). */
 @keyframes helical-drawer-in-left {
   from {
     translate: -100% 0;

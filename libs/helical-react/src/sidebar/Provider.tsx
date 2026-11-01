@@ -49,7 +49,8 @@ export function Provider({
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
-  const controlled = openProp !== undefined;
+  const isControlled = openProp !== undefined;
+  const usesMobileSheetState = isMobile && !isControlled;
 
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
@@ -69,11 +70,8 @@ export function Provider({
   );
 
   const toggleSidebar = React.useCallback(() => {
-    // When controlled, one `open` state drives both breakpoints (desktop collapse
-    // and the mobile drawer). When uncontrolled, keep the shadcn split: desktop
-    // uses `open`, the mobile drawer uses `openMobile`.
-    return isMobile && !controlled ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, controlled, setOpen, setOpenMobile]);
+    return usesMobileSheetState ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+  }, [usesMobileSheetState, setOpen, setOpenMobile]);
 
   React.useEffect(() => {
     if (openProp !== undefined) return;
@@ -106,9 +104,9 @@ export function Provider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      controlled,
+      isControlled,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, controlled],
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, isControlled],
   );
 
   return (

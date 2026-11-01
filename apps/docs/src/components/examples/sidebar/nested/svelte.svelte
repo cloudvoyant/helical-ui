@@ -28,7 +28,6 @@
     { label: 'Help', icon: CircleHelp },
   ];
 
-  // Matches SidebarTrigger's sizing so both header buttons render 16px icons.
   const triggerClass =
     'flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground ring-ring outline-hidden transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2';
 
