@@ -66,16 +66,48 @@ flowchart TD
     UpdateInternal --> PersistCookie
 ```
 
+#### Desktop State Transitions (`>= 768px`)
+
+Driven by `open` (`state = 'expanded' | 'collapsed'`) and persisted to the `sidebar_state` cookie:
+
 ```mermaid
 stateDiagram-v2
+    [*] --> Expanded: defaultOpen = true (default)
     [*] --> Collapsed: defaultOpen = false
-    Collapsed --> Expanded: toggleSidebar() / setOpen(true)
-    Expanded --> Collapsed: toggleSidebar() / setOpen(false)
 
-    state "Mobile Sheet (< 768px)" as Mobile {
-        [*] --> Closed
-        Closed --> Open: toggleSidebar() / setMobileSheetOpen(true)
-        Open --> Closed: Escape / Backdrop / Swipe / toggleSidebar()
+    state "Expanded (16rem width)" as Expanded
+    state "Collapsed (3rem icon rail or 0px offcanvas)" as Collapsed
+
+    Expanded --> Collapsed: toggleSidebar() / Trigger / Rail / Cmd+B / setOpen(false)
+    Collapsed --> Expanded: toggleSidebar() / Trigger / Rail / Cmd+B / setOpen(true)
+```
+
+#### Mobile Sheet State Transitions (`< 768px`)
+
+Driven by `mobileSheetOpen` (`openMobile` when uncontrolled, `open` when controlled; starts `Closed` in uncontrolled mode):
+
+```mermaid
+stateDiagram-v2
+    state "side = left (Modal Side Sheet)" as LeftSheet {
+        [*] --> LeftClosed
+        state "Closed" as LeftClosed
+        state "Open (18rem width + backdrop)" as LeftOpen
+
+        LeftClosed --> LeftOpen: toggleSidebar() / setMobileSheetOpen(true)
+        LeftOpen --> LeftClosed: Escape / Backdrop click / Swipe start / toggleSidebar()
+    }
+
+    state "side = right (Non-Modal Bottom Widget Sheet)" as RightSheet {
+        [*] --> RightClosed
+        state "Closed" as RightClosed
+        state "Open at 50% height (defaultSnapPoint = 0.5)" as Snap50
+        state "Snapped at 35% height (snapPoint = 0.35)" as Snap35
+
+        RightClosed --> Snap50: toggleSidebar() / setMobileSheetOpen(true)
+        Snap50 --> Snap35: Drag DrawerGrabber down
+        Snap35 --> Snap50: Drag DrawerGrabber up
+        Snap50 --> RightClosed: Escape / Swipe down past 35% / toggleSidebar()
+        Snap35 --> RightClosed: Escape / Swipe down / toggleSidebar()
     }
 ```
 
