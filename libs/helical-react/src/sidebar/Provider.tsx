@@ -35,7 +35,7 @@ function useIsMobile() {
 }
 
 export function Provider({
-  defaultOpen = true,
+  defaultOpen = false,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -49,6 +49,8 @@ export function Provider({
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
+  const isControlled = openProp !== undefined;
+  const usesMobileSheetState = isMobile && !isControlled;
 
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
@@ -68,8 +70,8 @@ export function Provider({
   );
 
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, setOpen, setOpenMobile]);
+    return usesMobileSheetState ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+  }, [usesMobileSheetState, setOpen, setOpenMobile]);
 
   React.useEffect(() => {
     if (openProp !== undefined) return;
@@ -102,8 +104,9 @@ export function Provider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
+      isControlled,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, isControlled],
   );
 
   return (

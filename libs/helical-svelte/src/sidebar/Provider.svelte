@@ -22,13 +22,15 @@
     children?: Snippet;
   } & HTMLAttributes<HTMLDivElement>;
 
-  let { defaultOpen = true, open: openProp, onOpenChange, class: className = '', style, children, ...rest }: Props = $props();
+  let { defaultOpen = false, open: openProp, onOpenChange, class: className = '', style, children, ...rest }: Props = $props();
 
   let isMobile = $state(false);
   let openMobile = $state(false);
   // svelte-ignore state_referenced_locally
   let _open = $state(defaultOpen);
   const open = $derived(openProp ?? _open);
+  const isControlled = openProp !== undefined;
+  const usesMobileSheetState = $derived(isMobile && !isControlled);
   const contextState = $derived<SidebarContextProps['state']>(open ? 'expanded' : 'collapsed');
 
   const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
@@ -44,7 +46,7 @@
   };
 
   const toggleSidebar = () => {
-    if (isMobile) {
+    if (usesMobileSheetState) {
       openMobile = !openMobile;
     } else {
       setOpen((o) => !o);
@@ -90,6 +92,9 @@
       return isMobile;
     },
     toggleSidebar,
+    get isControlled() {
+      return isControlled;
+    },
   });
 </script>
 

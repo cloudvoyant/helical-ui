@@ -83,6 +83,8 @@ export {
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_WIDTH_ICON,
   SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_WIDGET_SNAP_POINTS,
+  SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
   sidebarMenuButtonVariants,
   type SidebarMenuButtonVariants,
   type SidebarContextProps,

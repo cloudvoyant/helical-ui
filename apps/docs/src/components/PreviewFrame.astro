@@ -1,25 +1,18 @@
 ---
 // apps/docs/src/components/PreviewFrame.astro
-// Full-window iframe demo for layout components. Loads the component in its own
-// viewport (so 100svh / position: sticky behave as in production), styled flush
-// like the other examples — no fake browser chrome. A desktop/mobile width
-// toggle floats as icon buttons in the top-right corner, and the framework and
-// theme sync with the docs shell via postMessage. Only adopted for Page
-// (layout) for now — see the preview/[component]/[example] routes and the
-// deferred ticket for other components.
+// Browser-chrome iframe demo for layout components. A fake address bar shows
+// the preview URL (click to open in a new tab), and desktop/mobile width
+// toggles sit in the chrome bar. The framework and theme sync with the docs
+// shell via postMessage.
 interface Props {
   component: string;
   example: string;
   title?: string;
-  /** Fixed width (px) for the desktop mode. Full-screen layouts (e.g. the
-   * Sidebar) need a wide viewport to reach their desktop breakpoint; page-level
-   * previews default to filling the card width. */
   desktopWidth?: number;
 }
 
 const { component, example, title = 'helical-ui preview', desktopWidth } = Astro.props;
 const uid = `pf-${Math.random().toString(36).slice(2)}`;
-const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
 ---
 
 <div
@@ -28,82 +21,127 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
   data-component={component}
   data-preview-example={example}
   data-desktop-width={desktopWidth ?? ''}
-  class="relative overflow-hidden rounded-t-lg bg-background"
+  class="overflow-hidden rounded-lg border border-border bg-background"
 >
+  <div
+    data-preview-chrome
+    class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2"
+  >
+    <div class="flex items-center gap-1.5" aria-hidden="true">
+      <span class="size-2.5 rounded-full bg-border"></span>
+      <span class="size-2.5 rounded-full bg-border"></span>
+      <span class="size-2.5 rounded-full bg-border"></span>
+    </div>
+    <a
+      data-preview-url
+      href="#"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex min-w-0 mx-auto max-w-md items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M2 12h20" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+      <span data-preview-url-text class="truncate"></span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="ml-auto shrink-0"
+        aria-hidden="true"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+    </a>
+    <div class="flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5" role="group" aria-label="Preview width">
+      <button
+        type="button"
+        data-preview-width="desktop"
+        aria-pressed="true"
+        title="Desktop"
+        class="flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        data-preview-width="mobile"
+        aria-pressed="false"
+        title="Mobile"
+        class="flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <line x1="12" y1="18" x2="12.01" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </div>
   <div data-preview-viewport class="flex overflow-x-auto bg-muted/20">
     <div
       data-preview-window
       data-preview-mode="desktop"
-      class="relative mx-auto shrink-0 overflow-hidden transition-[width] duration-200"
-      style={`width: ${initialWidth}; aspect-ratio: 16 / 9`}
+      class="relative mx-auto w-full shrink-0 overflow-hidden transition-[width] duration-200"
+      style="width: 100%; aspect-ratio: 16 / 9"
     >
       <iframe data-preview title={title} class="block h-full w-full border-0"></iframe>
     </div>
   </div>
-  <div
-    data-preview-toolbar
-    class="absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-md border border-border bg-background/90 p-0.5 shadow-sm"
-    role="group"
-    aria-label="Preview width"
-  >
-    <button
-      type="button"
-      data-preview-width="desktop"
-      aria-pressed="true"
-      title="Desktop"
-      class="flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    </button>
-    <button
-      type="button"
-      data-preview-width="mobile"
-      aria-pressed="false"
-      title="Mobile"
-      class="flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <rect x="5" y="2" width="14" height="20" rx="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    </button>
-  </div>
 </div>
 
 <style>
-  /* Desktop mode: the iframe runs flush to the card edges (the card's own
-     border is the only one; the frame clips corners via overflow-hidden +
-     rounded-t-lg). Mobile mode: a phone-width screen with rounder corners and a
-     subtle border so it reads as a device on the muted canvas. */
   [data-preview-window][data-preview-mode='mobile'] {
-    border-radius: 1rem;
-    border: 1px solid var(--border);
+    border-radius: 0;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06);
   }
   [data-preview-width][aria-pressed='true'] {
@@ -122,7 +160,7 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
   if (root) {
     const frame = root.querySelector('[data-preview]');
     const component = root.dataset.component ?? 'page';
-    const example = root.dataset.previewExample ?? 'default';
+    const example = root.dataset.previewExample ?? 'example';
 
     const currentFw = () =>
       document.documentElement.dataset.framework === 'svelte' ? 'svelte' : 'react';
@@ -134,6 +172,22 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
     const currentDark = () => document.documentElement.classList.contains('dark');
 
     const buildSrc = () => `${base}preview/${component}/${example}/`;
+    const buildFullUrl = () => {
+      try {
+        return new URL(buildSrc(), location.origin).href;
+      } catch {
+        return buildSrc();
+      }
+    };
+
+    const urlLink = root.querySelector('[data-preview-url]');
+    const urlText = root.querySelector('[data-preview-url-text]');
+
+    const updateUrl = () => {
+      const fullUrl = buildFullUrl();
+      if (urlLink) urlLink.href = fullUrl;
+      if (urlText) urlText.textContent = fullUrl;
+    };
 
     const setSrc = () => {
       if (!frame) return;
@@ -149,8 +203,11 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
       );
     };
 
+    updateUrl();
     setSrc();
-    frame.addEventListener('load', sendState);
+    frame.addEventListener('load', () => {
+      sendState();
+    });
     window.addEventListener(FRAMEWORK_EVENT, sendState);
     new MutationObserver(sendState).observe(document.documentElement, {
       attributes: true,
@@ -160,17 +217,46 @@ const initialWidth = desktopWidth ? `${desktopWidth}px` : '100%';
     const windowEl = root.querySelector('[data-preview-window]');
     const buttons = root.querySelectorAll('[data-preview-width]');
     const desktopWidth = Number(root.dataset.desktopWidth) || 0;
+    const syncDesktopScale = () => {
+      if (!windowEl || !frame) return;
+      if (windowEl.dataset.previewMode === 'mobile' || !desktopWidth) {
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.transform = '';
+        frame.style.transformOrigin = '';
+        return;
+      }
+      const availableWidth = windowEl.clientWidth;
+      if (availableWidth > 0 && availableWidth < desktopWidth) {
+        frame.style.width = `${desktopWidth}px`;
+        frame.style.height = `${(desktopWidth * 9) / 16}px`;
+        frame.style.transform = `scale(${availableWidth / desktopWidth})`;
+        frame.style.transformOrigin = 'top left';
+      } else {
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.transform = '';
+        frame.style.transformOrigin = '';
+      }
+    };
     const applyWidth = (width) => {
       if (!windowEl) return;
       windowEl.dataset.previewMode = width;
       if (width === 'mobile') {
         windowEl.style.width = '375px';
+        windowEl.style.maxWidth = '100%';
         windowEl.style.aspectRatio = '9 / 16';
       } else {
-        windowEl.style.width = desktopWidth ? `${desktopWidth}px` : '100%';
+        windowEl.style.width = '100%';
+        windowEl.style.maxWidth = 'none';
         windowEl.style.aspectRatio = '16 / 9';
       }
+      syncDesktopScale();
     };
+    syncDesktopScale();
+    if (windowEl && typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(syncDesktopScale).observe(windowEl);
+    }
     buttons.forEach((button) => {
       button.addEventListener('click', () => {
         const width = button.dataset.previewWidth === 'mobile' ? 'mobile' : 'desktop';

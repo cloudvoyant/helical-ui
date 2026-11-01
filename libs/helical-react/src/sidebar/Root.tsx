@@ -11,9 +11,17 @@ import {
   DrawerTitle,
   DrawerDescription,
   DrawerCloseTrigger,
+  DrawerGrabber,
+  DrawerGrabberIndicator,
   type DrawerRootProps,
 } from '@ark-ui/react/drawer';
-import { SIDEBAR_WIDTH_MOBILE, sidebarStyles, cn } from '@cloudvoyant/helical-ui';
+import {
+  SIDEBAR_WIDTH_MOBILE,
+  SIDEBAR_WIDGET_SNAP_POINTS,
+  SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
+  sidebarStyles,
+  cn,
+} from '@cloudvoyant/helical-ui';
 import { Col } from '../col';
 import { useSidebar } from './context';
 
@@ -29,7 +37,7 @@ export function Root({
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { isMobile, state, open, setOpen, openMobile, setOpenMobile, isControlled } = useSidebar();
 
   if (collapsible === 'none') {
     return (
@@ -45,25 +53,46 @@ export function Root({
   }
 
   if (isMobile) {
+    const isBottomWidgetSheet = side === 'right';
+    const mobileSheetOpen = isControlled ? open : openMobile;
+    const setMobileSheetOpen = isControlled ? setOpen : setOpenMobile;
+    const bottomSheetSnapProps = isBottomWidgetSheet
+      ? {
+          snapPoints: SIDEBAR_WIDGET_SNAP_POINTS,
+          defaultSnapPoint: SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
+          snapToSequentialPoints: true,
+        }
+      : {};
     return (
       <DrawerRoot
-        open={openMobile}
-        onOpenChange={(details) => setOpenMobile(details.open)}
+        open={mobileSheetOpen}
+        onOpenChange={(details) => setMobileSheetOpen(details.open)}
+        swipeDirection={side === 'left' ? 'start' : 'down'}
+        modal={!isBottomWidgetSheet}
+        {...bottomSheetSnapProps}
+        preventDragOnScroll={false}
         {...(props as DrawerRootProps)}
       >
-        <DrawerBackdrop />
-        <DrawerPositioner className="w-(--sidebar-width)">
+        {!isBottomWidgetSheet && <DrawerBackdrop className={sidebarStyles.mobileBackdropClass} />}
+        <DrawerPositioner className={sidebarStyles.mobilePositionerClass}>
           <DrawerContent
             data-sidebar="sidebar"
             data-slot="sidebar"
             data-mobile="true"
-            className={cn('w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground', className)}
+            className={cn(sidebarStyles.mobileContentClass, className)}
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
           >
             <DrawerTitle className="sr-only">Sidebar</DrawerTitle>
             <DrawerDescription className="sr-only">Displays the mobile sidebar.</DrawerDescription>
             <DrawerCloseTrigger className="hidden" />
-            <Col className="h-full w-full">{children}</Col>
+            {isBottomWidgetSheet && (
+              <DrawerGrabber className={sidebarStyles.mobileGrabberClass}>
+                <DrawerGrabberIndicator className={sidebarStyles.mobileGrabberIndicatorClass} />
+              </DrawerGrabber>
+            )}
+            <div data-no-drag className="flex min-h-0 flex-1 flex-col">
+              <Col className="h-full w-full">{children}</Col>
+            </div>
           </DrawerContent>
         </DrawerPositioner>
       </DrawerRoot>

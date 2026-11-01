@@ -127,3 +127,52 @@
 :root.dark .ProseMirror [data-code-block] :is(.hljs-variable, .hljs-template-variable) {
   color: #ffa657;
 }
+
+@keyframes helical-drawer-in-left {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes helical-drawer-out-left {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -100% 0;
+  }
+}
+@keyframes helical-drawer-in-down {
+  from {
+    translate: 0 100%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes helical-drawer-out-down {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 100%;
+  }
+}
+@keyframes helical-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes helical-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

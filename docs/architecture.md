@@ -29,6 +29,10 @@ Every component follows the Button pattern: a shared cva variant function lives 
 
 The overlay components (Popover, Dialog, Window, Tooltip) extend this pattern: their shared Tailwind base classes live in `@cloudvoyant/helical-ui` (e.g. `popoverContentBase`), the framework wrappers are thin `cn(base, className)` pass-throughs, and the content/backdrop parts swallow the Ark `Portal` + `Positioner` internally so consumers never compose them (`Window` goes furthest — its root swallows the positioner and content, so children are the window parts directly). Ark's `CloseTrigger` is exported as `Dismiss` with a baked-in `aria-label`, and the arrow is an internal detail toggled via an `arrow` prop on content. A `Portal` layout primitive is exported by `@cloudvoyant/helical-react`/`@cloudvoyant/helical-svelte` (documented under Layout) for escaping ancestors in user compositions. Overlay components reuse the existing shadcn theme tokens — no `theme.css` additions.
 
+Component-specific architecture documents live under `docs/components/`:
+
+- [docs/components/sidebar.md](components/sidebar.md) — Sidebar layout, state transitions, and mobile sheet implementation.
+
 ## Release pipeline
 
 - `.releaserc.json` — semantic-release. Release rules cap every bump at `minor` (stay-at-v0).

@@ -14,7 +14,7 @@ The Sidebar provides an application navigation shell that can collapse to an ico
 
 ## Examples
 
-<Examples component="sidebar" exclude="icon" />
+<Examples component="sidebar" exclude="icon" order={['offcanvas', 'rail', 'right-side', 'nested']} />
 
 ## API Reference
 
@@ -26,7 +26,7 @@ The sidebar is a composition of named parts; all structural parts accept standar
 
 | Prop           | Type                      | Default | Description                    |
 | -------------- | ------------------------- | ------- | ------------------------------ |
-| `defaultOpen`  | `boolean`                 | `true`  | Default open state.            |
+| `defaultOpen`  | `boolean`                 | `false` | Default open state.            |
 | `open`         | `boolean`                 | —       | Controlled open state.         |
 | `onOpenChange` | `(open: boolean) => void` | —       | Fires when open state changes. |
 
@@ -80,7 +80,7 @@ Accepts all `HTMLButtonProps` plus `className`/`class`, and:
 
 #### Return
 
-`state` (`'expanded' | 'collapsed'`), `open`, `setOpen`, `openMobile`, `setOpenMobile`, `isMobile`, `toggleSidebar`.
+`state` (`'expanded' | 'collapsed'`), `open`, `setOpen`, `openMobile`, `setOpenMobile`, `isMobile`, `toggleSidebar`, `isControlled`.
 
 ### Other parts
 
@@ -88,7 +88,7 @@ Accepts all `HTMLButtonProps` plus `className`/`class`, and:
 
 ## Accessibility
 
-The mobile sheet uses Ark's `drawer` primitive, so focus trapping, `Esc` dismissal, and the dialog role come from Ark. Tooltips use Ark's `tooltip` primitive. `SidebarTrigger`, `SidebarRail`, and `SidebarMenuButton` are native buttons with accessible labels; `Cmd/Ctrl+B` toggles the sidebar. Non-interactive parts stay non-focusable.
+Below the `md` breakpoint the sidebar renders as a mobile sheet on Ark's `drawer` primitive over a dimmed backdrop: `side="left"` slides in as a full-height left side sheet, and `side="right"` slides up as a rounded bottom sheet — swipe-to-dismiss follows each sheet's axis, and focus trapping, `Esc`/backdrop dismissal, and the dialog role come from Ark. Tooltips use Ark's `tooltip` primitive. `SidebarTrigger`, `SidebarRail`, and `SidebarMenuButton` are native buttons with accessible labels; `Cmd/Ctrl+B` toggles the sidebar. Non-interactive parts stay non-focusable.
 
 ## Theming
 

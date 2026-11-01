@@ -9,8 +9,16 @@
     DrawerTitle,
     DrawerDescription,
     DrawerCloseTrigger,
+    DrawerGrabber,
+    DrawerGrabberIndicator,
   } from '@ark-ui/svelte/drawer';
-  import { SIDEBAR_WIDTH_MOBILE, sidebarStyles, cn } from '@cloudvoyant/helical-ui';
+  import {
+    SIDEBAR_WIDTH_MOBILE,
+    SIDEBAR_WIDGET_SNAP_POINTS,
+    SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
+    sidebarStyles,
+    cn,
+  } from '@cloudvoyant/helical-ui';
   import Col from '../Col.svelte';
   import { getSidebarContext } from './context.svelte';
   import type { Snippet } from 'svelte';
@@ -36,8 +44,18 @@
   const sidebar = getSidebarContext();
   const state = $derived(sidebar.state);
   const isMobile = $derived(sidebar.isMobile);
+  const open = $derived(sidebar.open);
+  const setOpen = sidebar.setOpen;
   const openMobile = $derived(sidebar.openMobile);
   const setOpenMobile = sidebar.setOpenMobile;
+  const isControlled = $derived(sidebar.isControlled);
+
+  const isBottomWidgetSheet = $derived(side === 'right');
+  const mobileSheetOpen = $derived(isControlled ? open : openMobile);
+  const setMobileSheetOpen = (value: boolean) => (isControlled ? setOpen(value) : setOpenMobile(value));
+  const snapPoints = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_SNAP_POINTS : undefined);
+  const defaultSnapPoint = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_DEFAULT_SNAP_POINT : undefined);
+  const snapToSequentialPoints = $derived(isBottomWidgetSheet);
 
   const containerClasses = $derived(
     cn(
@@ -73,20 +91,39 @@
     {@render children?.()}
   </Col>
 {:else if isMobile}
-  <DrawerRoot open={openMobile} onOpenChange={(details) => setOpenMobile(details.open)} {...rest}>
-    <DrawerBackdrop />
-    <DrawerPositioner class="w-(--sidebar-width)">
+  <DrawerRoot
+    open={mobileSheetOpen}
+    onOpenChange={(details) => setMobileSheetOpen(details.open)}
+    swipeDirection={side === 'left' ? 'start' : 'down'}
+    modal={!isBottomWidgetSheet}
+    {snapPoints}
+    {defaultSnapPoint}
+    {snapToSequentialPoints}
+    preventDragOnScroll={false}
+    {...rest}
+  >
+    {#if !isBottomWidgetSheet}
+      <DrawerBackdrop class={sidebarStyles.mobileBackdropClass} />
+    {/if}
+    <DrawerPositioner class={sidebarStyles.mobilePositionerClass}>
       <DrawerContent
         data-sidebar="sidebar"
         data-slot="sidebar"
         data-mobile="true"
-        class="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground"
+        class={cn(sidebarStyles.mobileContentClass, className)}
         style={`--sidebar-width: ${SIDEBAR_WIDTH_MOBILE};`}
       >
         <DrawerTitle class="sr-only">Sidebar</DrawerTitle>
         <DrawerDescription class="sr-only">Displays the mobile sidebar.</DrawerDescription>
         <DrawerCloseTrigger class="hidden" />
-        <Col class="h-full w-full">{@render children?.()}</Col>
+        {#if isBottomWidgetSheet}
+          <DrawerGrabber class={sidebarStyles.mobileGrabberClass}>
+            <DrawerGrabberIndicator class={sidebarStyles.mobileGrabberIndicatorClass} />
+          </DrawerGrabber>
+        {/if}
+        <div data-no-drag class="flex min-h-0 flex-1 flex-col">
+          <Col class="h-full w-full">{@render children?.()}</Col>
+        </div>
       </DrawerContent>
     </DrawerPositioner>
   </DrawerRoot>

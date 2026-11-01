@@ -12,6 +12,10 @@ export default defineConfig({
   devToolbar: {
     enabled: false,
   },
+  // Make `astro check` type-check .ts/.tsx files too (it only audits .astro by default)
+  check: {
+    ts: true,
+  },
   vite: {
     plugins: [tailwindcss()],
     resolve: {

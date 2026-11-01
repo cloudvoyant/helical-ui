@@ -6,11 +6,11 @@ import Demo from './Demo.astro';
 
 interface Props {
   component?: string;
-  /** The example already shown in the intro — skip it here. */
   exclude?: string | string[];
+  order?: string[];
 }
 
-const { component = 'button', exclude } = Astro.props;
+const { component = 'button', exclude, order = [] } = Astro.props;
 const excludedExamples = new Set(Array.isArray(exclude) ? exclude : exclude ? [exclude] : []);
 
 // Lazy glob over the example dirs — we only use the matched paths to derive
@@ -29,6 +29,15 @@ const entries = Object.keys(examplePaths)
   .filter((m) => m[1] === component)
   .map((m) => ({ id: m[2], title: titleFromId(m[2]) }))
   .filter((e) => !excludedExamples.has(e.id));
+
+if (order.length > 0) {
+  const rank = new Map(order.map((id, i) => [id, i]));
+  entries.sort((a, b) => {
+    const ra = rank.has(a.id) ? rank.get(a.id)! : order.length;
+    const rb = rank.has(b.id) ? rank.get(b.id)! : order.length;
+    return ra !== rb ? ra - rb : a.id.localeCompare(b.id);
+  });
+}
 ---
 
 <div class="flex flex-col gap-10">

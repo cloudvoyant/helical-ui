@@ -7,6 +7,8 @@ export const SIDEBAR_WIDTH = '16rem';
 export const SIDEBAR_WIDTH_MOBILE = '18rem';
 export const SIDEBAR_WIDTH_ICON = '3rem';
 export const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+export const SIDEBAR_WIDGET_SNAP_POINTS: number[] = [0.35, 0.5];
+export const SIDEBAR_WIDGET_DEFAULT_SNAP_POINT = 0.5;
 
 export const sidebarMenuButtonVariants = cva(
   'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
@@ -40,17 +42,25 @@ export interface SidebarContextProps {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  isControlled: boolean;
 }
 
 export const sidebarStyles = {
   wrapperClass: 'group/sidebar-wrapper min-h-svh w-full has-data-[variant=inset]:bg-sidebar',
 
-  // Base (static) classes for the desktop sidebar container. Side- and
-  // variant-specific classes are applied inline in the framework wrappers via
-  // ternaries, exactly as in the shadcn source. The `flex` direction bases are
-  // provided by the Row/Col layout primitives at render time.
   containerClass:
     'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex',
+
+  mobileBackdropClass:
+    'fixed inset-0 bg-black/50 select-none data-[state=open]:animate-[helical-fade-in_200ms_ease-out] data-[state=closed]:animate-[helical-fade-out_200ms_ease-in]',
+  mobilePositionerClass:
+    'fixed inset-0 z-50 flex data-[swipe-direction=left]:justify-start data-[swipe-direction=left]:items-stretch data-[swipe-direction=down]:justify-center data-[swipe-direction=down]:items-end',
+  mobileContentClass:
+    'relative flex h-full w-full flex-col bg-sidebar p-0 text-sidebar-foreground shadow-xl data-[swipe-direction=left]:w-(--sidebar-width) data-[swipe-direction=down]:max-h-[96svh] data-[swipe-direction=left]:data-[state=open]:animate-[helical-drawer-in-left_200ms_ease-out] data-[swipe-direction=left]:data-[state=closed]:animate-[helical-drawer-out-left_200ms_ease-in] data-[swipe-direction=down]:rounded-t-2xl data-[swipe-direction=down]:data-[state=open]:animate-[helical-drawer-in-down_200ms_ease-out] data-[swipe-direction=down]:data-[state=closed]:animate-[helical-drawer-out-down_200ms_ease-in]',
+
+  mobileGrabberClass:
+    'flex w-full shrink-0 cursor-grab touch-none select-none items-center justify-center py-3 data-[dragging]:cursor-grabbing',
+  mobileGrabberIndicatorClass: 'h-1 w-10 shrink-0 rounded-full bg-sidebar-border',
 
   gapClass:
     'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear group-data-[collapsible=offcanvas]:w-0',
