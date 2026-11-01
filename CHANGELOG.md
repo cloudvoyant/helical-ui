@@ -1,3 +1,10 @@
+# [0.20.0](https://github.com/cloudvoyant/helical-ui/compare/v0.19.0...v0.20.0) (2026-11-01)
+
+
+### Features
+
+* **sidebar:** add mobile bottom-sheet widget, right-side and nested demos ([#31](https://github.com/cloudvoyant/helical-ui/issues/31)) ([ab2fd27](https://github.com/cloudvoyant/helical-ui/commit/ab2fd27796eb40ad43c23bdab6ec87ad54e281bf))
+
 # [0.19.0](https://github.com/cloudvoyant/helical-ui/compare/v0.18.0...v0.19.0) (2026-09-17)
 
 
