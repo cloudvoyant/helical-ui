@@ -19,8 +19,8 @@ interface Props {
   description?: string;
   currentPath?: string;
   headings?: TocHeading[];
-  /** `landing` renders the Page landing variant (no gutters) for full-screen pages such as the home hero. */
-  variant?: 'default' | 'landing';
+  /** `landing` renders the Page landing variant (no gutters); `preview` renders a bare iframe canvas. */
+  variant?: 'default' | 'landing' | 'preview';
 }
 
 const {
@@ -31,8 +31,9 @@ const {
   variant = 'default',
 } = Astro.props;
 
-const general = (await getCollection('general')).sort((a, b) => a.data.order - b.data.order);
-const components = (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
+const isPreview = variant === 'preview';
+const general = isPreview ? [] : (await getCollection('general')).sort((a, b) => a.data.order - b.data.order);
+const components = isPreview ? [] : (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
 
 const groups = NAV_GROUPS.map((g) => {
     const items = g.section === 'general' ? general : components.filter((c) => c.data.group === g.group);
@@ -48,7 +49,7 @@ const groups = NAV_GROUPS.map((g) => {
 ---
 
 <!doctype html>
-<html lang="en" data-framework="react">
+<html lang="en" data-framework="react" class:list={['theme-helical-ui', isPreview && 'overflow-hidden']}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -107,42 +108,71 @@ const groups = NAV_GROUPS.map((g) => {
       })();
     </script>
   </head>
-  <body class="bg-background text-foreground antialiased">
-    <TopNav client:load currentPath={currentPath} groups={groups} />
-    {variant === 'landing' ? (
-      <Page variant="landing">
-        <slot />
-        <PageFooter>
-          <Footer />
-        </PageFooter>
-      </Page>
+  <body class:list={['bg-background text-foreground antialiased', isPreview && 'min-h-dvh overflow-hidden']}>
+    {variant === 'preview' ? (
+      <>
+        <div data-demo>
+          <slot />
+        </div>
+        <script is:inline>
+          window.addEventListener('message', (event) => {
+            if (event.origin !== location.origin) return;
+            const data = event.data ?? {};
+            if (data.framework === 'react' || data.framework === 'svelte') {
+              document.documentElement.dataset.framework = data.framework;
+            }
+            const root = document.documentElement;
+            if (typeof data.theme === 'string' && data.theme) {
+              root.classList.forEach((cls) => {
+                if (cls.startsWith('theme-')) root.classList.remove(cls);
+              });
+              root.classList.add(`theme-${data.theme}`);
+            }
+            if (data.dark === true) root.classList.add('dark');
+            else if (data.dark === false) root.classList.remove('dark');
+          });
+        </script>
+      </>
+    ) : variant === 'landing' ? (
+      <>
+        <TopNav client:load currentPath={currentPath} groups={groups} />
+        <Page variant="landing">
+          <slot />
+          <PageFooter>
+            <Footer />
+          </PageFooter>
+        </Page>
+      </>
     ) : (
-      <Page>
-        <PageGutter
-          side="left"
-          className="top-16 hidden h-[calc(100svh-4rem)] lg:block lg:w-56 lg:p-0"
-        >
-          <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pl-4 lg:pl-8">
-            <Sidebar currentPath={currentPath} />
-          </div>
-        </PageGutter>
-        <PageContent className="pt-16 px-4 pb-10 md:px-8">
-          <div class="mx-auto w-full max-w-4xl">
-            <slot />
-          </div>
-        </PageContent>
-        <PageGutter
-          side="right"
-          className="top-16 hidden h-[calc(100svh-4rem)] xl:block xl:w-64 xl:p-0"
-        >
-          <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pr-4 xl:pr-8">
-            <Toc headings={headings} />
-          </div>
-        </PageGutter>
-        <PageFooter>
-          <Footer />
-        </PageFooter>
-      </Page>
+      <>
+        <TopNav client:load currentPath={currentPath} groups={groups} />
+        <Page>
+          <PageGutter
+            side="left"
+            className="top-16 hidden h-[calc(100svh-4rem)] lg:block lg:w-56 lg:p-0"
+          >
+            <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pl-4 lg:pl-8">
+              <Sidebar currentPath={currentPath} />
+            </div>
+          </PageGutter>
+          <PageContent className="pt-16 px-4 pb-10 md:px-8">
+            <div class="mx-auto w-full max-w-4xl">
+              <slot />
+            </div>
+          </PageContent>
+          <PageGutter
+            side="right"
+            className="top-16 hidden h-[calc(100svh-4rem)] xl:block xl:w-64 xl:p-0"
+          >
+            <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pr-4 xl:pr-8">
+              <Toc headings={headings} />
+            </div>
+          </PageGutter>
+          <PageFooter>
+            <Footer />
+          </PageFooter>
+        </Page>
+      </>
     )}
   </body>
 </html>

@@ -1,12 +1,8 @@
 ---
 // apps/docs/src/pages/preview/sidebar/[example].astro
 // Full-bleed preview route for the Sidebar demos, rendered inside an iframe by
-// PreviewFrame.astro (own viewport, so 100svh / sticky resolve like production;
-// framework + theme pushed via postMessage). The example is a path segment
-// (static hosting — query params are empty at build time); both framework
-// islands render and the non-active one is hidden by the same
-// `html[data-framework]` CSS the docs shell uses.
-import '../../../styles/global.css';
+// PreviewFrame.astro.
+import Shell from '../../../layouts/Shell.astro';
 import SidebarIconReact from '../../../components/examples/sidebar/icon/react.tsx';
 import SidebarIconSvelte from '../../../components/examples/sidebar/icon/svelte.svelte';
 import SidebarOffcanvasReact from '../../../components/examples/sidebar/offcanvas/react.tsx';
@@ -27,92 +23,55 @@ const { example } = Astro.params;
 const title = `Sidebar preview — ${example}`;
 ---
 
-<html lang="en" data-framework="react" class="theme-helical-ui overflow-hidden">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap"
-    />
-    <title>{title}</title>
-  </head>
-  <body class="min-h-dvh overflow-hidden bg-background text-foreground antialiased">
-    <div data-demo>
-      {example === 'icon' && (
-        <div data-fw="react">
-          <SidebarIconReact client:load />
-        </div>
-      )}
-      {example === 'icon' && (
-        <div data-fw="svelte">
-          <SidebarIconSvelte client:load />
-        </div>
-      )}
-      {example === 'offcanvas' && (
-        <div data-fw="react">
-          <SidebarOffcanvasReact client:load />
-        </div>
-      )}
-      {example === 'offcanvas' && (
-        <div data-fw="svelte">
-          <SidebarOffcanvasSvelte client:load />
-        </div>
-      )}
-      {example === 'rail' && (
-        <div data-fw="react">
-          <SidebarRailReact client:load />
-        </div>
-      )}
-      {example === 'rail' && (
-        <div data-fw="svelte">
-          <SidebarRailSvelte client:load />
-        </div>
-      )}
-      {example === 'right-side' && (
-        <div data-fw="react">
-          <SidebarRightSideReact client:load />
-        </div>
-      )}
-      {example === 'right-side' && (
-        <div data-fw="svelte">
-          <SidebarRightSideSvelte client:load />
-        </div>
-      )}
-      {example === 'nested' && (
-        <div data-fw="react">
-          <SidebarNestedReact client:load />
-        </div>
-      )}
-      {example === 'nested' && (
-        <div data-fw="svelte">
-          <SidebarNestedSvelte client:load />
-        </div>
-      )}
+<Shell title={title} variant="preview">
+  {example === 'icon' && (
+    <div data-fw="react">
+      <SidebarIconReact client:load />
     </div>
-  </body>
-</html>
-
-<script is:inline>
-  // The docs page (PreviewFrame.astro) pushes the active framework, theme name,
-  // and dark/light into the frame via postMessage; the non-active island is
-  // hidden by the same `html[data-framework]` CSS the docs shell uses.
-  window.addEventListener('message', (event) => {
-    if (event.origin !== location.origin) return;
-    const data = event.data ?? {};
-    if (data.framework === 'react' || data.framework === 'svelte') {
-      document.documentElement.dataset.framework = data.framework;
-    }
-    const root = document.documentElement;
-    if (typeof data.theme === 'string' && data.theme) {
-      root.classList.forEach((cls) => {
-        if (cls.startsWith('theme-')) root.classList.remove(cls);
-      });
-      root.classList.add(`theme-${data.theme}`);
-    }
-    if (data.dark === true) root.classList.add('dark');
-    else if (data.dark === false) root.classList.remove('dark');
-  });
-</script>
+  )}
+  {example === 'icon' && (
+    <div data-fw="svelte">
+      <SidebarIconSvelte client:load />
+    </div>
+  )}
+  {example === 'offcanvas' && (
+    <div data-fw="react">
+      <SidebarOffcanvasReact client:load />
+    </div>
+  )}
+  {example === 'offcanvas' && (
+    <div data-fw="svelte">
+      <SidebarOffcanvasSvelte client:load />
+    </div>
+  )}
+  {example === 'rail' && (
+    <div data-fw="react">
+      <SidebarRailReact client:load />
+    </div>
+  )}
+  {example === 'rail' && (
+    <div data-fw="svelte">
+      <SidebarRailSvelte client:load />
+    </div>
+  )}
+  {example === 'right-side' && (
+    <div data-fw="react">
+      <SidebarRightSideReact client:load />
+    </div>
+  )}
+  {example === 'right-side' && (
+    <div data-fw="svelte">
+      <SidebarRightSideSvelte client:load />
+    </div>
+  )}
+  {example === 'nested' && (
+    <div data-fw="react">
+      <SidebarNestedReact client:load />
+    </div>
+  )}
+  {example === 'nested' && (
+    <div data-fw="svelte">
+      <SidebarNestedSvelte client:load />
+    </div>
+  )}
+</Shell>
