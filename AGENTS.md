@@ -33,6 +33,7 @@ flowchart LR
 ├── apps/docs/
 │   ├── src/content/components/<component>.mdx
 │   ├── src/components/examples/<component>/<example>/{react.tsx,svelte.svelte}
+│   ├── src/vite/                     # Docs Vite pre-transform plugins
 │   └── e2e/<component>.spec.ts
 └── docs/
     ├── architecture.md
@@ -40,6 +41,7 @@ flowchart LR
 ```
 
 - Use `kebab-case` for directories and shared `.ts`/`.mdx` files; use `PascalCase` for component files and exports. See [docs/architecture.md](docs/architecture.md).
+- [Proposed] Keep custom Vite plugins for `apps/docs` in `apps/docs/src/vite/` and document their role and transform flow in [docs/architecture.md](docs/architecture.md).
 
 ### File layout
 

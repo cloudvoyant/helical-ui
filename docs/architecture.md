@@ -19,9 +19,28 @@ helical-ui is a pnpm workspace monorepo:
 ## Docs app conventions
 
 - `apps/docs` uses Astro 7 with `@astrojs/react`, `@astrojs/svelte`, `@astrojs/mdx`, and Tailwind v4 via `@tailwindcss/vite`.
-- The theme lives in `@cloudvoyant/helical-ui/src/theme.css` and matches shadcn/ui's implementation exactly at this stage (CSS variables under `:root`/`.dark`, `@theme inline`, `@custom-variant dark`).
-- The framework selector persists to `localStorage` (`vortex:framework`) and sets `data-framework` on `<html>`; `Demo.astro` is an auto-generated monolithic switcher that renders both framework islands and CSS shows the active one.
-- To add a new demo, create a folder under `apps/docs/src/components/examples/{component}/{name}` containing `react.tsx` and `svelte.svelte`. The `Demo.astro` and `registry.json` files are automatically updated by `pnpm gen` (run during `predev`/`prebuild`).
+- The theme lives in `@cloudvoyant/helical-ui/src/theme.css` and matches shadcn/ui's implementation (CSS variables under `:root`/`.dark`, `@theme inline`, `@custom-variant dark`).
+- The framework selector persists to `localStorage` (`vortex:framework`) and sets `data-framework` on `<html>`; `Demo.astro` renders `<slot name="react" />` and `<slot name="svelte" />` inside `[data-fw]` wrappers and CSS shows the active framework.
+- To add a new demo, create a folder under `apps/docs/src/components/examples/{component}/{name}` containing `react.tsx` and `svelte.svelte`. No router registration or codegen step is required.
+
+### Docs Vite plugins (`apps/docs/src/vite/`)
+
+Because Astro's `client:*` hydration directives only work on statically imported components and `astro dev` serves unbundled ES modules over HTTP, `apps/docs` uses two `enforce: 'pre'` Vite plugins wired in [`apps/docs/astro.config.mjs`](../apps/docs/astro.config.mjs):
+
+```mermaid
+flowchart LR
+    MDX["<component>.mdx\n(<Examples />, <Demo />)"] --> DemoPlugin["helicalMdxDemoPlugin\n(mdx-demo-islands.mjs)"]
+    DemoPlugin --> Slotted["Static example imports +\n<Demo><_R slot='react' /><_S slot='svelte' /></Demo>"]
+    Slotted --> BarrelPlugin["helicalBarrelSubpathPlugin\n(barrel-subpaths.mjs)"]
+    BarrelPlugin --> Subpaths["Concrete subpath imports\n(libs/*/src/<module>, lucide-svelte/dist/icons/*)"]
+```
+
+1. **`helicalMdxDemoPlugin` ([`apps/docs/src/vite/mdx-demo-islands.mjs`](../apps/docs/src/vite/mdx-demo-islands.mjs)):**
+   - Runs before `@astrojs/mdx` to expand `<Examples component="..." />` and self-closing `<Demo component="..." example="..." />` tags in `.mdx` files into `<Demo>` elements with named slot children (`<_R_... slot="react" client:load />` and `<_S_... slot="svelte" client:load />`) and injects static `import` statements for only that page's examples.
+   - Accepts configurable `previewFrameComponents` (left self-closing because `<Demo>` renders an `<iframe data-preview>` via `PreviewFrame.astro`), `ssrExamples` (slotted without `client:*` directives so they render pure server HTML with zero client JS), and `clientOnlyComponents` (slotted with `client:only="react"` / `client:only="svelte"`).
+2. **`helicalBarrelSubpathPlugin` ([`apps/docs/src/vite/barrel-subpaths.mjs`](../apps/docs/src/vite/barrel-subpaths.mjs)):**
+   - Parses `libs/helical-{ui,react,svelte}/src/index.ts` and `lucide-svelte/dist/icons/index.js` at build start and rewrites static named imports/exports (and Astro hydrated island `client:component-path` metadata) to their concrete subpath files (skipping `?raw` code-tab imports and `node_modules`).
+   - Prevents `astro dev` from requesting every component in the workspace barrel or all 1,500+ `lucide-svelte` icons on page load, and keeps Rollup chunks isolated per component in `astro build`.
 
 ## Component pattern
 

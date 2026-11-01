@@ -6,14 +6,15 @@ import { fileURLToPath } from 'node:url';
 const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const examplesRoot = path.join(docsRoot, 'src/components/examples');
 
-const PREVIEW_FRAME_COMPONENTS = new Set(['sidebar', 'page']);
-const SSR_EXAMPLES = new Set([
+const DEFAULT_PREVIEW_FRAME_COMPONENTS = ['sidebar', 'page'];
+const DEFAULT_SSR_EXAMPLES = [
   'mermaid/prerendered',
   'latex/prerendered',
   'code-block/prerendered',
   'chart/prerendered',
   'editor/server-reader',
-]);
+];
+const DEFAULT_CLIENT_ONLY_COMPONENTS = ['navbar'];
 
 function titleFromId(id) {
   return id
@@ -42,8 +43,21 @@ function toPosixRelative(fromDir, targetPath) {
  * Expands `<Examples>` and `<Demo>` in `.mdx` files before `@astrojs/mdx` runs so
  * each page only imports and hydrates its own React/Svelte example islands via
  * `<Demo>` named slots (`slot="react"` and `slot="svelte"`).
+ *
+ * @param {object} [options]
+ * @param {Iterable<string>} [options.previewFrameComponents] Components rendered via `<PreviewFrame>` iframes rather than inline slots.
+ * @param {Iterable<string>} [options.ssrExamples] `<component>/<example>` keys rendered strictly on the server without `client:*` hydration.
+ * @param {Iterable<string>} [options.clientOnlyComponents] Components hydrated with `client:only` instead of `client:load`.
  */
-export function helicalMdxDemoPlugin() {
+export function helicalMdxDemoPlugin({
+  previewFrameComponents = DEFAULT_PREVIEW_FRAME_COMPONENTS,
+  ssrExamples = DEFAULT_SSR_EXAMPLES,
+  clientOnlyComponents = DEFAULT_CLIENT_ONLY_COMPONENTS,
+} = {}) {
+  const previewFrameSet = new Set(previewFrameComponents);
+  const ssrExampleSet = new Set(ssrExamples);
+  const clientOnlySet = new Set(clientOnlyComponents);
+
   return {
     name: 'helical-mdx-demo-islands',
     enforce: 'pre',
@@ -98,7 +112,7 @@ export function helicalMdxDemoPlugin() {
       transformed = transformed.replace(
         /<Demo\s+component="([^"]+)"\s+example="([^"]+)"\s*\/>/g,
         (fullMatch, component, example) => {
-          if (PREVIEW_FRAME_COMPONENTS.has(component)) {
+          if (previewFrameSet.has(component)) {
             return fullMatch;
           }
 
@@ -118,10 +132,10 @@ export function helicalMdxDemoPlugin() {
           const exampleKey = `${component}/${example}`;
           let reactDirective = ' client:load';
           let svelteDirective = ' client:load';
-          if (SSR_EXAMPLES.has(exampleKey)) {
+          if (ssrExampleSet.has(exampleKey)) {
             reactDirective = '';
             svelteDirective = '';
-          } else if (component === 'navbar') {
+          } else if (clientOnlySet.has(component)) {
             reactDirective = ' client:only="react"';
             svelteDirective = ' client:only="svelte"';
           }
