@@ -4,6 +4,8 @@ import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
+import { helicalMdxDemoPlugin } from './src/vite/mdx-demo-islands.mjs';
+import { helicalBarrelSubpathPlugin } from './src/vite/barrel-subpaths.mjs';
 
 export default defineConfig({
   site: 'https://cloudvoyant.github.io',
@@ -17,7 +19,7 @@ export default defineConfig({
     ts: true,
   },
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [helicalMdxDemoPlugin(), helicalBarrelSubpathPlugin(), tailwindcss()],
     resolve: {
       alias: [
         // Serve workspace packages from source in dev so edits to libs/* hot-reload
@@ -39,6 +41,30 @@ export default defineConfig({
       ],
     },
     optimizeDeps: {
+      entries: [
+        'src/**/*.{astro,tsx,ts,svelte}',
+        '../../libs/helical-ui/src/**/*.ts',
+        '../../libs/helical-react/src/**/*.{ts,tsx}',
+        '../../libs/helical-svelte/src/**/*.{ts,svelte}',
+      ],
+      include: [
+        'lucide-react',
+        'katex',
+        '@cloudvoyant/helical-ui > @tanstack/charts',
+        '@cloudvoyant/helical-ui > lowlight',
+        '@cloudvoyant/helical-ui > @tiptap/core',
+        '@cloudvoyant/helical-ui > @tiptap/starter-kit',
+        '@cloudvoyant/helical-ui > @tiptap/extension-code-block-lowlight',
+        '@cloudvoyant/helical-ui > @tiptap/extension-highlight',
+        '@cloudvoyant/helical-ui > @tiptap/extension-link',
+        '@cloudvoyant/helical-ui > @tiptap/extension-placeholder',
+        '@cloudvoyant/helical-ui > @tiptap/extension-task-item',
+        '@cloudvoyant/helical-ui > @tiptap/extension-task-list',
+        '@cloudvoyant/helical-ui > @tiptap/extension-text-align',
+        '@cloudvoyant/helical-ui > @tiptap/extension-typography',
+        '@cloudvoyant/helical-ui > @tiptap/extension-underline',
+        '@cloudvoyant/helical-react > @ark-ui/react',
+      ],
       // Workspace packages resolve to source in dev (see alias above); don't let
       // Vite pre-bundle and cache a stale copy (new named exports then throw
       // "does not provide an export named ..." until a dev-server restart).

@@ -5,8 +5,38 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
 import { Listbox, ListboxContent, ListboxItem, ListboxItemText } from '..';
 import type { SlashCommandItem } from '@cloudvoyant/helical-ui';
-import * as LucideIcons from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import {
+  Bookmark,
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  Heading4,
+  Image,
+  List,
+  ListOrdered,
+  ListTodo,
+  MessageSquareWarning,
+  Minus,
+  Quote,
+  type LucideIcon,
+} from 'lucide-react';
+
+const SLASH_MENU_ICONS: Record<string, LucideIcon | undefined> = {
+  Heading1,
+  Heading2,
+  Heading3,
+  Heading4,
+  Quote,
+  MessageSquareWarning,
+  List,
+  ListOrdered,
+  ListTodo,
+  Minus,
+  Code,
+  Image,
+  Bookmark,
+};
 
 export interface SlashMenuHandle {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
@@ -66,9 +96,7 @@ export const SlashMenu = forwardRef<SlashMenuHandle, SuggestionProps<SlashComman
     >
       <ListboxContent data-slash-menu-scroll>
         {items.map((item, i) => {
-          // SAFETY: slash-command icon names are looked up dynamically; missing Lucide exports
-          // intentionally resolve to undefined and render no icon rather than being invoked.
-          const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[item.icon];
+          const Icon = SLASH_MENU_ICONS[item.icon];
           return (
             <ListboxItem
               key={item.title}

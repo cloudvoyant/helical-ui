@@ -2,9 +2,6 @@
 // apps/docs/src/components/Demo.astro
 // Renders a single example card (preview + code).
 import Example from './Example.astro';
-import ReactRouter from './ReactRouter.tsx';
-import SvelteRouter from './SvelteRouter.svelte';
-import SsrRouter from './SsrRouter.astro';
 import PreviewFrame from './PreviewFrame.astro';
 
 interface Props {
@@ -15,7 +12,6 @@ interface Props {
 const { component = 'button', example = 'default' } = Astro.props;
 
 // Read the raw source code for the toggles (this works fine in Astro).
-// For the actual execution, we defer to the ReactRouter/SvelteRouter.
 const reactRawModules = import.meta.glob('./examples/*/*/react.tsx', { query: '?raw', import: 'default' });
 const svelteRawModules = import.meta.glob('./examples/*/*/svelte.svelte', { query: '?raw', import: 'default' });
 
@@ -31,17 +27,6 @@ const title = example
   .join(' ');
 
 const isPreviewFrame = ['sidebar', 'page'].includes(component);
-
-const SSR_EXAMPLES = new Set([
-  'mermaid/prerendered',
-  'latex/prerendered',
-  'code-block/prerendered',
-  'chart/prerendered',
-  'editor/server-reader'
-]);
-const isSsr = SSR_EXAMPLES.has(`${component}/${example}`);
-
-const isClientOnly = component === 'navbar';
 const isScrollableEditor = component === 'editor';
 
 // Full-bleed demos render flush to the card edges (no ExampleScreen padding).
@@ -75,26 +60,15 @@ const isFullscreen = FULLSCREEN_EXAMPLES.has(`${component}/${example}`);
     fullscreen={isFullscreen}
   >
     <div class:list={[isScrollableEditor && 'max-h-96 overflow-y-auto overscroll-contain']} data-editor-demo-scroll={isScrollableEditor || undefined}>
-    {isSsr ? (
-      <SsrRouter component={component} example={example} />
-    ) : isPreviewFrame ? (
+    {isPreviewFrame ? (
       <PreviewFrame component={component} example={example} desktopWidth={component === 'sidebar' ? 768 : undefined} />
-    ) : isClientOnly ? (
-      <>
-        <div data-fw="react">
-          <ReactRouter component={component} example={example} client:only="react" />
-        </div>
-        <div data-fw="svelte">
-          <SvelteRouter component={component} example={example} client:only="svelte" />
-        </div>
-      </>
     ) : (
       <>
         <div data-fw="react">
-          <ReactRouter component={component} example={example} client:load />
+          <slot name="react" />
         </div>
         <div data-fw="svelte">
-          <SvelteRouter component={component} example={example} client:load />
+          <slot name="svelte" />
         </div>
       </>
     )}

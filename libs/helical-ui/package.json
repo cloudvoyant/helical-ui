@@ -4,6 +4,9 @@
   "description": "helical-ui shared component interfaces, cva variants, and theme",
   "license": "MIT",
   "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

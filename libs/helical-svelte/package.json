@@ -4,6 +4,7 @@
   "description": "helical-ui Svelte UI components",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
   "svelte": "./dist/index.js",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

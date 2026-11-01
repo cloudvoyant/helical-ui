@@ -13,6 +13,7 @@ interface Props {
 
 const { component, example, title = 'helical-ui preview', desktopWidth } = Astro.props;
 const uid = `pf-${Math.random().toString(36).slice(2)}`;
+const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`;
 ---
 
 <div
@@ -129,10 +130,15 @@ const uid = `pf-${Math.random().toString(36).slice(2)}`;
     <div
       data-preview-window
       data-preview-mode="desktop"
-      class="relative mx-auto w-full shrink-0 overflow-hidden transition-[width] duration-200"
+      class="relative mx-auto w-full shrink-0 overflow-hidden bg-background transition-[width] duration-200"
       style="width: 100%; aspect-ratio: 16 / 9"
     >
-      <iframe data-preview title={title} class="block h-full w-full border-0"></iframe>
+      <iframe
+        data-preview
+        src={previewSrc}
+        title={title}
+        class="block h-full w-full border-0 bg-background opacity-0 transition-opacity duration-150"
+      ></iframe>
     </div>
   </div>
 </div>
@@ -205,9 +211,16 @@ const uid = `pf-${Math.random().toString(36).slice(2)}`;
 
     updateUrl();
     setSrc();
-    frame.addEventListener('load', () => {
+    const revealFrame = () => {
       sendState();
-    });
+      frame?.classList.remove('opacity-0');
+    };
+    frame?.addEventListener('load', revealFrame);
+    try {
+      if (frame?.contentDocument?.readyState === 'complete' && frame.contentDocument.location.href !== 'about:blank') {
+        revealFrame();
+      }
+    } catch {}
     window.addEventListener(FRAMEWORK_EVENT, sendState);
     new MutationObserver(sendState).observe(document.documentElement, {
       attributes: true,

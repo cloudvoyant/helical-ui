@@ -2,13 +2,8 @@
 // apps/docs/src/pages/preview/page/[example].astro
 // Full-bleed preview route rendered inside an iframe by PreviewFrame.astro.
 // Owns its own viewport, so 100svh / position: sticky resolve against the
-// frame (like production) instead of the docs page. The example is a path
-// segment (static hosting — query params are empty at build time); the active
-// framework and theme are pushed from the docs page via postMessage, and the
-// non-active framework's island is hidden with the same `html[data-framework]`
-// CSS the docs shell uses. Page-only for now; other layout elements get their
-// own preview/[component]/[example].astro when adopted.
-import '../../../styles/global.css';
+// frame (like production) instead of the docs page.
+import Shell from '../../../layouts/Shell.astro';
 import PageDefaultReact from '../../../components/examples/page/default/react.tsx';
 import PageDefaultSvelte from '../../../components/examples/page/default/svelte.svelte';
 import PageGuttersReact from '../../../components/examples/page/gutters/react.tsx';
@@ -29,86 +24,55 @@ const { example } = Astro.params;
 const title = `Page preview — ${example}`;
 ---
 
-<html lang="en" data-framework="react" class="theme-helical-ui">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-  </head>
-  <body class="min-h-dvh overflow-hidden bg-background text-foreground antialiased">
-    <div data-demo>
-      {example === 'default' && (
-        <div data-fw="react">
-          <PageDefaultReact client:load />
-        </div>
-      )}
-      {example === 'default' && (
-        <div data-fw="svelte">
-          <PageDefaultSvelte client:load />
-        </div>
-      )}
-      {example === 'gutters' && (
-        <div data-fw="react">
-          <PageGuttersReact client:load />
-        </div>
-      )}
-      {example === 'gutters' && (
-        <div data-fw="svelte">
-          <PageGuttersSvelte client:load />
-        </div>
-      )}
-      {example === 'gutter-scroll' && (
-        <div data-fw="react">
-          <PageGutterScrollReact client:load />
-        </div>
-      )}
-      {example === 'gutter-scroll' && (
-        <div data-fw="svelte">
-          <PageGutterScrollSvelte client:load />
-        </div>
-      )}
-      {example === 'footer' && (
-        <div data-fw="react">
-          <PageFooterReact client:load />
-        </div>
-      )}
-      {example === 'footer' && (
-        <div data-fw="svelte">
-          <PageFooterSvelte client:load />
-        </div>
-      )}
-      {example === 'landing' && (
-        <div data-fw="react">
-          <PageLandingReact client:load />
-        </div>
-      )}
-      {example === 'landing' && (
-        <div data-fw="svelte">
-          <PageLandingSvelte client:load />
-        </div>
-      )}
+<Shell title={title} variant="preview">
+  {example === 'default' && (
+    <div data-fw="react">
+      <PageDefaultReact client:load />
     </div>
-  </body>
-</html>
-
-<script is:inline>
-  // The docs page (PreviewFrame.astro) pushes the active framework, theme name,
-  // and dark/light into the frame via postMessage; the non-active island is
-  // hidden by the same `html[data-framework]` CSS the docs shell uses.
-  window.addEventListener('message', (event) => {
-    if (event.origin !== location.origin) return;
-    const data = event.data ?? {};
-    if (data.framework === 'react' || data.framework === 'svelte') {
-      document.documentElement.dataset.framework = data.framework;
-    }
-    const root = document.documentElement;
-    if (typeof data.theme === 'string' && data.theme) {
-      root.classList.forEach((cls) => {
-        if (cls.startsWith('theme-')) root.classList.remove(cls);
-      });
-      root.classList.add(`theme-${data.theme}`);
-    }
-    if (data.dark === true) root.classList.add('dark');
-    else if (data.dark === false) root.classList.remove('dark');
-  });
-</script>
+  )}
+  {example === 'default' && (
+    <div data-fw="svelte">
+      <PageDefaultSvelte client:load />
+    </div>
+  )}
+  {example === 'gutters' && (
+    <div data-fw="react">
+      <PageGuttersReact client:load />
+    </div>
+  )}
+  {example === 'gutters' && (
+    <div data-fw="svelte">
+      <PageGuttersSvelte client:load />
+    </div>
+  )}
+  {example === 'gutter-scroll' && (
+    <div data-fw="react">
+      <PageGutterScrollReact client:load />
+    </div>
+  )}
+  {example === 'gutter-scroll' && (
+    <div data-fw="svelte">
+      <PageGutterScrollSvelte client:load />
+    </div>
+  )}
+  {example === 'footer' && (
+    <div data-fw="react">
+      <PageFooterReact client:load />
+    </div>
+  )}
+  {example === 'footer' && (
+    <div data-fw="svelte">
+      <PageFooterSvelte client:load />
+    </div>
+  )}
+  {example === 'landing' && (
+    <div data-fw="react">
+      <PageLandingReact client:load />
+    </div>
+  )}
+  {example === 'landing' && (
+    <div data-fw="svelte">
+      <PageLandingSvelte client:load />
+    </div>
+  )}
+</Shell>

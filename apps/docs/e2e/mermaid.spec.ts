@@ -10,7 +10,7 @@ const FRAMEWORKS = ['react', 'svelte'] as const;
 
 // Matches the Vite-emitted mermaid chunk. Used to delay (loading-state test) or abort
 // (degradation + prerendered tests) the client-side mermaid import.
-const MERMAID_CHUNK = /mermaid[^/]*\.js$/;
+const MERMAID_CHUNK = /mermaid\.core\.[^/]*\.js$/;
 
 for (const framework of FRAMEWORKS) {
   test.describe(`Mermaid docs page · ${framework}`, () => {

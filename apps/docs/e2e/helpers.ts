@@ -13,6 +13,9 @@ export type Framework = (typeof FRAMEWORKS)[number];
 // hydration. A non-zero box means it has actually rendered. Every spec's
 // beforeEach navigates fresh and selects a framework, so this runs per test.
 export async function expectIslandRendered(page: Page, framework: Framework) {
+  await expect(page.locator(`[data-demo] [data-fw="${framework}"] astro-island[ssr]`)).toHaveCount(0, {
+    timeout: 10_000,
+  });
   const demo = page.locator(`[data-demo] [data-fw="${framework}"]`).first();
   await expect
     .poll(

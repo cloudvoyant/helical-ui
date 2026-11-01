@@ -1,8 +1,38 @@
 <script lang="ts">
   import type { SlashCommandItem } from '@cloudvoyant/helical-ui';
   import { onMount, tick } from 'svelte';
-  import * as LucideIcons from 'lucide-svelte';
+  import {
+    Bookmark,
+    Code,
+    Heading1,
+    Heading2,
+    Heading3,
+    Heading4,
+    Image,
+    List,
+    ListOrdered,
+    ListTodo,
+    MessageSquareWarning,
+    Minus,
+    Quote,
+  } from 'lucide-svelte';
   import type { Component } from 'svelte';
+
+  const SLASH_MENU_ICONS: Record<string, typeof Heading1 | undefined> = {
+    Heading1,
+    Heading2,
+    Heading3,
+    Heading4,
+    Quote,
+    MessageSquareWarning,
+    List,
+    ListOrdered,
+    ListTodo,
+    Minus,
+    Code,
+    Image,
+    Bookmark,
+  };
 
   interface Props {
     items: SlashCommandItem[];
@@ -16,8 +46,8 @@
   let menuScrollElement = $state<HTMLDivElement | undefined>();
   let itemElements = $state<Array<HTMLButtonElement | undefined>>([]);
 
-  function getIcon(iconName: string): Component | undefined {
-    return (LucideIcons as unknown as Record<string, Component | undefined>)[iconName];
+  function getIcon(iconName: string): Component<{ size?: number }> | undefined {
+    return SLASH_MENU_ICONS[iconName] as unknown as Component<{ size?: number }> | undefined;
   }
 
   function setSelectedIndex(index: number) {

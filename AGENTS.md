@@ -33,13 +33,17 @@ flowchart LR
 ├── apps/docs/
 │   ├── src/content/components/<component>.mdx
 │   ├── src/components/examples/<component>/<example>/{react.tsx,svelte.svelte}
+│   ├── src/vite/                     # Docs Vite pre-transform plugins
 │   └── e2e/<component>.spec.ts
 └── docs/
-    ├── architecture.md
-    └── components/<component>.md     # Component architecture docs
+    └── architecture/
+        ├── index.md                  # Monorepo & library architecture
+        ├── docs-site.md              # Docs/demo app & Vite plugin architecture
+        └── components/<component>.md # Component architecture docs
 ```
 
-- Use `kebab-case` for directories and shared `.ts`/`.mdx` files; use `PascalCase` for component files and exports. See [docs/architecture.md](docs/architecture.md).
+- Use `kebab-case` for directories and shared `.ts`/`.mdx` files; use `PascalCase` for component files and exports. See [docs/architecture/index.md](docs/architecture/index.md).
+- [Proposed] Keep custom Vite plugins for `apps/docs` in `apps/docs/src/vite/` and document their role and transform flow in [docs/architecture/docs-site.md](docs/architecture/docs-site.md).
 
 ### File layout
 
@@ -80,7 +84,7 @@ export const badgeVariants = cva('inline-flex items-center', {
 });
 ```
 
-- [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/components/<component>.md`.
+- [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/architecture/components/<component>.md`.
 - [Proposed] Document complex UI components with `difflab templates scaffold ui-component-architecture`, using Mermaid diagrams for state transitions and data flow.
 - [Proposed] Prefer Tailwind utilities and `cva` variants in `libs/helical-ui/src/<component>.ts` over raw rules in [components.css](libs/helical-ui/src/components.css), reserving `components.css` for `@keyframes` or third-party selector overrides.
 
