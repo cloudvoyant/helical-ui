@@ -1,3 +1,10 @@
+## [0.20.1](https://github.com/cloudvoyant/helical-ui/compare/v0.20.0...v0.20.1) (2026-11-01)
+
+
+### Performance Improvements
+
+* **docs:** isolate demo islands per page and tree-shake barrel imports ([#32](https://github.com/cloudvoyant/helical-ui/issues/32)) ([6a6e694](https://github.com/cloudvoyant/helical-ui/commit/6a6e6940765700879ee9591845afd0fe41947b91))
+
 # [0.20.0](https://github.com/cloudvoyant/helical-ui/compare/v0.19.0...v0.20.0) (2026-11-01)
 
 
