@@ -1,7 +1,4 @@
 ---
-// apps/docs/src/components/PreviewFrame.astro
-// Browser-chrome iframe demo for layout components. Lazily load previews near
-// the viewport; sync their framework and theme with the docs shell.
 interface Props {
   component: string;
   example: string;
@@ -154,9 +151,6 @@ const uid = `pf-${Math.random().toString(36).slice(2)}`;
 </style>
 
 <script is:inline define:vars={{ uid, base: import.meta.env.BASE_URL }}>
-  // Mirrors FRAMEWORK_EVENT in lib/framework.ts. A define:vars script is inlined
-  // as a non-module script, so it can't use imports or import.meta — base comes
-  // in via define:vars and the event name is duplicated here on purpose.
   const FRAMEWORK_EVENT = 'vortex:framework';
 
   const root = document.getElementById(uid);
@@ -219,10 +213,6 @@ const uid = `pf-${Math.random().toString(36).slice(2)}`;
     } catch {}
     window.addEventListener(FRAMEWORK_EVENT, sendState);
 
-    // A native lazy iframe can begin loading several viewports early. Keep src
-    // unset until the preview is close enough to be useful, then let the browser
-    // handle the actual lazy navigation. This avoids hydrating every framework
-    // preview during the initial docs-page load.
     if ('IntersectionObserver' in window) {
       const loadObserver = new IntersectionObserver(
         (entries) => {

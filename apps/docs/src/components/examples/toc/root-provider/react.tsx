@@ -20,18 +20,36 @@ export default function ReactTocRootProvider() {
       <Page className="bg-background text-foreground">
         <PageContent className="px-8 py-10">
           <div className="mx-auto flex max-w-2xl flex-col gap-10">
-            {items.map((item) => (
-              <section key={item.value} className="scroll-mt-8">
-                <h2 id={item.value} className="text-lg font-semibold">
-                  {item.label}
-                </h2>
-                <div className="mt-3 flex flex-col gap-2">
-                  {Array.from({ length: item.lines }).map((_, i) => (
-                    <div key={i} className="h-2.5 rounded bg-muted" />
-                  ))}
-                </div>
-              </section>
-            ))}
+            <section className="scroll-mt-8">
+              <h2 id="react-03-introduction" className="text-lg font-semibold">
+                Introduction
+              </h2>
+              <div className="mt-3 min-h-96 rounded bg-muted/30" />
+            </section>
+            <section className="scroll-mt-8">
+              <h2 id="react-03-getting-started" className="text-lg font-semibold">
+                Getting Started
+              </h2>
+              <div className="mt-3 min-h-96 rounded bg-muted/30" />
+            </section>
+            <section className="scroll-mt-8">
+              <h2 id="react-03-installation" className="text-lg font-semibold">
+                Installation
+              </h2>
+              <div className="mt-3 min-h-96 rounded bg-muted/30" />
+            </section>
+            <section className="scroll-mt-8">
+              <h2 id="react-03-usage" className="text-lg font-semibold">
+                Usage
+              </h2>
+              <div className="mt-3 min-h-96 rounded bg-muted/30" />
+            </section>
+            <section className="scroll-mt-8">
+              <h2 id="react-03-conclusion" className="text-lg font-semibold">
+                Conclusion
+              </h2>
+              <div className="mt-3 min-h-96 rounded bg-muted/30" />
+            </section>
           </div>
         </PageContent>
         <PageGutter side="right" className="border-s border-border">

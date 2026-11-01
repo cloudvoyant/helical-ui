@@ -3,14 +3,8 @@
 // active item via the machine's indicator props.
 import { Page, PageContent, PageGutter, TableOfContents } from '@cloudvoyant/helical-react';
 
-function Filler({ lines }: { lines: number }) {
-  return (
-    <div className="mt-3 flex flex-col gap-2">
-      {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className="h-2.5 rounded bg-muted" />
-      ))}
-    </div>
-  );
+function Filler() {
+  return <div className="mt-3 min-h-96 rounded bg-muted/30" />;
 }
 
 export default function ReactTocIndicator() {
@@ -23,31 +17,31 @@ export default function ReactTocIndicator() {
               <h2 id="react-06-step-validation" className="text-lg font-semibold">
                 Validation Pending
               </h2>
-              <Filler lines={5} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-06-upload-progress" className="text-lg font-semibold">
                 Asset Uploading
               </h2>
-              <Filler lines={90} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-06-deployment-sync" className="text-lg font-semibold">
                 Server Sync Active
               </h2>
-              <Filler lines={12} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-06-build-pipeline" className="text-lg font-semibold">
                 CI/CD Running
               </h2>
-              <Filler lines={105} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-06-database-health" className="text-lg font-semibold">
                 DB Connection Stable
               </h2>
-              <Filler lines={3} />
+              <Filler />
             </section>
             <section className="scroll-mt-8">
               <h2 id="react-06-final-draft" className="text-lg font-semibold">

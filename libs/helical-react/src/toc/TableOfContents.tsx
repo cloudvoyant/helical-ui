@@ -13,16 +13,23 @@ import {
 import { SwapIndicator, SwapRoot } from '@ark-ui/react/swap';
 import { TreeView, createTreeCollection } from '@ark-ui/react/tree-view';
 import {
+  buildTocTree,
   cn,
   collectTocItems,
+  getTocCurrentValue,
+  pruneTocLeaves,
   tocIndicatorBase,
   tocItemBase,
   tocLinkVariants,
   tocListVariants,
   tocNavBase,
   tocSkeletonBase,
+  tocRailBridge,
+  tocRailLineOffset,
+  tocRailTextOffset,
   tocTitleBase,
   type TocItem,
+  type TocNode,
 } from '@cloudvoyant/helical-ui';
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -51,13 +58,11 @@ export type TableOfContentsProps = {
 
 const tocNavClass = 'flex min-w-0 flex-col gap-2';
 
-/** Select the last active heading in document order. */
 function getCurrentValue(toc: UseTocReturn, activeItems = toc.activeItems) {
-  if (activeItems.length === 0) return undefined;
-  const order = new Map(toc.items.map((item, index) => [item.value, index]));
-  return activeItems.reduce((last, item) =>
-    (order.get(item.value) ?? -1) > (order.get(last.value) ?? -1) ? item : last,
-  ).value;
+  return getTocCurrentValue(
+    toc.items.map((item) => ({ value: item.value })),
+    activeItems.map((item) => ({ value: item.value })),
+  );
 }
 
 function currentLinkProps(toc: UseTocReturn, value: string) {
@@ -70,7 +75,7 @@ function currentLinkProps(toc: UseTocReturn, value: string) {
 
 /**
  * Hook-free dispatcher. With `value` the supplied machine is rendered directly
- * and no machine is created; without it, `TocOwned` owns exactly one machine.
+ * and no machine is created; without it, `OwnedTableOfContents` owns exactly one machine.
  */
 export function TableOfContents(props: TableOfContentsProps) {
   if (props.value) {
@@ -82,7 +87,7 @@ export function TableOfContents(props: TableOfContentsProps) {
       }));
     return <TocView {...props} items={items} value={props.value} />;
   }
-  return props.items ? <TocOwned {...props} items={props.items} /> : <TocAutoOwned {...props} />;
+  return props.items ? <OwnedTableOfContents {...props} items={props.items} /> : <TocAutoOwned {...props} />;
 }
 
 /** Collects headings before the machine mounts so its observer sees every item. */
@@ -94,11 +99,11 @@ function TocAutoOwned(props: TableOfContentsProps) {
     setItems(collectTocItems(root, props.headingSelector));
   }, [props.headingSelector, props.scrollEl]);
 
-  return items.length > 0 ? <TocOwned {...props} items={items} /> : null;
+  return items.length > 0 ? <OwnedTableOfContents {...props} items={items} /> : null;
 }
 
-/** The only high-level component that calls the internal `useToc`. */
-function TocOwned(props: TableOfContentsProps & { items: TocItem[] }) {
+/** Owns exactly one machine, then delegates DOM rendering to TocView. */
+function OwnedTableOfContents(props: TableOfContentsProps & { items: TocItem[] }) {
   const value = useToc({
     items: props.items,
     activeIds: props.activeIds,
@@ -235,18 +240,6 @@ function HoverNav({ items, title }: { items: TocItem[]; title?: ReactNode }) {
   );
 }
 
-// Ark's rail geometry, copied verbatim from the upstream example. h2 sits at
-// level 0; deeper headings step in, clamped so h5+ share h4's indent. The rail
-// overlaps the row above by BRIDGE px so a turn can straddle the boundary.
-const RAIL_BASE = 8;
-const RAIL_STEP = 8;
-const RAIL_TEXT_STEP = 12;
-const RAIL_MAX_LEVEL = 2;
-const RAIL_BRIDGE = 6;
-
-const railLevel = (depth: number) => Math.min(Math.max(depth - 2, 0), RAIL_MAX_LEVEL);
-const railLineOffset = (depth: number) => RAIL_BASE + railLevel(depth) * RAIL_STEP;
-const railTextOffset = (depth: number) => RAIL_BASE + (railLevel(depth) + 1) * RAIL_TEXT_STEP;
 
 function Rail({
   depth,
@@ -257,18 +250,18 @@ function Rail({
   prevDepth?: number;
   nextDepth?: number;
 }) {
-  const line = railLineOffset(depth);
-  const prevLine = railLineOffset(prevDepth);
-  const nextLine = railLineOffset(nextDepth);
+  const line = tocRailLineOffset(depth);
+  const prevLine = tocRailLineOffset(prevDepth);
+  const nextLine = tocRailLineOffset(nextDepth);
   const turns = prevLine !== line;
 
   return (
     <svg
       className="pointer-events-none absolute start-0 overflow-visible text-border group-data-[current]/link:text-primary"
       style={{
-        top: -RAIL_BRIDGE,
+        top: -tocRailBridge,
         width: Math.max(prevLine, line) + 9,
-        height: line === nextLine ? `calc(100% + ${RAIL_BRIDGE}px)` : '100%',
+        height: line === nextLine ? `calc(100% + ${tocRailBridge}px)` : '100%',
       }}
       aria-hidden="true"
       fill="none"
@@ -276,9 +269,9 @@ function Rail({
       strokeWidth="1"
     >
       {turns && (
-        <path d={`M ${prevLine + 0.5} 0 C ${prevLine + 0.5} 8 ${line + 0.5} 4 ${line + 0.5} ${RAIL_BRIDGE * 2}`} />
+        <path d={`M ${prevLine + 0.5} 0 C ${prevLine + 0.5} 8 ${line + 0.5} 4 ${line + 0.5} ${tocRailBridge * 2}`} />
       )}
-      <line x1={line + 0.5} y1={turns ? RAIL_BRIDGE * 2 : RAIL_BRIDGE} x2={line + 0.5} y2="100%" />
+      <line x1={line + 0.5} y1={turns ? tocRailBridge * 2 : tocRailBridge} x2={line + 0.5} y2="100%" />
     </svg>
   );
 }
@@ -294,7 +287,7 @@ function RailList({ items }: { items: TocItem[] }) {
             href={`#${item.value}`}
             {...currentLinkProps(toc, item.value)}
             className={tocLinkVariants({ variant: 'rail' })}
-            style={{ paddingInlineStart: railTextOffset(item.depth) }}
+            style={{ paddingInlineStart: tocRailTextOffset(item.depth) }}
           >
             <Rail depth={item.depth} prevDepth={items[index - 1]?.depth} nextDepth={items[index + 1]?.depth} />
             {item.label}
@@ -305,45 +298,6 @@ function RailList({ items }: { items: TocItem[] }) {
   );
 }
 
-interface TocTreeNode {
-  value: string;
-  label: string;
-  depth: number;
-  children?: TocTreeNode[];
-}
-
-/** Derives Ark's section/child hierarchy from the public flat item list by depth. */
-function buildTree(items: TocItem[]): TocTreeNode[] {
-  const roots: TocTreeNode[] = [];
-  const stack: TocTreeNode[] = [];
-
-  for (const item of items) {
-    const node: TocTreeNode = { value: item.value, label: item.label, depth: item.depth, children: [] };
-    while (stack.length > 0 && stack[stack.length - 1]!.depth >= item.depth) {
-      stack.pop();
-    }
-    const parent = stack[stack.length - 1];
-    if (parent) {
-      parent.children!.push(node);
-    } else {
-      roots.push(node);
-    }
-    stack.push(node);
-  }
-
-  return roots;
-}
-
-/** TreeView treats any `children` array as a branch, so leaves must drop the key. */
-function pruneLeaves(nodes: TocTreeNode[]): TocTreeNode[] {
-  return nodes.map((node) => {
-    const children = node.children ? pruneLeaves(node.children) : [];
-    if (children.length === 0) {
-      return { value: node.value, label: node.label, depth: node.depth };
-    }
-    return { value: node.value, label: node.label, depth: node.depth, children };
-  });
-}
 
 /**
  * `tree`: Ark's TreeView composition over the internal TOC context. Branches
@@ -351,10 +305,10 @@ function pruneLeaves(nodes: TocTreeNode[]): TocTreeNode[] {
  */
 function TreeNav({ items }: { items: TocItem[] }) {
   const toc = useTocContext();
-  const roots = useMemo(() => pruneLeaves(buildTree(items)), [items]);
+  const roots = useMemo(() => pruneTocLeaves(buildTocTree(items)), [items]);
   const collection = useMemo(
     () =>
-      createTreeCollection<TocTreeNode>({
+      createTreeCollection<TocNode>({
         nodeToValue: (node) => node.value,
         nodeToString: (node) => node.label,
         rootNode: { value: 'ROOT', label: '', depth: 1, children: roots },
@@ -390,7 +344,7 @@ function TreeNav({ items }: { items: TocItem[] }) {
   );
 }
 
-function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocTreeNode>) {
+function TocTreeBranch({ node, indexPath }: TreeView.NodeProviderProps<TocNode>) {
   const toc = useTocContext();
   const linkProps = toc.getLinkProps({ item: { value: node.value, depth: node.depth } });
   const currentProps = currentLinkProps(toc, node.value);

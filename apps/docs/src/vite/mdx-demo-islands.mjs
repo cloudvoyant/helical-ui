@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const examplesRoot = path.join(docsRoot, 'src/components/examples');
 
-const DEFAULT_PREVIEW_FRAME_COMPONENTS = ['sidebar', 'page'];
+const DEFAULT_PREVIEW_FRAME_COMPONENTS = ['sidebar', 'page', 'toc'];
 const DEFAULT_SSR_EXAMPLES = [
   'mermaid/prerendered',
   'latex/prerendered',

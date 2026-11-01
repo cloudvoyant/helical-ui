@@ -1,5 +1,4 @@
-<!-- libs/helical-svelte/src/toc/TocOwned.svelte -->
-<!-- The only high-level component that calls the internal `useToc`. -->
+<!-- Owns exactly one TOC machine, then delegates DOM rendering to TocView. -->
 <script lang="ts">
   import type { TocItem } from '@cloudvoyant/helical-ui';
   import { useToc } from './internal';

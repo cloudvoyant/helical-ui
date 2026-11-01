@@ -314,6 +314,9 @@ importers:
       '@cloudvoyant/helical-ui':
         specifier: workspace:*
         version: link:../../libs/helical-ui
+      '@cloudvoyant/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.3(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.0))
@@ -518,6 +521,17 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  libs/testing:
+    dependencies:
+      '@cloudvoyant/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.62.1
+
+  libs/utils: {}
 
   libs/helical-ui:
     dependencies:

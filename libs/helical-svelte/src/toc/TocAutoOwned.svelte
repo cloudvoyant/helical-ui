@@ -4,7 +4,7 @@
   import type { TocItem } from '@cloudvoyant/helical-ui';
   import { onMount } from 'svelte';
   import type { TocProps } from './types';
-  import TocOwned from './TocOwned.svelte';
+  import OwnedTableOfContents from './OwnedTableOfContents.svelte';
 
   type Props = Omit<TocProps, 'items' | 'value'>;
   type HelicalUiWithTocCollector = typeof helicalUi & {
@@ -25,7 +25,7 @@
 </script>
 
 {#if items.length > 0}
-  <TocOwned
+  <OwnedTableOfContents
     {items}
     variant={props.variant}
     scrollEl={props.scrollEl}
