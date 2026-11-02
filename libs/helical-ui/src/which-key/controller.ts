@@ -879,12 +879,23 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     return true;
   }
 
+  function isScrollableContainer(el: HTMLElement, doc: Document | null): boolean {
+    if (!doc || el === doc.body || el === doc.documentElement) return false;
+    if (el.scrollHeight <= el.clientHeight + 2) return false;
+    const win = doc.defaultView;
+    if (!win || typeof win.getComputedStyle !== 'function') return true;
+    const overflowY = win.getComputedStyle(el).overflowY;
+    return overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+  }
+
   function jumpToBoundary(boundary: 'start' | 'end' | 'first-in-group' | 'last-in-group'): boolean {
     const container = getActiveContainer();
     if (!container) return false;
     const items = getPaneFocusableItems(container, options.getScopeElement?.());
     if (items.length === 0) return false;
 
+    const doc = resolveDoc();
+    const win = doc?.defaultView ?? null;
     recordCurrentLocation();
 
     if (boundary === 'start' || boundary === 'first-in-group') {
@@ -892,6 +903,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       focusElementInActivePane(target);
       if (boundary === 'start') {
         container.scrollTop = 0;
+        if (win && !isScrollableContainer(container, doc)) {
+          try {
+            win.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+          } catch {
+            win.scrollTo(0, 0);
+          }
+        }
       }
       recordCurrentLocation();
       emit();
@@ -902,6 +920,18 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     focusElementInActivePane(target);
     if (boundary === 'end') {
       container.scrollTop = container.scrollHeight;
+      if (win && !isScrollableContainer(container, doc)) {
+        const scrollMax = Math.max(
+          doc?.documentElement?.scrollHeight ?? 0,
+          doc?.body?.scrollHeight ?? 0,
+          container.scrollHeight,
+        );
+        try {
+          win.scrollTo({ top: scrollMax, behavior: 'instant' as ScrollBehavior });
+        } catch {
+          win.scrollTo(0, scrollMax);
+        }
+      }
     }
     recordCurrentLocation();
     emit();
