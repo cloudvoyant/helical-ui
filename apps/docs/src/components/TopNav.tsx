@@ -1,6 +1,5 @@
 // apps/docs/src/components/TopNav.tsx
 // The docs site top navigation, built from the helical-ui Navbar (shrink variant).
-import { useEffect, useState } from 'react';
 import {
   Navbar,
   NavbarProvider,
@@ -13,86 +12,11 @@ import {
   NavbarMenuItem,
   NavbarMenuLink,
   Kbd,
-  type KeybindingPreset,
+  useWhichKey,
 } from '@cloudvoyant/helical-react';
 import { HelicalLogo } from './examples/HelicalLogo';
 import ThemeSelector from './ThemeSelector';
 import FrameworkSelector from './FrameworkSelector';
-import {
-  EXPLORE_OPEN_EVENT,
-  PRESET_CHANGE_EVENT,
-  getStoredKeymapPreset,
-  setStoredKeymapPreset,
-} from './DocsKeyboardShell';
-
-const PRESETS: { id: KeybindingPreset; label: string }[] = [
-  { id: 'helix', label: 'Helix' },
-  { id: 'vim', label: 'Vim' },
-  { id: 'kakoune', label: 'Kakoune' },
-];
-
-function KeybindingSelector() {
-  const [preset, setPresetState] = useState<KeybindingPreset>('helix');
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setPresetState(getStoredKeymapPreset());
-    setReady(true);
-
-    const onPresetChange = (e: Event) => {
-      const detail = (e as CustomEvent<KeybindingPreset>).detail;
-      if (detail === 'helix' || detail === 'vim' || detail === 'kakoune') {
-        setPresetState(detail);
-      }
-    };
-    window.addEventListener(PRESET_CHANGE_EVENT, onPresetChange);
-    return () => window.removeEventListener(PRESET_CHANGE_EVENT, onPresetChange);
-  }, []);
-
-  return (
-    <div className="hidden items-center gap-1.5 md:inline-flex">
-      <div
-        className="inline-flex items-center rounded-full border border-border bg-muted p-1 text-xs font-medium"
-        role="group"
-        aria-label="Keybinding preset"
-        data-keybinding-selector
-        data-ready={ready || undefined}
-      >
-        {PRESETS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className={`rounded-full px-2.5 py-0.5 transition-colors ${
-              preset === p.id
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            data-preset={p.id}
-            aria-pressed={preset === p.id}
-            onClick={() => setPresetState(setStoredKeymapPreset(p.id))}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        aria-label="Explore keybindings"
-        title="Explore keybindings (Space ?)"
-        data-keybinding-explorer-trigger
-        onClick={() => window.dispatchEvent(new CustomEvent(EXPLORE_OPEN_EVENT))}
-        className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      >
-        <Kbd size="sm" variant="subtle">
-          ␣
-        </Kbd>
-        <Kbd size="sm" variant="subtle">
-          ?
-        </Kbd>
-      </button>
-    </div>
-  );
-}
 
 interface NavItem {
   title: string;
@@ -116,6 +40,8 @@ const links = [
 ];
 
 export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups = [] }: Props) {
+  const { openExplorer } = useWhichKey();
+
   return (
     <NavbarProvider>
       <Navbar
@@ -143,8 +69,19 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
         </NavbarMenu>
         <NavbarActions>
           <FrameworkSelector />
-          <KeybindingSelector />
           <div className="flex-1" />
+          <button
+            type="button"
+            aria-label="Explore keybindings"
+            title="Explore keybindings (?)"
+            data-keybinding-explorer-trigger
+            onClick={openExplorer}
+            className="hidden h-8 items-center justify-center rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
+          >
+            <Kbd size="sm" variant="subtle">
+              ?
+            </Kbd>
+          </button>
           <ThemeSelector />
           <a
             href="https://github.com/cloudvoyant/helical-ui"

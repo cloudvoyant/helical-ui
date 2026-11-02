@@ -1,5 +1,7 @@
 // libs/helical-ui/src/window.ts
 // Closely based on: Ark UI floating-panel (https://ark-ui.com/docs/components/floating-panel, @ark-ui/react/floating-panel), exposed as "Window".
+import type { PaneRegistrationProps } from './which-key/types';
+
 export const windowPositionerBase = 'z-50 [--z-index:50]!';
 
 export const windowContentBase =
@@ -23,8 +25,4 @@ export const windowBodyBase = 'flex flex-1 flex-col gap-4 overflow-auto p-4 text
 
 export const windowResizeTriggerBase = 'absolute bottom-0 right-0 size-4 cursor-se-resize';
 
-export interface WindowPaneRegistrationProps {
-  paneId?: string;
-  paneTitle?: string;
-  paneDisabled?: boolean;
-}
+export type WindowPaneRegistrationProps = PaneRegistrationProps;

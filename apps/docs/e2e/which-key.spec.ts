@@ -102,7 +102,7 @@ for (const framework of FRAMEWORKS) {
         await selectFramework(page, framework);
       });
 
-      test.describe('When the user presses Space then ? (<leader>?) in normal mode', () => {
+      test.describe('When the user presses ? (or Space then ?) in normal mode', () => {
         test('Then opens the WhichKeyExplorer Dialog + Listbox modal listing active preset bindings grouped by ListboxItemGroup with <Kbd> chords', async ({
           page,
         }) => {
@@ -111,7 +111,6 @@ for (const framework of FRAMEWORKS) {
           await demo.getByTestId('wk-explorer-surface').click();
 
           // Act
-          await page.keyboard.press('Space');
           await page.keyboard.press('?');
 
           // Assert
@@ -474,15 +473,18 @@ test.describe('Docs Shell Keyboard Integration', () => {
     test.beforeEach(async ({ page }) => {
       // Arrange
       await page.goto('components/which-key');
-      await page.locator('[data-keybinding-selector][data-ready]').waitFor();
+      await page.locator('[data-framework-selector][data-ready]').waitFor();
     });
 
-    test.describe('When the user switches presets via the TopNav KeybindingSelector or clicks the explorer button', () => {
-      test('Then updates the active preset in localStorage and opens WhichKeyExplorer from TopNav', async ({
+    test.describe('When the user switches keybinding flavor in Settings or clicks the ? explorer button', () => {
+      test('Then updates the active preset in localStorage below Color mode and opens WhichKeyExplorer from TopNav', async ({
         page,
       }) => {
-        // Arrange
-        const vimBtn = page.locator('[data-keybinding-selector] button[data-preset="vim"]');
+        // Arrange: open Settings modal
+        await page.locator('[data-theme-selector]').click();
+        const modal = page.locator('[data-theme-modal]');
+        await expect(modal).toBeVisible();
+        const vimBtn = modal.locator('[data-keybinding-selector] button[data-preset="vim"]');
 
         // Act
         await vimBtn.click();
@@ -492,7 +494,11 @@ test.describe('Docs Shell Keyboard Integration', () => {
         const stored = await page.evaluate(() => window.localStorage.getItem('vortex:keymap-preset'));
         expect(stored).toBe('vim');
 
-        // Act: open explorer from TopNav button
+        // Close Settings modal
+        await page.keyboard.press('Escape');
+        await expect(modal).toBeHidden();
+
+        // Act: open explorer from TopNav ? button
         await page.locator('[data-keybinding-explorer-trigger]').click();
         const explorer = page.getByTestId('which-key-explorer');
         await expect(explorer).toBeVisible();

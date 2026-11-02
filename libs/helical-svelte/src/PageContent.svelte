@@ -17,6 +17,7 @@
     paneId,
     paneTitle,
     paneDisabled,
+    paneOrder,
     children,
     ...rest
   }: Props = $props();
@@ -29,6 +30,7 @@
       paneId,
       paneTitle,
       paneDisabled,
+      paneOrder,
       defaultTitle: 'Main Content',
     }),
   );

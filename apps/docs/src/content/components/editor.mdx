@@ -114,3 +114,21 @@ In SvelteKit, put the editor in a client-only boundary when its parent is server
 Imperative: `focus()`, `updateContent(json)`, `getCounts(): EditorCounts` — React via `ref`, Svelte via bound exports. `EditorCounts` reports `wordCount`, `charCount`, `pageCount` (300 words/page) and `readDuration` (250 words/minute).
 
 `Reader` — `content` (Tiptap JSON string). Renders static HTML from the same schema, with anchor-linkable heading ids.
+
+## Keybindings
+
+`Editor` includes the `ModalKeymap` ProseMirror extension and registers automatically with an ancestor [`WhichKeyProvider`](/helical-ui/components/which-key) (`modalKeymap` defaults to `true`):
+
+| Keybinding | Action |
+| --- | --- |
+| `Escape` | Exit `insert` mode to `normal` mode (renders the inline block cursor) or collapse `select` mode. |
+| `i` / `a` | Enter `insert` mode before or after the cursor (`c` deletes the selection and enters `insert` mode). |
+| `o` / `O` | Open a new paragraph below or above the current block and enter `insert` mode. |
+| `h` / `j` / `k` / `l` | Move by character or visual line (`w` / `b` / `e` move or select by word; `{` / `}` jump by paragraph). |
+| `x` / `v` / `V` | Select lines or toggle `select` mode (`x` selects the current line and extends downward in Helix/Kakoune). |
+| `m i w` / `m a w` | Select inner or around word (`i w` / `a w` in `select` mode for Vim). |
+| `m i p` / `m i c` / `m i n` / `m i l` | Select inner paragraph (`p`), code block (`c`), notice (`n`), or list item (`l`). |
+| `Alt+;` / `;` / `C` / `,` | Flip selection anchor/head (`Alt+;`), collapse to head (`;`), add cursor on next line (`C`), or keep primary cursor only (`,`). |
+| `d` / `y` / `p` / `P` | Delete (`d`), yank (`y`), or paste after/before (`p` / `P`) via the modal register. |
+| `u` / `U` (`Ctrl+r`) | Undo (`u`) or redo (`U` in Helix/Kakoune, `Ctrl+r` in Vim). |
+| `Space` / `?` | Open the `Leader` menu (`Space`) or searchable `Keybindings` dialog (`?`) when in `normal` or `select` mode. |

@@ -83,7 +83,6 @@
     }
   },
   "devDependencies": {
-    "@cloudvoyant/utils": "workspace:*",
     "@types/katex": "catalog:",
     "@types/node": "catalog:",
     "katex": "catalog:",

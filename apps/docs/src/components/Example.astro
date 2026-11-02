@@ -17,9 +17,14 @@ const slug = id || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-
 const codeId = `example-${slug}-code`;
 ---
 
-<div class="w-full" data-example data-example-id={id || undefined}>
-  <div class="flex flex-col rounded-lg border border-border bg-background">
-    <div data-example-preview class="rounded-t-lg bg-background" data-demo>
+<div
+  class="group/example w-full rounded-lg outline-none"
+  data-example
+  data-example-id={id || undefined}
+  tabindex="0"
+>
+  <div class="flex flex-col rounded-lg border border-border bg-background transition-colors group-focus-visible/example:border-primary group-focus-visible/example:ring-2 group-focus-visible/example:ring-primary/25">
+    <div data-example-preview class="rounded-t-lg bg-background outline-none" data-demo tabindex="-1">
       <ExampleScreen fullscreen={fullscreen}>
         <slot />
       </ExampleScreen>

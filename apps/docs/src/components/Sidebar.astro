@@ -30,8 +30,10 @@ const groups = NAV_GROUPS;
                 <a
                   href={href}
                   class:list={[
-                    'block rounded-md px-3 py-1.5 font-medium transition-colors',
-                    active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                    'block rounded-md px-3 py-1.5 font-medium outline-none transition-colors',
+                    active
+                      ? 'bg-accent/60 text-primary focus-visible:bg-accent'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground',
                   ]}
                 >
                   {entry.data.title}

@@ -282,6 +282,36 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         return true;
       }
 
+      if (motion === 'paragraphForward' || motion === 'paragraphBackward') {
+        const dir = motion === 'paragraphForward' ? 1 : -1;
+        const blocks = collectLeafBlocks(doc);
+        if (blocks.length === 0) return false;
+
+        let currentIdx = blocks.findIndex((b) =>
+          b.isTextblock ? sel.head >= b.start && sel.head <= b.end : sel.from === b.pos,
+        );
+        if (currentIdx === -1) {
+          currentIdx = 0;
+        }
+        const targetIdx = Math.max(0, Math.min(blocks.length - 1, currentIdx + dir * steps));
+        const targetBlock = blocks[targetIdx]!;
+
+        if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
+          tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
+        } else if (isExtend) {
+          const dest = dir > 0 ? targetBlock.end : targetBlock.start;
+          tr = tr.setSelection(TextSelection.create(doc, sel.anchor, dest));
+        } else if (isSelectionFirst) {
+          tr = tr.setSelection(TextSelection.create(doc, targetBlock.start, targetBlock.end));
+        } else {
+          tr = tr.setSelection(TextSelection.create(doc, targetBlock.start));
+        }
+
+        tr = updateMeta(tr, { goalColumn: null });
+        dispatchTransaction(editor, tr.scrollIntoView());
+        return true;
+      }
+
       if (motion === 'left' || motion === 'right') {
         const dir = motion === 'left' ? -1 : 1;
         const blocks = collectLeafBlocks(doc);
@@ -909,33 +939,51 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
             const decos: Decoration[] = [];
             const { doc, selection } = state;
             const head = selection.head;
-            const $head = selection.$head;
 
-            if (
-              $head.parent.isTextblock &&
-              $head.parentOffset < $head.parent.content.size &&
-              head + 1 <= doc.content.size
-            ) {
-              decos.push(
-                Decoration.inline(head, head + 1, {
-                  class: 'pm-modal-cursor',
-                  'data-pm-modal-cursor': pluginState.mode,
-                }),
-              );
-            } else if (typeof document !== 'undefined') {
-              decos.push(
-                Decoration.widget(
-                  head,
-                  () => {
-                    const span = document.createElement('span');
-                    span.className = 'pm-modal-cursor pm-modal-cursor-eol';
-                    span.setAttribute('data-pm-modal-cursor', pluginState.mode);
-                    span.textContent = '\u00a0';
-                    return span;
-                  },
-                  { side: 1, key: `modal-cursor-${head}-${pluginState.mode}` },
-                ),
-              );
+            const pushCursorDecoration = (pos: number, isMulti = false) => {
+              if (pos < 0 || pos > doc.content.size) return;
+              const $pos = doc.resolve(pos);
+              const nodeAfter = $pos.nodeAfter;
+              if (nodeAfter?.isText && nodeAfter.text && nodeAfter.text.length > 0 && pos + 1 <= doc.content.size) {
+                decos.push(
+                  Decoration.inline(
+                    pos,
+                    pos + 1,
+                    isMulti
+                      ? { class: 'pm-multi-cursor', 'data-pm-multi-cursor': 'true' }
+                      : { class: 'pm-modal-cursor', 'data-pm-modal-cursor': pluginState.mode },
+                  ),
+                );
+                return;
+              }
+              if (typeof document !== 'undefined') {
+                decos.push(
+                  Decoration.widget(
+                    pos,
+                    () => {
+                      const span = document.createElement('span');
+                      span.className = isMulti
+                        ? 'pm-multi-cursor pm-modal-cursor-eol'
+                        : 'pm-modal-cursor pm-modal-cursor-eol';
+                      span.setAttribute(
+                        isMulti ? 'data-pm-multi-cursor' : 'data-pm-modal-cursor',
+                        isMulti ? 'true' : pluginState.mode,
+                      );
+                      span.setAttribute('aria-hidden', 'true');
+                      span.textContent = '\u00a0';
+                      return span;
+                    },
+                    {
+                      side: 1,
+                      key: isMulti ? `multi-cursor-${pos}` : `modal-cursor-${pos}-${pluginState.mode}`,
+                    },
+                  ),
+                );
+              }
+            };
+
+            if (selection.empty) {
+              pushCursorDecoration(head, false);
             }
 
             for (const range of pluginState.secondaryRanges) {
@@ -946,14 +994,8 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
                     'data-pm-multi-selection': 'true',
                   }),
                 );
-              }
-              if (range.head >= 0 && range.head + 1 <= doc.content.size) {
-                decos.push(
-                  Decoration.inline(range.head, range.head + 1, {
-                    class: 'pm-multi-cursor',
-                    'data-pm-multi-cursor': 'true',
-                  }),
-                );
+              } else {
+                pushCursorDecoration(range.head, true);
               }
             }
 

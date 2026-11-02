@@ -2,6 +2,7 @@
 // Closely based on: Chakra UI Splitter slot recipe (built on @ark-ui/* splitter).
 // Root/panel base classes are empty: Ark sets display/flex-direction, the
 // height/width: 100% and overflow: hidden, and panel flex sizing inline.
+import type { PaneRegistrationProps } from './which-key/types';
 
 /**
  * Intentionally empty: Ark UI sets `display`/`flex-direction` on the root and
@@ -26,8 +27,4 @@ export const splitterResizeTriggerSeparatorBase =
 export const splitterResizeTriggerIndicatorBase =
   'relative z-10 rounded-full border border-border bg-muted shadow-xs data-[dragging]:bg-muted-foreground data-[focus]:bg-accent data-[disabled]:hidden data-[orientation=horizontal]:h-6 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-6';
 
-export interface SplitterPanelPaneRegistrationProps {
-  paneId?: string;
-  paneTitle?: string;
-  paneDisabled?: boolean;
-}
+export type SplitterPanelPaneRegistrationProps = PaneRegistrationProps;

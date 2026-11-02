@@ -44,3 +44,13 @@ Both packages expose flat `Splitter`, `SplitterPanel`, `SplitterResizeTrigger`, 
 ## Accessibility
 
 Ark renders the resize handle as a `role="separator"` button with `aria-orientation`, `aria-valuenow`, and keyboard support (arrow keys resize, `Home`/`End` jump to min/max).
+
+## Keybindings
+
+`SplitterPanel` accepts optional `paneId`, `paneTitle`, `paneDisabled`, and `paneOrder` props to register each split panel as a spatial pane with [`WhichKeyProvider`](/helical-ui/components/which-key):
+
+| Keybinding | Action |
+| --- | --- |
+| `Ctrl+w h/j/k/l` (`Space w h/j/k/l`) | Move focus spatially between horizontal (`h` / `l`) or vertical (`j` / `k`) `SplitterPanel` regions. |
+| `Ctrl+w w` / `Space 1..9` | Cycle through registered split panels or focus a panel by index. |
+| `ArrowLeft` / `ArrowRight` / `ArrowUp` / `ArrowDown` | Resize the panels when a `SplitterResizeTrigger` handle is focused (`Home` / `End` jump to min/max). |

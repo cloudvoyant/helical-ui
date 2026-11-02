@@ -49,18 +49,24 @@ function createKeyEvent(
 // =============================================================================
 
 describe('Given a controller initialized with the default "helix" preset', () => {
-  describe('When "Space" then "?" (<leader>?) is dispatched in normal mode', () => {
+  describe('When "?" or "Space" then "?" (<leader>?) is dispatched in normal mode', () => {
     it('Then sets explorerOpen=true, clears activePath, and exposes flattened explorerEntries', () => {
       // Arrange
       const controller = createWhichKeyController();
 
-      // Act
+      // Act: direct "?"
+      controller.handleKeyDown(createKeyEvent('?', { shiftKey: true }));
+      const stateAfterDirectQuestion = controller.getState();
+      controller.closeExplorer();
+
+      // Act: "Space" then "?"
       controller.handleKeyDown(createKeyEvent(' ', { code: 'Space' }));
       const stateAfterSpace = controller.getState();
       controller.handleKeyDown(createKeyEvent('?', { shiftKey: true }));
       const stateAfterQuestion = controller.getState();
 
       // Assert
+      expect(stateAfterDirectQuestion.explorerOpen).toBe(true);
       expect(stateAfterSpace.isOpen).toBe(true);
       expect(stateAfterSpace.activePath).toEqual(['Space']);
       expect(stateAfterQuestion.explorerOpen).toBe(true);
@@ -149,7 +155,43 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(windowSubmenuState.activePath).toEqual(['Space', 'w']);
       expect(windowSubmenuState.title).toBe('Window / Pane');
       expect(backToSpaceState.activePath).toEqual(['Space']);
-      expect(backToSpaceState.title).toBe('Space');
+      expect(backToSpaceState.title).toBe('Leader');
+    });
+  });
+
+  describe('When tab navigation sequences ("g n", "g p", "g t", "g T", "] t", "[ t") are dispatched', () => {
+    it('Then invokes tab.next and tab.prev across all presets', () => {
+      // Arrange
+      const calls: string[] = [];
+      const controller = createWhichKeyController({
+        commands: {
+          'tab.next': () => {
+            calls.push('next');
+            return true;
+          },
+          'tab.prev': () => {
+            calls.push('prev');
+            return true;
+          },
+        },
+      });
+
+      // Act
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('n'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('p'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('t'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('T', { shiftKey: true }));
+      controller.handleKeyDown(createKeyEvent(']'));
+      controller.handleKeyDown(createKeyEvent('t'));
+      controller.handleKeyDown(createKeyEvent('['));
+      controller.handleKeyDown(createKeyEvent('t'));
+
+      // Assert
+      expect(calls).toEqual(['next', 'prev', 'next', 'prev', 'next', 'prev']);
     });
   });
 });
@@ -235,6 +277,24 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
         // Cleanup
         unregister();
       }
+    });
+  });
+
+  describe('When jumpAction is inspected or updated', () => {
+    it('Then defaults to "activate" (click) and notifies onJumpActionChange when updated', () => {
+      // Arrange
+      const onJumpActionChange = vi.fn();
+      const controller = createWhichKeyController({ onJumpActionChange });
+
+      // Act & Assert: default is 'activate'
+      expect(controller.getState().jumpAction).toBe('activate');
+
+      // Act: switch to 'focus'
+      controller.setJumpAction('focus');
+
+      // Assert
+      expect(controller.getState().jumpAction).toBe('focus');
+      expect(onJumpActionChange).toHaveBeenCalledWith('focus');
     });
   });
 });

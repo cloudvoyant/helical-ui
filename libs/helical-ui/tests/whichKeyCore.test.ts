@@ -150,6 +150,20 @@ describe('Given a set of 2D pane bounding boxes', () => {
       expect(downFromContent?.id).toBe('footer');
       expect(upFromFooter?.id).toBe('content');
     });
+
+    it('Then steps through a tall scrollable center pane between two viewport-height sticky gutters (sidebar -> content -> toc -> content -> sidebar)', () => {
+      // Arrange
+      const stickyLeft: PaneRect = { id: 'docs-sidebar', x: 0, y: 64, width: 224, height: 800 };
+      const tallMain: PaneRect = { id: 'docs-main', x: 224, y: 0, width: 800, height: 5000 };
+      const stickyRight: PaneRect = { id: 'docs-toc', x: 1024, y: 64, width: 256, height: 800 };
+      const panes = [stickyLeft, tallMain, stickyRight];
+
+      // Act & Assert
+      expect(findDirectionalPane(stickyLeft, panes, 'right')?.id).toBe('docs-main');
+      expect(findDirectionalPane(tallMain, panes, 'right')?.id).toBe('docs-toc');
+      expect(findDirectionalPane(stickyRight, panes, 'left')?.id).toBe('docs-main');
+      expect(findDirectionalPane(tallMain, panes, 'left')?.id).toBe('docs-sidebar');
+    });
   });
 });
 

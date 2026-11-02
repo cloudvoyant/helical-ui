@@ -32,12 +32,13 @@ function ExplorerSurface({ lastExecuted }: { lastExecuted: string }) {
           </Badge>
         </HStack>
         <Button size="sm" variant="outline" data-testid="wk-explorer-trigger" onClick={() => openExplorer()}>
-          Open Explorer <Kbd size="sm" hotkey={['Space', '?']} />
+          Open Explorer <Kbd size="sm" hotkey="?" />
         </Button>
       </HStack>
       <p className="text-xs text-muted-foreground">
-        Press <Kbd size="sm" hotkey={['Space', '?']} /> (or click the button) to open the searchable Keybinding
-        Exploration Menu, filter by keyword, and press <Kbd size="sm">Enter</Kbd> to run a command.
+        Press <Kbd size="sm" hotkey="?" /> or <Kbd size="sm" hotkey={['Space', '?']} /> (or click the button) to open
+        the searchable Keybinding Exploration Menu, filter by keyword, and press <Kbd size="sm">Enter</Kbd> to run a
+        command.
       </p>
     </Pane>
   );
@@ -50,8 +51,8 @@ export default function ReactWhichKeyExplorer() {
     () => ({
       Space: {
         key: 'Space',
-        label: '+space',
-        group: 'Space',
+        label: '+leader',
+        group: 'Leader',
         children: {
           p: {
             key: 'p',

@@ -183,32 +183,25 @@
   caret-color: transparent;
 }
 
-.ProseMirror [data-pm-modal-cursor] {
-  background-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
-  outline: 1.5px solid var(--color-primary);
-  border-radius: 2px;
+.ProseMirror::selection,
+.ProseMirror ::selection {
+  background-color: var(--color-foreground);
+  color: var(--color-background);
 }
 
-.ProseMirror [data-pm-modal-cursor='select'] {
-  background-color: color-mix(in srgb, var(--color-warn) 35%, transparent);
-  outline-color: var(--color-warn);
+.ProseMirror [data-pm-modal-cursor],
+.ProseMirror [data-pm-multi-cursor],
+.ProseMirror [data-pm-multi-selection] {
+  background-color: var(--color-foreground);
+  color: var(--color-background) !important;
+  -webkit-text-fill-color: var(--color-background) !important;
+  border-radius: 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .ProseMirror .pm-modal-cursor-eol {
-  display: inline-block;
-  min-width: 0.55ch;
-  line-height: 1;
+  display: inline;
   pointer-events: none;
   user-select: none;
-}
-
-.ProseMirror [data-pm-multi-selection] {
-  background-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
-  border-radius: 2px;
-}
-
-.ProseMirror [data-pm-multi-cursor] {
-  background-color: color-mix(in srgb, var(--color-info) 40%, transparent);
-  outline: 1.5px solid var(--color-info);
-  border-radius: 2px;
 }

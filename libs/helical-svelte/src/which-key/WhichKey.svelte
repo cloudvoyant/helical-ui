@@ -20,6 +20,7 @@
   } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import Row from '../Row.svelte';
+  import Scroll from '../Scroll.svelte';
   import { getOptionalWhichKeyContext } from './context.svelte';
   import WhichKeyExplorer from './WhichKeyExplorer.svelte';
 
@@ -77,7 +78,9 @@
                 {ctx.state.sticky ? `${ctx.state.mode}·lock` : ctx.state.mode}
               </span>
             {/if}
-            <span data-testid="which-key-title">{ctx.state.title}</span>
+            <span data-testid="which-key-title">
+              {ctx.state.title === 'Space' ? 'Leader' : ctx.state.title}
+            </span>
             {#if ctx.state.countBuffer}
               <span
                 data-testid="which-key-count"
@@ -95,40 +98,42 @@
           </div>
         </div>
 
-        <div
-          data-testid="which-key-items"
-          class={whichKeyBodyVariants({ variant })}
-        >
-          {#each ctx.state.items as node (node.key)}
-            {@const isGroup = Boolean(
-              node.children || node.proxy || node.expand || node.label.startsWith('+'),
-            )}
-            <button
-              type="button"
-              data-testid="which-key-item"
-              data-key={node.key}
-              data-group={isGroup ? 'true' : 'false'}
-              onclick={(e: MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                ctx.controller.triggerKey(node.key);
-              }}
-              class={whichKeyItemBase}
-            >
-              <span
+        <Scroll class="max-h-72" viewportClass="max-h-72">
+          <div
+            data-testid="which-key-items"
+            class={whichKeyBodyVariants({ variant })}
+          >
+            {#each ctx.state.items as node (node.key)}
+              {@const isGroup = Boolean(
+                node.children || node.proxy || node.expand || node.label.startsWith('+'),
+              )}
+              <button
+                type="button"
+                data-testid="which-key-item"
+                data-key={node.key}
                 data-group={isGroup ? 'true' : 'false'}
-                class={whichKeyItemLabelBase}
+                onclick={(e: MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  ctx.controller.triggerKey(node.key);
+                }}
+                class={whichKeyItemBase}
               >
-                {node.label}
-              </span>
-              <Kbd
-                size="sm"
-                variant={isGroup ? 'subtle' : 'outline'}
-                hotkey={node.key}
-              />
-            </button>
-          {/each}
-        </div>
+                <span
+                  data-group={isGroup ? 'true' : 'false'}
+                  class={whichKeyItemLabelBase}
+                >
+                  {node.label}
+                </span>
+                <Kbd
+                  size="sm"
+                  variant={isGroup ? 'subtle' : 'outline'}
+                  hotkey={node.key}
+                />
+              </button>
+            {/each}
+          </div>
+        </Scroll>
 
         <div class={whichKeyFooterBase}>
           <Row class="items-center gap-2">

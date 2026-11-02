@@ -23,6 +23,7 @@ import {
 } from '@cloudvoyant/helical-ui';
 import { Kbd } from '../kbd';
 import { Row } from '../row';
+import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 import { WhichKeyExplorer } from './WhichKeyExplorer';
 
@@ -96,7 +97,9 @@ function WhichKeyInner({
                     {sticky ? `${mode}·lock` : mode}
                   </span>
                 )}
-                <span data-testid="which-key-title">{title}</span>
+                <span data-testid="which-key-title">
+                  {title === 'Space' ? 'Leader' : title}
+                </span>
                 {countBuffer && (
                   <span
                     data-testid="which-key-count"
@@ -114,43 +117,45 @@ function WhichKeyInner({
               </div>
             </div>
 
-            <div
-              data-testid="which-key-items"
-              className={whichKeyBodyVariants({ variant })}
-            >
-              {items.map((node) => {
-                const isGroup = Boolean(
-                  node.children || node.proxy || node.expand || node.label.startsWith('+'),
-                );
-                return (
-                  <button
-                    key={node.key}
-                    type="button"
-                    data-testid="which-key-item"
-                    data-key={node.key}
-                    data-group={isGroup ? 'true' : 'false'}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      triggerKey(node.key);
-                    }}
-                    className={whichKeyItemBase}
-                  >
-                    <span
+            <Scroll className="max-h-72" viewportClassName="max-h-72">
+              <div
+                data-testid="which-key-items"
+                className={whichKeyBodyVariants({ variant })}
+              >
+                {items.map((node) => {
+                  const isGroup = Boolean(
+                    node.children || node.proxy || node.expand || node.label.startsWith('+'),
+                  );
+                  return (
+                    <button
+                      key={node.key}
+                      type="button"
+                      data-testid="which-key-item"
+                      data-key={node.key}
                       data-group={isGroup ? 'true' : 'false'}
-                      className={whichKeyItemLabelBase}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        triggerKey(node.key);
+                      }}
+                      className={whichKeyItemBase}
                     >
-                      {node.label}
-                    </span>
-                    <Kbd
-                      size="sm"
-                      variant={isGroup ? 'subtle' : 'outline'}
-                      hotkey={node.key}
-                    />
-                  </button>
-                );
-              })}
-            </div>
+                      <span
+                        data-group={isGroup ? 'true' : 'false'}
+                        className={whichKeyItemLabelBase}
+                      >
+                        {node.label}
+                      </span>
+                      <Kbd
+                        size="sm"
+                        variant={isGroup ? 'subtle' : 'outline'}
+                        hotkey={node.key}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </Scroll>
 
             <div className={whichKeyFooterBase}>
               <Row className="items-center gap-2">

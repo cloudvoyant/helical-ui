@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
-import { THEMES, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import { THEMES, type JumpAction, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import { useWhichKey } from '@cloudvoyant/helical-react';
 import {
   applyColorMode,
   getInitialColorMode,
@@ -20,6 +21,17 @@ const MODES: { value: ColorMode; label: string; Icon: LucideIcon }[] = [
   { value: 'light', label: 'Light', Icon: Sun },
   { value: 'dark', label: 'Dark', Icon: Moon },
   { value: 'system', label: 'System', Icon: Monitor },
+];
+
+const KEYBINDING_PRESETS: { value: KeybindingPreset; label: string }[] = [
+  { value: 'helix', label: 'Helix' },
+  { value: 'vim', label: 'Vim' },
+  { value: 'kakoune', label: 'Kakoune' },
+];
+
+const JUMP_ACTIONS: { value: JumpAction; label: string }[] = [
+  { value: 'activate', label: 'Click' },
+  { value: 'focus', label: 'Focus' },
 ];
 
 /**
@@ -72,6 +84,100 @@ function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDa
               {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
               <m.Icon className="size-3.5" aria-hidden />
               <span>{m.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Helix/Vim/Kakoune segmented button group for selecting the site-wide modal keybinding preset.
+ */
+function KeybindingPresetToggle() {
+  const { preset, setPreset } = useWhichKey();
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-muted-foreground">Keybinding flavor</div>
+      <div
+        role="group"
+        className="flex w-full items-stretch"
+        aria-label="Keybinding preset"
+        data-keybinding-selector
+        data-ready="true"
+      >
+        {KEYBINDING_PRESETS.map((p, i) => {
+          const active = preset === p.value;
+          return (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setPreset(p.value)}
+              aria-pressed={active}
+              data-preset={p.value}
+              className={[
+                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
+                i === 0 && 'rounded-l-md',
+                i === KEYBINDING_PRESETS.length - 1 && 'rounded-r-md',
+                i > 0 && '-ml-px',
+                active
+                  ? 'z-10 border-foreground text-foreground'
+                  : 'border-border text-muted-foreground hover:border-muted-foreground',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Click/Focus segmented button group for selecting whether `g w` jump labels click or focus the target.
+ */
+function JumpActionToggle() {
+  const { jumpAction, setJumpAction } = useWhichKey();
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-muted-foreground">Jump behavior (gw)</div>
+      <div
+        role="group"
+        className="flex w-full items-stretch"
+        aria-label="Jump behavior"
+        data-jump-action-selector
+        data-ready="true"
+      >
+        {JUMP_ACTIONS.map((item, i) => {
+          const active = jumpAction === item.value;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setJumpAction(item.value)}
+              aria-pressed={active}
+              data-jump-action={item.value}
+              className={[
+                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
+                i === 0 && 'rounded-l-md',
+                i === JUMP_ACTIONS.length - 1 && 'rounded-r-md',
+                i > 0 && '-ml-px',
+                active
+                  ? 'z-10 border-foreground text-foreground'
+                  : 'border-border text-muted-foreground hover:border-muted-foreground',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
+              <span>{item.label}</span>
             </button>
           );
         })}
@@ -253,6 +359,8 @@ export default function ThemeSelector() {
               </div>
 
               <ColorModeToggle onResolvedDarkChange={setIsDark} />
+              <KeybindingPresetToggle />
+              <JumpActionToggle />
               <ThemeGrid isDark={isDark} />
             </div>
           </div>,

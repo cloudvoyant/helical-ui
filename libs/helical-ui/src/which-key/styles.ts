@@ -22,14 +22,13 @@ export const whichKeyVariants = cva(
 
 export type WhichKeyVariants = VariantProps<typeof whichKeyVariants>;
 
-export const whichKeyHeaderBase =
-  'flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-1.5 text-xs font-medium';
+export const whichKeyHeaderBase = 'flex items-center justify-between gap-2 px-3 pt-2.5 pb-1 text-xs font-medium';
 
 export const whichKeyTitleBase = 'flex items-center gap-1.5 font-semibold text-foreground';
 
 export const whichKeyBreadcrumbBase = 'flex items-center gap-1 text-[11px] text-muted-foreground';
 
-export const whichKeyBodyVariants = cva('max-h-72 overflow-y-auto p-1.5', {
+export const whichKeyBodyVariants = cva('p-1.5', {
   variants: {
     variant: {
       helix: 'flex flex-col gap-0.5',
@@ -49,7 +48,7 @@ export const whichKeyItemLabelBase =
   'truncate text-foreground group-hover:text-accent-foreground data-[group=true]:font-medium data-[group=true]:text-primary';
 
 export const whichKeyFooterBase =
-  'flex items-center justify-between gap-2 border-t bg-muted/30 px-3 py-1 text-[10px] text-muted-foreground';
+  'flex items-center justify-between gap-2 px-3 pt-1 pb-2 text-[10px] text-muted-foreground';
 
 export const whichKeyModeBadgeVariants = cva(
   'inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider uppercase select-none',
@@ -69,13 +68,17 @@ export const whichKeyModeBadgeVariants = cva(
 );
 
 export const whichKeyExplorerContentBase =
-  'flex max-h-[min(34rem,85vh)] w-full max-w-2xl flex-col gap-0 overflow-hidden p-0';
+  'flex max-h-[min(34rem,85vh)] w-full max-w-xl flex-col gap-0 overflow-hidden bg-popover p-0 text-popover-foreground';
 
-export const whichKeyExplorerHeaderBase = 'flex items-center justify-between gap-2 border-b px-4 py-3';
+export const whichKeyExplorerHeaderBase = 'flex flex-row items-center justify-between gap-2 px-4 pt-3.5 pb-2.5';
 
-export const whichKeyExplorerListboxBase = 'flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none';
+export const whichKeyExplorerListboxBase =
+  'flex min-h-0 flex-1 flex-col rounded-none border-0 bg-transparent shadow-none';
 
-export const whichKeyExplorerListContentBase = 'max-h-96 flex-1 overflow-y-auto p-1.5 outline-none';
+export const whichKeyExplorerInputBase =
+  'mx-4 mb-2 w-[calc(100%-2rem)] rounded-md border-0 border-b-2 border-transparent bg-muted/60 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus-visible:border-primary focus-visible:ring-0';
+
+export const whichKeyExplorerListContentBase = 'max-h-none flex-1 overflow-visible px-2.5 pt-1 pb-3 outline-none';
 
 export const whichKeyExplorerItemBase =
   'flex w-full cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground';

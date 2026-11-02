@@ -16,17 +16,19 @@
   };
 
   let {
-    preset = 'helix',
+    preset,
     defaultMode = 'normal',
     leaderKey = 'Space',
-    jumpAction = 'focus',
+    jumpAction,
     jumpAlphabet,
+    storageKey,
     keymap,
     commands,
     enabled = true,
     scoped = true,
     onPresetChange,
     onModeChange,
+    onJumpActionChange,
     onCommand,
     children,
   }: Props = $props();
@@ -41,6 +43,7 @@
       leaderKey,
       jumpAction,
       jumpAlphabet,
+      storageKey,
       keymap,
       commands,
       enabled,
@@ -54,6 +57,7 @@
       getScopeElement: () => (scoped ? scopeEl : null),
       onPresetChange: (next) => onPresetChange?.(next),
       onModeChange: (next) => onModeChange?.(next),
+      onJumpActionChange: (next) => onJumpActionChange?.(next),
       onCommand: (id, ctx) => onCommand?.(id, ctx),
     }),
   );
@@ -77,11 +81,15 @@
   });
 
   $effect(() => {
-    controller.setPreset(preset);
+    if (preset !== undefined) {
+      controller.setPreset(preset);
+    }
   });
 
   $effect(() => {
-    controller.setJumpAction(jumpAction);
+    if (jumpAction !== undefined) {
+      controller.setJumpAction(jumpAction);
+    }
   });
 
   $effect(() => {

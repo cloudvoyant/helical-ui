@@ -177,6 +177,7 @@ export interface UsePaneRegistrationResult {
   readonly dataAttributes: {
     'data-pane-id'?: string;
     'data-pane-title'?: string;
+    'data-pane-order'?: string;
     'data-pane-active'?: 'true' | 'false';
   };
 }
@@ -218,16 +219,27 @@ export function useOptionalPaneRegistration(
     get dataAttributes(): {
       'data-pane-id'?: string;
       'data-pane-title'?: string;
+      'data-pane-order'?: string;
       'data-pane-active'?: 'true' | 'false';
     } {
       const opts = getOptions();
-      if (!ctx || opts.paneDisabled) return {};
+      if (opts.paneDisabled) return {};
       const resolvedId = opts.paneId ?? fallbackId;
       const resolvedTitle = opts.paneTitle ?? opts.defaultTitle;
+      if (!ctx) {
+        return opts.paneId
+          ? {
+              'data-pane-id': opts.paneId,
+              'data-pane-title': resolvedTitle,
+              ...(opts.paneOrder !== undefined ? { 'data-pane-order': String(opts.paneOrder) } : {}),
+            }
+          : {};
+      }
       const isActive = ctx.state.activePaneId === resolvedId;
       return {
         'data-pane-id': resolvedId,
         'data-pane-title': resolvedTitle,
+        ...(opts.paneOrder !== undefined ? { 'data-pane-order': String(opts.paneOrder) } : {}),
         'data-pane-active': isActive ? 'true' : 'false',
       };
     },

@@ -156,6 +156,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  [tabindex='-1']:focus {
+    outline: none;
+  }
   body {
     @apply bg-background text-foreground;
   }

@@ -9,7 +9,7 @@ import type {
   PaneDirection,
   WhichKeyNode,
   WhichKeyVariant,
-} from '@cloudvoyant/utils';
+} from './core';
 
 export type {
   JumpAction,
@@ -24,7 +24,7 @@ export type {
   WhichKeyNode,
   WhichKeyTreeResult,
   WhichKeyVariant,
-} from '@cloudvoyant/utils';
+} from './core';
 
 export type ModalMotion =
   | 'left'
@@ -34,6 +34,8 @@ export type ModalMotion =
   | 'wordForward'
   | 'wordBackward'
   | 'wordEnd'
+  | 'paragraphForward'
+  | 'paragraphBackward'
   | 'lineSelect'
   | 'lineStart'
   | 'lineEnd'
@@ -157,6 +159,7 @@ export interface WhichKeyControllerOptions {
   leaderKey?: string;
   jumpAction?: JumpAction;
   jumpAlphabet?: string;
+  storageKey?: string;
   keymap?: Record<string, WhichKeyNode>;
   commands?: Record<string, KeymapHandler>;
   enabled?: boolean;
@@ -164,6 +167,7 @@ export interface WhichKeyControllerOptions {
   getScopeElement?: () => HTMLElement | null;
   onPresetChange?: (preset: KeybindingPreset) => void;
   onModeChange?: (mode: KeymapMode) => void;
+  onJumpActionChange?: (action: JumpAction) => void;
   onCommand?: (commandId: string, ctx: KeymapCommandContext) => void;
 }
 
@@ -225,10 +229,13 @@ export interface WhichKeyExplorerProps {
   className?: string;
 }
 
-export interface PaneProps {
+export interface PaneRegistrationProps {
   paneId?: string;
   paneTitle?: string;
   paneDisabled?: boolean;
   paneOrder?: number;
+}
+
+export interface PaneProps extends PaneRegistrationProps {
   className?: string;
 }

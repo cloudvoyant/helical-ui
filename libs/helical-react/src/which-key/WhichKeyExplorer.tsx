@@ -1,6 +1,6 @@
 // libs/helical-react/src/which-key/WhichKeyExplorer.tsx
-// Searchable <leader>? (Space ?) Keybinding Exploration Menu built on Dialog + Listbox + Highlight.
-import { useMemo } from 'react';
+// Searchable ? / <leader>? Keybindings Menu built on Dialog + Listbox + Scroll + Highlight.
+import { useEffect, useMemo, useState } from 'react';
 import { Highlight } from '@ark-ui/react/highlight';
 import { createListCollection } from '@ark-ui/react/listbox';
 import {
@@ -8,6 +8,7 @@ import {
   whichKeyExplorerContentBase,
   whichKeyExplorerHeaderBase,
   whichKeyExplorerHighlightMarkBase,
+  whichKeyExplorerInputBase,
   whichKeyExplorerItemBase,
   whichKeyExplorerListboxBase,
   whichKeyExplorerListContentBase,
@@ -35,6 +36,7 @@ import {
   ListboxItemText,
 } from '../listbox';
 import { Row } from '../row';
+import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 
 export type WhichKeyExplorerProps = CoreWhichKeyExplorerProps;
@@ -42,7 +44,7 @@ export type WhichKeyExplorerProps = CoreWhichKeyExplorerProps;
 export function WhichKeyExplorer({
   open: controlledOpen,
   onOpenChange,
-  placeholder = 'Search keybindings by command, group, or chord (e.g. "window", "goto", "Space w")...',
+  placeholder = 'Search keybindings...',
   className,
 }: WhichKeyExplorerProps) {
   const controller = useOptionalWhichKeyController();
@@ -75,6 +77,7 @@ function WhichKeyExplorerInner({
   } = useWhichKey();
 
   const isOpen = controlledOpen ?? explorerOpen;
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
@@ -84,18 +87,6 @@ function WhichKeyExplorerInner({
     }
     onOpenChange?.(nextOpen);
   };
-
-  const collection = useMemo(
-    () =>
-      createListCollection({
-        items: explorerEntries.map((entry) => ({
-          value: entry.id,
-          label: `${entry.label} ${entry.sequenceText} ${entry.group}`,
-          entry,
-        })),
-      }),
-    [explorerEntries],
-  );
 
   const groupedEntries = useMemo(() => {
     const groups = new Map<string, KeymapExplorerEntry[]>();
@@ -108,6 +99,61 @@ function WhichKeyExplorerInner({
     return Array.from(groups.entries());
   }, [explorerEntries]);
 
+  const orderedEntries = useMemo(
+    () => groupedEntries.flatMap(([, entries]) => entries),
+    [groupedEntries],
+  );
+
+  const effectiveHighlightedId = useMemo(() => {
+    if (orderedEntries.length === 0) return null;
+    if (highlightedId && orderedEntries.some((e) => e.id === highlightedId)) {
+      return highlightedId;
+    }
+    return orderedEntries[0]!.id;
+  }, [highlightedId, orderedEntries]);
+
+  const collection = useMemo(
+    () =>
+      createListCollection({
+        items: orderedEntries.map((entry) => ({
+          value: entry.id,
+          label: entry.label,
+          entry,
+        })),
+      }),
+    [orderedEntries],
+  );
+
+  useEffect(() => {
+    if (!isOpen || typeof document === 'undefined') return;
+    const focusInput = () => {
+      const input = document.querySelector<HTMLInputElement>(
+        '[data-which-key-explorer] [data-testid="which-key-explorer-input"]',
+      );
+      input?.focus();
+    };
+    focusInput();
+    const raf = requestAnimationFrame(focusInput);
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen]);
+
+  const scrollItemIntoView = (id: string) => {
+    requestAnimationFrame(() => {
+      if (typeof document === 'undefined') return;
+      const items = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '[data-which-key-explorer] [data-part="item"]',
+        ),
+      );
+      for (const el of items) {
+        if (el.getAttribute('data-value') === id) {
+          el.scrollIntoView({ block: 'nearest' });
+          break;
+        }
+      }
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -115,6 +161,13 @@ function WhichKeyExplorerInner({
       open={isOpen}
       lazyMount
       unmountOnExit
+      initialFocusEl={() =>
+        typeof document !== 'undefined'
+          ? document.querySelector<HTMLElement>(
+              '[data-which-key-explorer] [data-testid="which-key-explorer-input"]',
+            )
+          : null
+      }
       onOpenChange={(details) => handleOpenChange(details.open)}
     >
       <DialogBackdrop />
@@ -126,70 +179,92 @@ function WhichKeyExplorerInner({
         <DialogHeader className={whichKeyExplorerHeaderBase}>
           <Row className="items-center gap-2">
             <DialogTitle className="text-sm font-semibold">
-              Keybinding Explorer
+              Keybindings
             </DialogTitle>
             <span className={whichKeyModeBadgeVariants({ mode: 'normal' })}>
               {preset}
             </span>
           </Row>
-          <Row className="items-center gap-2">
-            <span className="hidden text-xs text-muted-foreground sm:inline">
-              Press <Kbd size="sm">↵</Kbd> to run · <Kbd size="sm">Esc</Kbd> to close
-            </span>
-            <DialogDismiss />
-          </Row>
+          <DialogDismiss
+            tabIndex={-1}
+            className="static opacity-80 hover:opacity-100 focus:ring-0"
+          >
+            <Kbd size="sm">Esc</Kbd>
+          </DialogDismiss>
         </DialogHeader>
 
         <Listbox
           collection={collection}
           selectionMode="single"
+          highlightedValue={effectiveHighlightedId}
+          onHighlightChange={(details) => {
+            if (details.highlightedValue) {
+              setHighlightedId(details.highlightedValue);
+            }
+          }}
           onSelect={(details) => {
             controller.executeExplorerEntry(details.value);
           }}
           className={whichKeyExplorerListboxBase}
         >
           <ListboxInput
+            autoFocus
             autoHighlight
             data-testid="which-key-explorer-input"
             placeholder={placeholder}
             value={explorerQuery}
             onChange={(e) => setExplorerQuery(e.currentTarget.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && explorerEntries.length > 0) {
-                const highlightedEl = e.currentTarget
-                  .closest('[data-scope="listbox"]')
-                  ?.querySelector<HTMLElement>('[data-part="item"][data-highlighted]');
-                const itemVal =
-                  highlightedEl?.getAttribute('data-value') ??
-                  explorerEntries[0]?.id;
+              if (orderedEntries.length === 0) return;
+              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                e.stopPropagation();
+                const delta = e.key === 'ArrowDown' ? 1 : -1;
+                const currentIdx = orderedEntries.findIndex(
+                  (item) => item.id === effectiveHighlightedId,
+                );
+                const nextIdx =
+                  currentIdx === -1
+                    ? 0
+                    : (currentIdx + delta + orderedEntries.length) %
+                      orderedEntries.length;
+                const nextId = orderedEntries[nextIdx]!.id;
+                setHighlightedId(nextId);
+                scrollItemIntoView(nextId);
+                return;
+              }
+              if (e.key === 'Enter') {
+                const itemVal = effectiveHighlightedId ?? orderedEntries[0]?.id;
                 if (itemVal) {
                   e.preventDefault();
+                  e.stopPropagation();
                   controller.executeExplorerEntry(itemVal);
                 }
               }
             }}
+            className={whichKeyExplorerInputBase}
           />
-          <ListboxContent
-            data-testid="which-key-explorer-list"
-            className={whichKeyExplorerListContentBase}
-          >
-            {groupedEntries.map(([groupName, entries]) => (
-              <ListboxItemGroup key={groupName}>
-                <ListboxItemGroupLabel>{groupName}</ListboxItemGroupLabel>
-                {entries.map((entry) => (
-                  <ListboxItem
-                    key={entry.id}
-                    item={{
-                      value: entry.id,
-                      label: entry.label,
-                    }}
-                    data-testid="which-key-explorer-item"
-                    data-command-id={entry.commandId}
-                    onClick={() => controller.executeExplorerEntry(entry)}
-                    className={whichKeyExplorerItemBase}
-                  >
-                    <ListboxItemText className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-                      <span className="truncate font-medium text-foreground">
+          <Scroll className="max-h-96 min-h-0 flex-1" viewportClassName="max-h-96">
+            <ListboxContent
+              data-testid="which-key-explorer-list"
+              className={whichKeyExplorerListContentBase}
+            >
+              {groupedEntries.map(([groupName, entries]) => (
+                <ListboxItemGroup key={groupName}>
+                  <ListboxItemGroupLabel>{groupName}</ListboxItemGroupLabel>
+                  {entries.map((entry) => (
+                    <ListboxItem
+                      key={entry.id}
+                      item={{
+                        value: entry.id,
+                        label: entry.label,
+                      }}
+                      data-testid="which-key-explorer-item"
+                      data-command-id={entry.commandId}
+                      onClick={() => controller.executeExplorerEntry(entry)}
+                      className={whichKeyExplorerItemBase}
+                    >
+                      <ListboxItemText className="min-w-0 flex-1 truncate font-medium text-foreground">
                         <Highlight
                           text={entry.label}
                           query={explorerQuery}
@@ -197,30 +272,19 @@ function WhichKeyExplorerInner({
                           matchAll
                           className={whichKeyExplorerHighlightMarkBase}
                         />
-                      </span>
-                      {entry.description && entry.description !== entry.label && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          <Highlight
-                            text={entry.description}
-                            query={explorerQuery}
-                            ignoreCase
-                            matchAll
-                            className={whichKeyExplorerHighlightMarkBase}
-                          />
-                        </span>
-                      )}
-                    </ListboxItemText>
-                    <Row className="shrink-0 items-center gap-1">
-                      <Kbd size="sm" hotkey={entry.chords} />
-                    </Row>
-                  </ListboxItem>
-                ))}
-              </ListboxItemGroup>
-            ))}
-            {groupedEntries.length === 0 && (
-              <ListboxEmpty>No matching keybindings found.</ListboxEmpty>
-            )}
-          </ListboxContent>
+                      </ListboxItemText>
+                      <Row className="shrink-0 items-center gap-1">
+                        <Kbd size="sm" hotkey={entry.chords} />
+                      </Row>
+                    </ListboxItem>
+                  ))}
+                </ListboxItemGroup>
+              ))}
+              {groupedEntries.length === 0 && (
+                <ListboxEmpty>No matching keybindings found.</ListboxEmpty>
+              )}
+            </ListboxContent>
+          </Scroll>
         </Listbox>
       </DialogContent>
     </Dialog>

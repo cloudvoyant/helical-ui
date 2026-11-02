@@ -1,3 +1,4 @@
+// libs/helical-ui/src/which-key/core.ts
 export type KeybindingPreset = 'helix' | 'vim' | 'kakoune';
 export type KeymapMode = 'normal' | 'select' | 'insert' | 'jump';
 export type WhichKeyVariant = 'helix' | 'modern' | 'classic';
@@ -270,6 +271,15 @@ export function findDirectionalPane(
     const dx = centerX - originCenterX;
     const dy = centerY - originCenterY;
 
+    const gapX = Math.max(
+      0,
+      Math.max(origin.x, candidate.x) - Math.min(origin.x + origin.width, candidate.x + candidate.width),
+    );
+    const gapY = Math.max(
+      0,
+      Math.max(origin.y, candidate.y) - Math.min(origin.y + origin.height, candidate.y + candidate.height),
+    );
+
     let primaryDist = 0;
     let orthogonalDist = 0;
 
@@ -277,27 +287,27 @@ export function findDirectionalPane(
       case 'left':
         if (dx >= -1) continue;
         primaryDist = -dx;
-        orthogonalDist = Math.abs(dy);
+        orthogonalDist = gapY;
         break;
       case 'right':
         if (dx <= 1) continue;
         primaryDist = dx;
-        orthogonalDist = Math.abs(dy);
+        orthogonalDist = gapY;
         break;
       case 'up':
         if (dy >= -1) continue;
         primaryDist = -dy;
-        orthogonalDist = Math.abs(dx);
+        orthogonalDist = gapX;
         break;
       case 'down':
         if (dy <= 1) continue;
         primaryDist = dy;
-        orthogonalDist = Math.abs(dx);
+        orthogonalDist = gapX;
         break;
     }
 
-    // Weight orthogonal distance higher so aligned panes in the target direction win over diagonal panes,
-    // while Euclidean distance cleanly resolves ties.
+    // Weight orthogonal interval gap higher so aligned/overlapping panes in the target direction
+    // win over diagonal panes, while primary distance selects the immediately adjacent pane.
     const euclidean = Math.hypot(dx, dy);
     const score = primaryDist + orthogonalDist * 2 + euclidean * 0.01;
     if (score < bestScore) {

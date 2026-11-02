@@ -19,8 +19,8 @@
   const customKeymap: Record<string, WhichKeyNode> = {
     Space: {
       key: 'Space',
-      label: '+space',
-      group: 'Space',
+      label: '+leader',
+      group: 'Leader',
       children: {
         p: {
           key: 'p',
@@ -80,12 +80,12 @@
             data-testid="wk-explorer-trigger"
             onclick={() => wk.openExplorer()}
           >
-            Open Explorer <Kbd size="sm" hotkey={['Space', '?']} />
+            Open Explorer <Kbd size="sm" hotkey="?" />
           </Button>
         </HStack>
         <p class="text-xs text-muted-foreground">
-          Press <Kbd size="sm" hotkey={['Space', '?']} /> (or click the button) to open the
-          searchable Keybinding Exploration Menu, filter by keyword, and press
+          Press <Kbd size="sm" hotkey="?" /> or <Kbd size="sm" hotkey={['Space', '?']} /> (or click the
+          button) to open the searchable Keybinding Exploration Menu, filter by keyword, and press
           <Kbd size="sm">Enter</Kbd> to run a command.
         </p>
       </Pane>

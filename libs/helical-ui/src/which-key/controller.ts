@@ -16,7 +16,7 @@ import {
   isGroupNode,
   nodeMatchesMode,
   resolveNode,
-} from '@cloudvoyant/utils';
+} from './core';
 import { getPresetKeymap } from './presets';
 import {
   getModalEditor,
@@ -82,7 +82,7 @@ function isHTMLElementLike(value: unknown): value is HTMLElement {
   return 'parentElement' in value || 'tagName' in value;
 }
 
-function isTextEntryElement(el: Element | null): el is HTMLElement {
+function isTextEntryElement(el: Element | null): boolean {
   if (!el || !isHTMLElementLike(el)) return false;
   if (getModalEditor(el)) return true;
   if (el.isContentEditable || el.getAttribute?.('contenteditable') === 'true') {
@@ -199,18 +199,33 @@ function getTopMostModalDialog(doc: Document): HTMLElement | null {
 }
 
 function getPaneFocusableItems(container: HTMLElement, ownScope?: HTMLElement | null): HTMLElement[] {
-  const raw = getFocusables(container, { includeContainer: false });
+  const doc = container.ownerDocument;
+  const activeEl = doc?.activeElement instanceof HTMLElement ? doc.activeElement : null;
+  const enteredExample =
+    !ownScope && activeEl && !activeEl.hasAttribute('data-example')
+      ? activeEl.closest<HTMLElement>('[data-example]')
+      : null;
+  const searchRoot =
+    enteredExample && container.contains(enteredExample)
+      ? (enteredExample.querySelector<HTMLElement>('[data-example-preview]') ?? enteredExample)
+      : container;
+
+  const raw = getFocusables(searchRoot, { includeContainer: false });
   return raw.filter((el) => {
     if (!(el instanceof HTMLElement)) return false;
     if (el.closest('[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay]')) {
       return false;
     }
     const fwEl = el.closest('[data-fw]');
-    const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
+    const activeFw = doc?.documentElement?.getAttribute('data-framework');
     if (fwEl && activeFw && fwEl.getAttribute('data-fw') !== activeFw) {
       return false;
     }
     if (!ownScope) {
+      if (!enteredExample) {
+        const parentExample = el.parentElement?.closest('[data-example]');
+        if (parentExample) return false;
+      }
       const nestedScope = el.closest('[data-which-key-scope]');
       if (nestedScope) return false;
     }
@@ -221,6 +236,39 @@ function getPaneFocusableItems(container: HTMLElement, ownScope?: HTMLElement | 
   });
 }
 
+function getJumpableItems(container: HTMLElement, ownScope?: HTMLElement | null): HTMLElement[] {
+  const doc = container.ownerDocument;
+  const rawFocusables = getFocusables(container, { includeContainer: false });
+  const rawTabs = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      '[role="tab"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"])',
+    ),
+  );
+  const combined: HTMLElement[] = [];
+  const seen = new Set<HTMLElement>();
+  for (const el of [...rawFocusables, ...rawTabs]) {
+    if (!(el instanceof HTMLElement) || seen.has(el)) continue;
+    seen.add(el);
+    if (el.closest('[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay]')) {
+      continue;
+    }
+    const fwEl = el.closest('[data-fw]');
+    const activeFw = doc?.documentElement?.getAttribute('data-framework');
+    if (fwEl && activeFw && fwEl.getAttribute('data-fw') !== activeFw) {
+      continue;
+    }
+    if (!ownScope) {
+      const nestedScope = el.closest('[data-which-key-scope]');
+      if (nestedScope) continue;
+    }
+    if (el.getAttribute('aria-hidden') === 'true' || el.hasAttribute('inert')) {
+      continue;
+    }
+    combined.push(el);
+  }
+  return combined;
+}
+
 interface AttachedControllerEntry {
   getScopeElement: () => HTMLElement | null;
   isBusy: () => boolean;
@@ -229,6 +277,8 @@ interface AttachedControllerEntry {
 const globalWhichKeyState = globalThis as typeof globalThis & {
   __helicalAttachedEntriesByDoc__?: WeakMap<Document, Set<AttachedControllerEntry>>;
   __helicalLastInteractedScopeByDoc__?: WeakMap<Document, HTMLElement | null>;
+  __helicalRootControllerByDoc__?: WeakMap<Document, WhichKeyController>;
+  __helicalRootControllerListenersByDoc__?: WeakMap<Document, Set<() => void>>;
 };
 
 const attachedEntriesByDoc = (globalWhichKeyState.__helicalAttachedEntriesByDoc__ ??= new WeakMap<
@@ -239,6 +289,42 @@ const lastInteractedScopeByDoc = (globalWhichKeyState.__helicalLastInteractedSco
   Document,
   HTMLElement | null
 >());
+const rootControllerByDoc = (globalWhichKeyState.__helicalRootControllerByDoc__ ??= new WeakMap<
+  Document,
+  WhichKeyController
+>());
+const rootControllerListenersByDoc = (globalWhichKeyState.__helicalRootControllerListenersByDoc__ ??= new WeakMap<
+  Document,
+  Set<() => void>
+>());
+
+function notifyRootControllerListeners(doc: Document): void {
+  const set = rootControllerListenersByDoc.get(doc);
+  if (!set) return;
+  for (const fn of set) {
+    fn();
+  }
+}
+
+export function getDocumentWhichKeyController(doc?: Document): WhichKeyController | null {
+  const resolved = doc ?? (typeof document !== 'undefined' ? document : undefined);
+  if (!resolved) return null;
+  return rootControllerByDoc.get(resolved) ?? null;
+}
+
+export function subscribeDocumentWhichKeyController(doc: Document | undefined, listener: () => void): () => void {
+  const resolved = doc ?? (typeof document !== 'undefined' ? document : undefined);
+  if (!resolved) return () => {};
+  let set = rootControllerListenersByDoc.get(resolved);
+  if (!set) {
+    set = new Set();
+    rootControllerListenersByDoc.set(resolved, set);
+  }
+  set.add(listener);
+  return () => {
+    set?.delete(listener);
+  };
+}
 
 function isScopeElementActive(scopeEl: HTMLElement | null, doc: Document): boolean {
   if (!scopeEl) return true;
@@ -307,10 +393,60 @@ function shouldEntryHandleEvent(entry: AttachedControllerEntry, doc: Document): 
 }
 
 export function createWhichKeyController(options: WhichKeyControllerOptions = {}): WhichKeyController {
-  let preset: KeybindingPreset = options.preset ?? 'helix';
+  const storageKey = options.storageKey;
+
+  function readStoredPreset(): KeybindingPreset | null {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(`${storageKey}:keymap-preset`);
+      if (raw === 'helix' || raw === 'vim' || raw === 'kakoune') return raw;
+    } catch {
+      // Ignore storage errors
+    }
+    return null;
+  }
+
+  function writeStoredPreset(next: KeybindingPreset): void {
+    const doc = resolveDoc();
+    if (doc?.documentElement && !options.getScopeElement?.()) {
+      doc.documentElement.dataset.keymapPreset = next;
+    }
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(`${storageKey}:keymap-preset`, next);
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  function readStoredJumpAction(): JumpAction | null {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(`${storageKey}:jump-action`);
+      if (raw === 'activate' || raw === 'focus') return raw;
+    } catch {
+      // Ignore storage errors
+    }
+    return null;
+  }
+
+  function writeStoredJumpAction(next: JumpAction): void {
+    const doc = resolveDoc();
+    if (doc?.documentElement && !options.getScopeElement?.()) {
+      doc.documentElement.dataset.jumpAction = next;
+    }
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(`${storageKey}:jump-action`, next);
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  let preset: KeybindingPreset = options.preset ?? readStoredPreset() ?? 'helix';
   let mode: KeymapMode = options.defaultMode ?? 'normal';
   const leaderKey = options.leaderKey ?? 'Space';
-  let jumpAction: JumpAction = options.jumpAction ?? 'focus';
+  let jumpAction: JumpAction = options.jumpAction ?? readStoredJumpAction() ?? 'activate';
   const jumpAlphabet = options.jumpAlphabet ?? DEFAULT_JUMP_ALPHABET;
 
   const listeners = new Set<(state: WhichKeyState) => void>();
@@ -381,6 +517,50 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     return trie;
   }
 
+  function syncPaneActiveAttributes(): void {
+    for (const pane of panes.values()) {
+      if (pane.element && typeof pane.element.setAttribute === 'function') {
+        pane.element.setAttribute('data-pane-active', pane.id === activePaneId ? 'true' : 'false');
+      }
+    }
+  }
+
+  function syncDomPanes(docOverride?: Document | null): void {
+    const doc = docOverride ?? resolveDoc();
+    if (!doc || typeof doc.querySelectorAll !== 'function') return;
+    const ownScope = options.getScopeElement?.() ?? null;
+    const root = ownScope ?? doc.body;
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+
+    const elements = Array.from(root.querySelectorAll<HTMLElement>('[data-pane-id]'));
+    for (const el of elements) {
+      if (!ownScope && el.closest('[data-which-key-scope]')) continue;
+      const id = el.getAttribute('data-pane-id');
+      if (!id) continue;
+      const existing = panes.get(id);
+      if (existing && existing.element === el) continue;
+
+      const title = el.getAttribute('data-pane-title') || existing?.title || id;
+      const orderAttr = el.getAttribute('data-pane-order');
+      const parsedOrder = orderAttr ? Number.parseInt(orderAttr, 10) : Number.NaN;
+      const order = !Number.isNaN(parsedOrder) ? parsedOrder : (existing?.order ?? panes.size + 1);
+      const disabled = el.getAttribute('data-pane-disabled') === 'true';
+
+      panes.set(id, {
+        id,
+        title,
+        element: el,
+        disabled,
+        order,
+        lastFocusedElement: existing?.lastFocusedElement ?? null,
+      });
+      if (!activePaneId && !disabled) {
+        activePaneId = id;
+      }
+    }
+    syncPaneActiveAttributes();
+  }
+
   function getOrderedPanes(): PaneRegistration[] {
     return Array.from(panes.values())
       .filter((p) => !p.disabled)
@@ -440,6 +620,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   let cachedState: WhichKeyState = computeState();
 
   function emit(): void {
+    syncPaneActiveAttributes();
     cachedState = computeState();
     for (const listener of listeners) {
       listener(cachedState);
@@ -515,6 +696,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     activePath = [];
     sticky = false;
     countBuffer = '';
+    writeStoredPreset(nextPreset);
     notifyAllModalEditors({ mode, preset: nextPreset });
     options.onPresetChange?.(nextPreset);
     announce(`Switched to ${nextPreset} preset`);
@@ -522,7 +704,10 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function setJumpAction(action: JumpAction): void {
+    if (jumpAction === action) return;
     jumpAction = action;
+    writeStoredJumpAction(action);
+    options.onJumpActionChange?.(action);
     emit();
   }
 
@@ -570,6 +755,49 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   function setExplorerQuery(query: string): void {
     explorerQuery = query;
     emit();
+  }
+
+  function enterExampleContainer(exampleEl: HTMLElement): boolean {
+    const doc = resolveDoc();
+    const activeFw = doc?.documentElement?.getAttribute('data-framework');
+    const preview = exampleEl.querySelector<HTMLElement>('[data-example-preview]') ?? exampleEl;
+
+    const scopes = Array.from(preview.querySelectorAll<HTMLElement>('[data-which-key-scope]'));
+    const activeScope = doc ? (scopes.find((s) => isScopeElementActive(s, doc)) ?? null) : null;
+    if (activeScope && doc) {
+      lastInteractedScopeByDoc.set(doc, activeScope);
+      const scopeFocusables = getPaneFocusableItems(activeScope, activeScope);
+      const target = scopeFocusables[0] ?? preview;
+      recordCurrentLocation();
+      focusElementInActivePane(target);
+      announce('Entered example preview');
+      emit();
+      return true;
+    }
+
+    const rawFocusables = getFocusables(preview, { includeContainer: false }).filter((el) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const fwEl = el.closest('[data-fw]');
+      if (fwEl && activeFw && fwEl.getAttribute('data-fw') !== activeFw) return false;
+      if (el.getAttribute('aria-hidden') === 'true' || el.hasAttribute('inert')) return false;
+      return true;
+    });
+
+    if (rawFocusables.length > 0) {
+      recordCurrentLocation();
+      focusElementInActivePane(rawFocusables[0]!);
+      announce('Entered example preview');
+      emit();
+      return true;
+    }
+
+    const codeToggle = exampleEl.querySelector<HTMLButtonElement>('[data-example-toggle]');
+    if (codeToggle) {
+      codeToggle.click();
+      announce('Toggled example code');
+      return true;
+    }
+    return false;
   }
 
   function focusElementInActivePane(target: HTMLElement): void {
@@ -725,14 +953,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     recordCurrentLocation();
     activePaneId = targetPane.id;
 
+    const ownScope = options.getScopeElement?.() ?? null;
     const remembered =
-      targetPane.lastFocusedElement && targetPane.element.contains(targetPane.lastFocusedElement)
+      targetPane.lastFocusedElement &&
+      targetPane.element.contains(targetPane.lastFocusedElement) &&
+      (ownScope || !targetPane.lastFocusedElement.closest('[data-which-key-scope]'))
         ? targetPane.lastFocusedElement
         : null;
-    const firstFocusable =
-      remembered ??
-      getPaneFocusableItems(targetPane.element, options.getScopeElement?.() ?? targetPane.element)[0] ??
-      getFirstFocusable(targetPane.element, { includeContainer: true });
+    const firstFocusable = remembered ?? getPaneFocusableItems(targetPane.element, ownScope)[0] ?? null;
 
     if (firstFocusable instanceof HTMLElement) {
       focusElementInActivePane(firstFocusable);
@@ -809,7 +1037,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     const ownScope = options.getScopeElement?.() ?? null;
     const scopeRoot = getTopMostModalDialog(doc) ?? ownScope ?? doc.body;
-    const allFocusable = getPaneFocusableItems(scopeRoot, ownScope);
+    const allFocusable = getJumpableItems(scopeRoot, ownScope);
     const visible = allFocusable.filter((el) => {
       const rect = el.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return false;
@@ -900,11 +1128,202 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     return true;
   }
 
+  function stepFocusVerticalInPane(delta: number): boolean {
+    const container = getActiveContainer();
+    if (!container) return false;
+    const items = getPaneFocusableItems(container, options.getScopeElement?.());
+    if (items.length === 0) return false;
+
+    const doc = resolveDoc();
+    const activeEl = doc?.activeElement as HTMLElement | null;
+    const currentIndex = activeEl ? items.indexOf(activeEl) : -1;
+    if (currentIndex === -1) {
+      return stepFocusInPane(delta);
+    }
+
+    const initialRect = items[currentIndex]!.getBoundingClientRect();
+    if (initialRect.width <= 0 || initialRect.height <= 0) {
+      return stepFocusInPane(delta);
+    }
+
+    const initialCenterX = initialRect.left + initialRect.width / 2;
+    const initialCenterY = initialRect.top + initialRect.height / 2;
+    const rowTolerance = Math.max(8, initialRect.height * 0.5);
+
+    const hasSiblingInSameRow = items.some((el, idx) => {
+      if (idx === currentIndex) return false;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return false;
+      const cy = r.top + r.height / 2;
+      const cx = r.left + r.width / 2;
+      return Math.abs(cy - initialCenterY) <= rowTolerance && Math.abs(cx - initialCenterX) > 8;
+    });
+
+    if (!hasSiblingInSameRow) {
+      return stepFocusInPane(delta);
+    }
+
+    const dir = delta >= 0 ? 1 : -1;
+    const steps = Math.max(1, Math.abs(delta));
+    let currentEl = items[currentIndex]!;
+
+    for (let s = 0; s < steps; s += 1) {
+      const curRect = currentEl.getBoundingClientRect();
+      const curCenterY = curRect.top + curRect.height / 2;
+      const curTol = Math.max(8, curRect.height * 0.5);
+
+      const candidates = items
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            el,
+            cx: r.left + r.width / 2,
+            cy: r.top + r.height / 2,
+            h: r.height,
+            w: r.width,
+          };
+        })
+        .filter((c) => {
+          if (c.w <= 0 || c.h <= 0) return false;
+          return dir > 0 ? c.cy > curCenterY + curTol : c.cy < curCenterY - curTol;
+        });
+
+      if (candidates.length === 0) {
+        if (s === 0) {
+          return stepFocusInPane(delta);
+        }
+        break;
+      }
+
+      let closestRowY = candidates[0]!.cy;
+      for (const c of candidates) {
+        if (Math.abs(c.cy - curCenterY) < Math.abs(closestRowY - curCenterY)) {
+          closestRowY = c.cy;
+        }
+      }
+
+      const rowCandidates = candidates.filter((c) => Math.abs(c.cy - closestRowY) <= curTol);
+      let best = rowCandidates[0]!;
+      for (const c of rowCandidates) {
+        if (Math.abs(c.cx - initialCenterX) < Math.abs(best.cx - initialCenterX)) {
+          best = c;
+        }
+      }
+      currentEl = best.el;
+    }
+
+    focusElementInActivePane(currentEl);
+    emit();
+    return true;
+  }
+
+  function isElementInActiveFramework(el: HTMLElement, doc: Document | null): boolean {
+    const fwEl = el.closest('[data-fw]');
+    const activeFw = doc?.documentElement?.getAttribute('data-framework');
+    if (fwEl && activeFw && fwEl.getAttribute('data-fw') !== activeFw) {
+      return false;
+    }
+    if (el.getAttribute('aria-hidden') === 'true' || el.hasAttribute('inert')) {
+      return false;
+    }
+    return true;
+  }
+
+  function findActiveTablist(activeEl: HTMLElement | null, container: HTMLElement | null): HTMLElement | null {
+    const doc = resolveDoc();
+    if (activeEl) {
+      const directTablist = activeEl.closest<HTMLElement>('[role="tablist"]');
+      if (directTablist && isElementInActiveFramework(directTablist, doc)) {
+        return directTablist;
+      }
+      const tabsScope = activeEl.closest<HTMLElement>('[data-scope="tabs"]');
+      if (tabsScope) {
+        const list = Array.from(tabsScope.querySelectorAll<HTMLElement>('[role="tablist"]')).find((el) =>
+          isElementInActiveFramework(el, doc),
+        );
+        if (list) return list;
+      }
+      const tabPanel = activeEl.closest<HTMLElement>('[role="tabpanel"]');
+      if (tabPanel?.parentElement) {
+        const list = Array.from(tabPanel.parentElement.querySelectorAll<HTMLElement>('[role="tablist"]')).find((el) =>
+          isElementInActiveFramework(el, doc),
+        );
+        if (list) return list;
+      }
+      const exampleContainer = activeEl.hasAttribute('data-example')
+        ? activeEl
+        : activeEl.closest<HTMLElement>('[data-example]');
+      if (exampleContainer) {
+        const list = Array.from(exampleContainer.querySelectorAll<HTMLElement>('[role="tablist"]')).find((el) =>
+          isElementInActiveFramework(el, doc),
+        );
+        if (list) return list;
+      }
+    }
+
+    const searchRoot = container ?? doc?.body ?? null;
+    if (!searchRoot) return null;
+    const allLists = Array.from(searchRoot.querySelectorAll<HTMLElement>('[role="tablist"]')).filter((el) =>
+      isElementInActiveFramework(el, doc),
+    );
+    return allLists[0] ?? null;
+  }
+
+  function stepTab(delta: number, boundary?: 'first' | 'last'): boolean {
+    const doc = resolveDoc();
+    const activeEl = (doc?.activeElement as HTMLElement | null) ?? null;
+    const container = getActiveContainer();
+    const tablist = findActiveTablist(activeEl, container);
+    if (!tablist) return false;
+
+    const tabs = Array.from(
+      tablist.querySelectorAll<HTMLElement>(
+        '[role="tab"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"])',
+      ),
+    ).filter((el) => isElementInActiveFramework(el, doc));
+    if (tabs.length === 0) return false;
+
+    let currentIdx = activeEl ? tabs.findIndex((t) => t === activeEl || t.contains(activeEl)) : -1;
+    if (currentIdx === -1) {
+      currentIdx = tabs.findIndex(
+        (t) =>
+          t.getAttribute('aria-selected') === 'true' ||
+          t.hasAttribute('data-selected') ||
+          t.getAttribute('data-state') === 'active',
+      );
+    }
+    if (currentIdx === -1) {
+      currentIdx = 0;
+    }
+
+    let targetIdx: number;
+    if (boundary === 'first') {
+      targetIdx = 0;
+    } else if (boundary === 'last') {
+      targetIdx = tabs.length - 1;
+    } else {
+      targetIdx = (((currentIdx + delta) % tabs.length) + tabs.length) % tabs.length;
+    }
+
+    const targetTab = tabs[targetIdx];
+    if (!targetTab) return false;
+
+    recordCurrentLocation();
+    focusElementInActivePane(targetTab);
+    targetTab.click();
+    recordCurrentLocation();
+    announce(`Tab ${targetTab.textContent?.trim() || targetIdx + 1}`);
+    emit();
+    return true;
+  }
+
   function stepSection(delta: number): boolean {
     const container = getActiveContainer();
     if (!container) return false;
     const sections = Array.from(
-      container.querySelectorAll<HTMLElement>('h1, h2, h3, [data-page-section], [role="tab"], section[id]'),
+      container.querySelectorAll<HTMLElement>(
+        '[data-page-section], [data-slot="page-section"], section[id], .docs-prose :is(h2, h3)',
+      ),
     );
     if (sections.length === 0) {
       return stepFocusInPane(delta);
@@ -930,13 +1349,18 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         // Ignore
       }
     }
-    const focusable = getFirstFocusable(targetSection, { includeContainer: true }) ?? targetSection;
-    if (focusable instanceof HTMLElement) {
+    const innerFocusable =
+      getPaneFocusableItems(targetSection, options.getScopeElement?.())[0] ??
+      getFirstFocusable(targetSection, { includeContainer: false });
+    if (innerFocusable instanceof HTMLElement) {
+      focusElementInActivePane(innerFocusable);
+    } else {
       runProgrammaticFocus(() => {
-        if (focusable.tabIndex < 0) {
-          focusable.tabIndex = -1;
+        if (targetSection.tabIndex < 0) {
+          targetSection.tabIndex = -1;
         }
-        focusable.focus({ preventScroll: true });
+        targetSection.style.outline = 'none';
+        targetSection.focus({ preventScroll: true });
       });
     }
     recordCurrentLocation();
@@ -976,6 +1400,12 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
           break;
         case 'wordBackward':
           sel.modify(alter, 'backward', 'word');
+          break;
+        case 'paragraphForward':
+          sel.modify(alter, 'forward', 'paragraphboundary');
+          break;
+        case 'paragraphBackward':
+          sel.modify(alter, 'backward', 'paragraphboundary');
           break;
         case 'lineStart':
           sel.modify(alter, 'backward', 'lineboundary');
@@ -1028,6 +1458,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       startJumpMode();
       return true;
     }
+    if (commandId === 'jump.activate') {
+      startJumpMode('activate');
+      return true;
+    }
+    if (commandId === 'jump.focus') {
+      startJumpMode('focus');
+      return true;
+    }
+    if (commandId === 'jump.action.activate') {
+      setJumpAction('activate');
+      return true;
+    }
+    if (commandId === 'jump.action.focus') {
+      setJumpAction('focus');
+      return true;
+    }
     if (commandId === 'jumplist.back') {
       return jumpBack();
     }
@@ -1051,6 +1497,8 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     if (commandId === 'view.scrollDown') return scrollActivePane('down', ctx.count);
     if (commandId === 'view.scrollUp') return scrollActivePane('up', ctx.count);
 
+    if (commandId === 'tab.next') return stepTab(ctx.count) || stepSection(ctx.count);
+    if (commandId === 'tab.prev') return stepTab(-ctx.count) || stepSection(-ctx.count);
     if (commandId === 'section.next') return stepSection(ctx.count);
     if (commandId === 'section.prev') return stepSection(-ctx.count);
     if (commandId === 'focus.nextBlock') return stepFocusInPane(ctx.count);
@@ -1074,16 +1522,57 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         return handleGenericContentEditableMotion(activeEl, motion, ctx.count);
       }
 
+      const activeTab = activeEl?.closest<HTMLElement>('[role="tab"]');
+      const activeTablist = activeTab?.closest<HTMLElement>('[role="tablist"]');
+      if (activeTab && activeTablist) {
+        const isVertical =
+          activeTablist.getAttribute('aria-orientation') === 'vertical' ||
+          activeTablist.getAttribute('data-orientation') === 'vertical';
+        if (!isVertical) {
+          if (motion === 'right' || motion === 'wordForward' || motion === 'wordEnd') {
+            return stepTab(ctx.count);
+          }
+          if (motion === 'left' || motion === 'wordBackward') {
+            return stepTab(-ctx.count);
+          }
+          if (motion === 'lineStart') {
+            return stepTab(0, 'first');
+          }
+          if (motion === 'lineEnd') {
+            return stepTab(0, 'last');
+          }
+        } else {
+          if (motion === 'down') {
+            return stepTab(ctx.count);
+          }
+          if (motion === 'up') {
+            return stepTab(-ctx.count);
+          }
+          if (motion === 'lineStart') {
+            return stepTab(0, 'first');
+          }
+          if (motion === 'lineEnd') {
+            return stepTab(0, 'last');
+          }
+        }
+      }
+
       switch (motion) {
         case 'down':
+          return stepFocusVerticalInPane(ctx.count);
+        case 'up':
+          return stepFocusVerticalInPane(-ctx.count);
         case 'wordForward':
         case 'wordEnd':
         case 'right':
           return stepFocusInPane(ctx.count);
-        case 'up':
         case 'wordBackward':
         case 'left':
           return stepFocusInPane(-ctx.count);
+        case 'paragraphForward':
+          return stepSection(ctx.count);
+        case 'paragraphBackward':
+          return stepSection(-ctx.count);
         case 'docStart':
           return jumpToBoundary('start');
         case 'docEnd':
@@ -1146,6 +1635,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
           setMode('normal');
         }
         return Boolean(res);
+      }
+
+      if (op === 'insertStart' && activeEl?.hasAttribute('data-example')) {
+        return enterExampleContainer(activeEl);
+      }
+
+      if (op === 'change' && activeEl && !isTextEntryElement(activeEl)) {
+        const exampleCard = activeEl.closest<HTMLElement>('[data-example]');
+        if (exampleCard) {
+          const toggle = exampleCard.querySelector<HTMLButtonElement>('[data-example-toggle]');
+          if (toggle) {
+            toggle.click();
+            announce('Toggled example code');
+            return true;
+          }
+        }
       }
 
       if (op === 'insertStart' || op === 'appendEnd' || op === 'change') {
@@ -1474,7 +1979,36 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         }
         return true;
       }
+      const parentExample =
+        targetEl instanceof HTMLElement && !targetEl.hasAttribute('data-example')
+          ? targetEl.closest<HTMLElement>('[data-example]')
+          : null;
+      if (parentExample && (!doc || !getTopMostModalDialog(doc))) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (doc) {
+          lastInteractedScopeByDoc.set(doc, null);
+        }
+        focusElementInActivePane(parentExample);
+        announce('Exited example preview');
+        emit();
+        return true;
+      }
       return false;
+    }
+
+    // If Enter is pressed on a [data-example] container in normal mode, enter its preview (or toggle code if display-only).
+    if (
+      event.key === 'Enter' &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      targetEl instanceof HTMLElement &&
+      targetEl.hasAttribute('data-example')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      return enterExampleContainer(targetEl);
     }
 
     // If Enter is pressed in normal mode on a text-editable input (and not a ProseMirror editor),
@@ -1585,6 +2119,32 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       docEntries?.delete(entry);
     });
 
+    if (!options.getScopeElement?.()) {
+      const storedPreset = readStoredPreset();
+      if (storedPreset && !options.preset) {
+        preset = storedPreset;
+      }
+      const storedJump = readStoredJumpAction();
+      if (storedJump && !options.jumpAction) {
+        jumpAction = storedJump;
+      }
+      if (doc.documentElement) {
+        doc.documentElement.dataset.keymapPreset = preset;
+        doc.documentElement.dataset.jumpAction = jumpAction;
+      }
+      rootControllerByDoc.set(doc, controllerApi);
+      notifyRootControllerListeners(doc);
+      detachCleanups.push(() => {
+        if (rootControllerByDoc.get(doc) === controllerApi) {
+          rootControllerByDoc.delete(doc);
+          notifyRootControllerListeners(doc);
+        }
+      });
+    }
+
+    syncDomPanes(doc);
+    emit();
+
     const onPointerDown = (e: Event) => {
       const targetNode = e.target instanceof Element ? e.target : null;
       if (!targetNode) return;
@@ -1605,7 +2165,10 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       // Update activePaneId when user clicks inside a registered pane
       for (const pane of panes.values()) {
         if (pane.element && pane.element.contains(targetNode)) {
-          activePaneId = pane.id;
+          if (activePaneId !== pane.id) {
+            activePaneId = pane.id;
+            emit();
+          }
           break;
         }
       }
@@ -1620,12 +2183,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       if (!targetNode) return;
 
       if (
+        programmaticFocusDepth === 0 &&
         !targetNode.closest(
           '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="dialog"]',
         )
       ) {
         const focusedScope = (targetNode.closest('[data-which-key-scope]') as HTMLElement | null) ?? null;
-        if (focusedScope && isScopeElementActive(focusedScope, doc)) {
+        if (!focusedScope || isScopeElementActive(focusedScope, doc)) {
           lastInteractedScopeByDoc.set(doc, focusedScope);
         }
       }
@@ -1634,8 +2198,12 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
       for (const pane of panes.values()) {
         if (pane.element && pane.element.contains(targetNode)) {
+          const prevPaneId = activePaneId;
           activePaneId = pane.id;
           pane.lastFocusedElement = targetNode;
+          if (prevPaneId !== pane.id) {
+            emit();
+          }
           break;
         }
       }
@@ -1748,7 +2316,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     }
   }
 
-  return {
+  const controllerApi: WhichKeyController = {
     getState: () => cachedState,
     subscribe: (listener) => {
       listeners.add(listener);
@@ -1786,4 +2354,6 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     jumpForward,
     trackBranchElement,
   };
+
+  return controllerApi;
 }

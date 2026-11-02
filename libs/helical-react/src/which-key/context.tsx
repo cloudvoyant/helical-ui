@@ -14,6 +14,8 @@ import { useEnvironmentContext } from '@ark-ui/react/environment';
 import { HotkeysProvider } from '@tanstack/react-hotkeys';
 import {
   createWhichKeyController,
+  getDocumentWhichKeyController,
+  subscribeDocumentWhichKeyController,
   type JumpAction,
   type KeybindingPreset,
   type KeymapCommandContext,
@@ -37,17 +39,19 @@ export interface WhichKeyProviderProps extends WhichKeyControllerOptions {
 }
 
 export function WhichKeyProvider({
-  preset = 'helix',
+  preset,
   defaultMode = 'normal',
   leaderKey = 'Space',
-  jumpAction = 'focus',
+  jumpAction,
   jumpAlphabet,
+  storageKey,
   keymap,
   commands,
   enabled = true,
   scoped = true,
   onPresetChange,
   onModeChange,
+  onJumpActionChange,
   onCommand,
   children,
 }: WhichKeyProviderProps) {
@@ -62,6 +66,7 @@ export function WhichKeyProvider({
       leaderKey,
       jumpAction,
       jumpAlphabet,
+      storageKey,
       keymap,
       commands,
       enabled,
@@ -69,6 +74,7 @@ export function WhichKeyProvider({
       getScopeElement: () => (scoped ? scopeRef.current : null),
       onPresetChange,
       onModeChange,
+      onJumpActionChange,
       onCommand,
     });
   }
@@ -76,11 +82,15 @@ export function WhichKeyProvider({
   const controller = controllerRef.current;
 
   useEffect(() => {
-    controller.setPreset(preset);
+    if (preset !== undefined) {
+      controller.setPreset(preset);
+    }
   }, [controller, preset]);
 
   useEffect(() => {
-    controller.setJumpAction(jumpAction);
+    if (jumpAction !== undefined) {
+      controller.setJumpAction(jumpAction);
+    }
   }, [controller, jumpAction]);
 
   useEffect(() => {
@@ -122,15 +132,29 @@ export function WhichKeyProvider({
 }
 
 export function useOptionalWhichKeyController(): WhichKeyController | null {
-  return useContext(WhichKeyContext);
+  const contextController = useContext(WhichKeyContext);
+  const docController = useSyncExternalStore(
+    (listener) =>
+      contextController
+        ? () => {}
+        : subscribeDocumentWhichKeyController(
+            typeof document !== 'undefined' ? document : undefined,
+            listener,
+          ),
+    () => (contextController ? null : getDocumentWhichKeyController()),
+    () => null,
+  );
+  return contextController ?? docController;
 }
 
 export function useWhichKeyController(): WhichKeyController {
-  const controller = useContext(WhichKeyContext);
-  if (!controller) {
-    throw new Error('useWhichKey must be used within a <WhichKeyProvider>.');
+  const controller = useOptionalWhichKeyController();
+  const fallbackRef = useRef<WhichKeyController | null>(null);
+  if (controller) return controller;
+  if (!fallbackRef.current) {
+    fallbackRef.current = createWhichKeyController();
   }
-  return controller;
+  return fallbackRef.current;
 }
 
 export interface UseWhichKeyReturn extends WhichKeyState {
@@ -222,6 +246,7 @@ export interface UsePaneRegistrationResult {
   dataAttributes: {
     'data-pane-id'?: string;
     'data-pane-title'?: string;
+    'data-pane-order'?: string;
     'data-pane-active'?: 'true' | 'false';
   };
 }
@@ -272,12 +297,29 @@ export function useOptionalPaneRegistration(
     options.paneOrder,
   ]);
 
-  if (!controller || options.paneDisabled) {
+  if (options.paneDisabled) {
     return {
       ref: () => {},
       paneId: resolvedId,
       isActive: false,
       dataAttributes: {},
+    };
+  }
+
+  if (!controller) {
+    return {
+      ref: () => {},
+      paneId: resolvedId,
+      isActive: false,
+      dataAttributes: options.paneId
+        ? {
+            'data-pane-id': options.paneId,
+            'data-pane-title': resolvedTitle,
+            ...(options.paneOrder !== undefined
+              ? { 'data-pane-order': String(options.paneOrder) }
+              : {}),
+          }
+        : {},
     };
   }
 
@@ -289,6 +331,9 @@ export function useOptionalPaneRegistration(
     dataAttributes: {
       'data-pane-id': resolvedId,
       'data-pane-title': resolvedTitle,
+      ...(options.paneOrder !== undefined
+        ? { 'data-pane-order': String(options.paneOrder) }
+        : {}),
       'data-pane-active': isActive ? 'true' : 'false',
     },
   };

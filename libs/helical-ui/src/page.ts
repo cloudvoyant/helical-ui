@@ -9,6 +9,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { colBase } from './layout';
 import { cn } from './cn';
+import type { PaneRegistrationProps } from './which-key/types';
 
 export const pageVariants = cva('min-h-svh w-full', {
   variants: {
@@ -60,8 +61,4 @@ export type PageVariants = VariantProps<typeof pageVariants>;
 export type PageGutterVariants = VariantProps<typeof pageGutterVariants>;
 export type PageGutterContentVariants = VariantProps<typeof pageGutterContentVariants>;
 
-export interface PagePaneRegistrationProps {
-  paneId?: string;
-  paneTitle?: string;
-  paneDisabled?: boolean;
-}
+export type PagePaneRegistrationProps = PaneRegistrationProps;

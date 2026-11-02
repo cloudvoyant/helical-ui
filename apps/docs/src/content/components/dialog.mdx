@@ -95,6 +95,17 @@ Accepts all [Ark `DialogCloseTriggerProps`](https://ark-ui.com/docs/components/d
 
 Complies with the [Dialog WAI-ARIA design pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/). Keyboard support: `Enter` opens from the trigger; `Tab`/`Shift+Tab` move focus within the trapped dialog; `Esc` closes and returns focus to the trigger or `finalFocusEl`.
 
+## Keybindings
+
+When open inside a [`WhichKeyProvider`](/helical-ui/components/which-key), modal `Dialog` content automatically becomes the active keyboard scope:
+
+| Keybinding | Action |
+| --- | --- |
+| `j` / `k` / `w` / `b` | Step through focusable controls strictly inside the open modal dialog. |
+| `g g` / `G` (`g e`) | Jump to the first or last focusable control inside the dialog. |
+| `g w` (`s` in Vim) | Overlay 2D jump labels scoped to controls inside the active modal dialog. |
+| `Escape` | Exit `insert` mode if active inside an input, or close the dialog and return focus to the trigger. |
+
 ## Theme extensions
 
 None. The dialog reuses existing tokens (`--background`, `--foreground`, `--border`, `--ring`, `--muted`) and a translucent black backdrop (`bg-black/50`) — no `theme.css` changes.

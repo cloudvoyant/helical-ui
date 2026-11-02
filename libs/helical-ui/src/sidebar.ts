@@ -2,6 +2,7 @@
 // Source: shadcn/ui sidebar (https://ui.shadcn.com/docs/components/base/sidebar),
 //         re-based on Ark UI. Shared class strings / cva / constants / types.
 import { cva, type VariantProps } from 'class-variance-authority';
+import type { PaneRegistrationProps } from './which-key/types';
 
 export const SIDEBAR_WIDTH = '16rem';
 export const SIDEBAR_WIDTH_MOBILE = '18rem';
@@ -45,11 +46,7 @@ export interface SidebarContextProps {
   isControlled: boolean;
 }
 
-export interface SidebarPaneRegistrationProps {
-  paneId?: string;
-  paneTitle?: string;
-  paneDisabled?: boolean;
-}
+export type SidebarPaneRegistrationProps = PaneRegistrationProps;
 
 export const sidebarStyles = {
   wrapperClass: 'group/sidebar-wrapper min-h-svh w-full has-data-[variant=inset]:bg-sidebar',

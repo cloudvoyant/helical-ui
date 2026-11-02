@@ -45,6 +45,7 @@ export function PageGutter({
   paneId,
   paneTitle,
   paneDisabled,
+  paneOrder,
   className,
   children,
   ...props
@@ -53,6 +54,7 @@ export function PageGutter({
     paneId,
     paneTitle,
     paneDisabled,
+    paneOrder,
     defaultTitle: side === 'right' ? 'Right Gutter' : 'Left Gutter',
   });
 
@@ -79,6 +81,7 @@ export function PageContent({
   paneId,
   paneTitle,
   paneDisabled,
+  paneOrder,
   className,
   children,
   ...props
@@ -87,6 +90,7 @@ export function PageContent({
     paneId,
     paneTitle,
     paneDisabled,
+    paneOrder,
     defaultTitle: 'Main Content',
   });
 
@@ -111,9 +115,33 @@ export function PageFooter({ className, children, ...props }: HTMLArkProps<'foot
   );
 }
 
-export function PageSection({ className, children, ...props }: HTMLArkProps<'section'>) {
+export type PageSectionProps = HTMLArkProps<'section'> & PagePaneRegistrationProps;
+
+export function PageSection({
+  paneId,
+  paneTitle,
+  paneDisabled,
+  paneOrder,
+  className,
+  children,
+  ...props
+}: PageSectionProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled,
+    paneOrder,
+    defaultTitle: 'Section',
+  });
+
   return (
-    <ark.section data-slot="page-section" className={cn(pageSectionBase, className)} {...props}>
+    <ark.section
+      ref={pane.ref}
+      data-slot="page-section"
+      {...pane.dataAttributes}
+      className={cn(pageSectionBase, className)}
+      {...props}
+    >
       {children}
     </ark.section>
   );
