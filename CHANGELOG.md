@@ -1,3 +1,10 @@
+# [0.21.0](https://github.com/cloudvoyant/helical-ui/compare/v0.20.1...v0.21.0) (2026-11-02)
+
+
+### Features
+
+* **which-key:** add WhichKey, explorer, pane nav, and ModalKeymap ([#33](https://github.com/cloudvoyant/helical-ui/issues/33)) ([5f56b1f](https://github.com/cloudvoyant/helical-ui/commit/5f56b1f0d6872d3a4b152333eaf13b15b8da4135))
+
 ## [0.20.1](https://github.com/cloudvoyant/helical-ui/compare/v0.20.0...v0.20.1) (2026-11-01)
 
 
