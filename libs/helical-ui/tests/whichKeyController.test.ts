@@ -194,6 +194,48 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(calls).toEqual(['next', 'prev', 'next', 'prev', 'next', 'prev']);
     });
   });
+
+  describe('When "g g" and "g b" are dispatched across helix, vim, and kakoune presets', () => {
+    it('Then invokes motion.docStart on gg and motion.docEnd on gb in all three presets', () => {
+      // Arrange
+      const calls: string[] = [];
+      const controller = createWhichKeyController({
+        commands: {
+          'motion.docStart': (ctx) => {
+            calls.push(`${ctx.preset}:start`);
+            return true;
+          },
+          'motion.docEnd': (ctx) => {
+            calls.push(`${ctx.preset}:end`);
+            return true;
+          },
+        },
+      });
+
+      // Act: helix (default)
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('b'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('g'));
+
+      // Act: vim
+      controller.setPreset('vim');
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('b'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('g'));
+
+      // Act: kakoune
+      controller.setPreset('kakoune');
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('b'));
+      controller.handleKeyDown(createKeyEvent('g'));
+      controller.handleKeyDown(createKeyEvent('g'));
+
+      // Assert
+      expect(calls).toEqual(['helix:end', 'helix:start', 'vim:end', 'vim:start', 'kakoune:end', 'kakoune:start']);
+    });
+  });
 });
 
 describe('Given a controller switching between insert and normal modes', () => {

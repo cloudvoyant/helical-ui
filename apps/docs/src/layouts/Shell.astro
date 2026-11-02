@@ -141,7 +141,9 @@ const groups = NAV_GROUPS.map((g) => {
         <TopNav client:load currentPath={currentPath} groups={groups} />
         <DocsWhichKeyProvider client:load />
         <Page variant="landing">
-          <slot />
+          <div data-pane-id="docs-landing" data-pane-title="Home" data-pane-order="1" class="contents">
+            <slot />
+          </div>
           <PageFooter>
             <Footer />
           </PageFooter>

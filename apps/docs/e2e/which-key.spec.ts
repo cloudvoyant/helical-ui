@@ -605,4 +605,43 @@ test.describe('Docs Shell Keyboard Integration', () => {
       });
     });
   });
+
+  test.describe('Given the docs site homepage (/) in normal mode', () => {
+    test.beforeEach(async ({ page }) => {
+      // Arrange
+      await page.goto('');
+      await page.locator('[data-framework-selector][data-ready]').waitFor();
+    });
+
+    test.describe('When the user presses j, gb, and gg starting from the hero buttons', () => {
+      test('Then steps down from the hero buttons into the component cards on j without getting stuck, jumps to the last component card on gb, and jumps back to the first hero button on gg', async ({
+        page,
+      }) => {
+        // Arrange: focus the first hero CTA link ("Get started")
+        const landingPane = page.locator('[data-pane-id="docs-landing"]');
+        await expect(landingPane).toBeVisible();
+        const getStartedLink = landingPane.getByRole('link', { name: 'Get started' });
+        const lastCatalogCard = landingPane.locator('[data-page-section] a[href]').last();
+        await getStartedLink.focus();
+        await expect(getStartedLink).toBeFocused();
+
+        // Act: press j to step vertically from the hero row into the first row of component cards
+        await page.keyboard.press('j');
+        const focusedAfterJ = await page.evaluate(() => document.activeElement?.getAttribute('href') ?? '');
+        expect(focusedAfterJ).toContain('components/');
+
+        // Act: press g then b (Goto Bottom) to jump to the last component card at the bottom of the page
+        await page.keyboard.press('g');
+        await page.keyboard.press('b');
+        await expect(lastCatalogCard).toBeFocused();
+
+        // Act: press g then g (Goto Top) to jump back to "Get started" and scroll to the top of the page
+        await page.keyboard.press('g');
+        await page.keyboard.press('g');
+        await expect(getStartedLink).toBeFocused();
+        const scrollYAfterGG = await page.evaluate(() => window.scrollY);
+        expect(scrollYAfterGG).toBe(0);
+      });
+    });
+  });
 });

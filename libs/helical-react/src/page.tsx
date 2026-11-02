@@ -19,13 +19,37 @@ import {
 } from '@cloudvoyant/helical-ui';
 import { useOptionalPaneRegistration } from './which-key/context';
 
-export type PageProps = HTMLArkProps<'div'> & {
-  variant?: PageVariants['variant'];
-};
+export type PageProps = HTMLArkProps<'div'> &
+  PagePaneRegistrationProps & {
+    variant?: PageVariants['variant'];
+  };
 
-export function Page({ variant = 'default', className, children, ...props }: PageProps) {
+export function Page({
+  variant = 'default',
+  paneId,
+  paneTitle,
+  paneDisabled,
+  paneOrder,
+  className,
+  children,
+  ...props
+}: PageProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled: paneDisabled ?? !paneId,
+    paneOrder,
+    defaultTitle: 'Page',
+  });
+
   return (
-    <ark.div data-slot="page" className={cn(pageVariants({ variant }), className)} {...props}>
+    <ark.div
+      ref={pane.ref}
+      data-slot="page"
+      {...pane.dataAttributes}
+      className={cn(pageVariants({ variant }), className)}
+      {...props}
+    >
       {children}
     </ark.div>
   );
@@ -129,7 +153,7 @@ export function PageSection({
   const pane = useOptionalPaneRegistration({
     paneId,
     paneTitle,
-    paneDisabled,
+    paneDisabled: paneDisabled ?? !paneId,
     paneOrder,
     defaultTitle: 'Section',
   });

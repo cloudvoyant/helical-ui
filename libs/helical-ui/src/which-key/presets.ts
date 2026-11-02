@@ -683,10 +683,10 @@ export function createHelixPreset(leaderKey = 'Space'): Record<string, WhichKeyN
         },
         b: {
           key: 'b',
-          label: 'Window Bottom',
-          description: 'Jump to bottom of visible viewport (gb)',
+          label: 'Go to Bottom',
+          description: 'Jump to last item or bottom of document (gb)',
           category: 'Goto',
-          commandId: 'view.bottom',
+          commandId: 'motion.docEnd',
         },
         n: {
           key: 'n',
@@ -840,6 +840,13 @@ export function createVimPreset(leaderKey = 'Space'): Record<string, WhichKeyNod
           key: 'e',
           label: 'Backward Word End / Bottom',
           description: 'Jump to bottom of pane or document (ge)',
+          category: 'Goto',
+          commandId: 'motion.docEnd',
+        },
+        b: {
+          key: 'b',
+          label: 'Last Line / Bottom',
+          description: 'Jump to last item or bottom of document (gb)',
           category: 'Goto',
           commandId: 'motion.docEnd',
         },
@@ -1013,10 +1020,10 @@ export function createKakounePreset(leaderKey = 'Space'): Record<string, WhichKe
         },
         b: {
           key: 'b',
-          label: 'Window Bottom',
-          description: 'Go to bottom of visible window (gb)',
+          label: 'Buffer Bottom',
+          description: 'Go to bottom of buffer or last item (gb)',
           category: 'Goto',
-          commandId: 'view.bottom',
+          commandId: 'motion.docEnd',
         },
         a: {
           key: 'a',

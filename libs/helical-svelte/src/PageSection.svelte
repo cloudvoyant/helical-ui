@@ -29,7 +29,7 @@
     () => ({
       paneId,
       paneTitle,
-      paneDisabled,
+      paneDisabled: paneDisabled ?? !paneId,
       paneOrder,
       defaultTitle: 'Section',
     }),
