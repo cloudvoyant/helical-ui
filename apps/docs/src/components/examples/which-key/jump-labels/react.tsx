@@ -22,7 +22,7 @@ function JumpLabelsSurface({
   jumpAction: JumpAction;
   onToggleJumpAction: (next: JumpAction) => void;
 }) {
-  const { startJumpMode } = useWhichKey();
+  const { startJumpMode, setJumpAction } = useWhichKey();
   const [activatedItem, setActivatedItem] = useState('None');
   const [focusedItem, setFocusedItem] = useState('None');
 
@@ -39,7 +39,10 @@ function JumpLabelsSurface({
             size="sm"
             variant={jumpAction === 'focus' ? 'solid' : 'outline'}
             data-testid="wk-jump-mode-focus"
-            onClick={() => onToggleJumpAction('focus')}
+            onClick={() => {
+              setJumpAction('focus');
+              onToggleJumpAction('focus');
+            }}
           >
             jumpAction: focus
           </Button>
@@ -47,11 +50,14 @@ function JumpLabelsSurface({
             size="sm"
             variant={jumpAction === 'activate' ? 'solid' : 'outline'}
             data-testid="wk-jump-mode-activate"
-            onClick={() => onToggleJumpAction('activate')}
+            onClick={() => {
+              setJumpAction('activate');
+              onToggleJumpAction('activate');
+            }}
           >
             jumpAction: activate
           </Button>
-          <Button size="sm" variant="outline" data-testid="wk-jump-trigger" onClick={() => startJumpMode(jumpAction)}>
+          <Button size="sm" variant="outline" data-testid="wk-jump-trigger" onClick={() => startJumpMode()}>
             Trigger Jump (<Kbd size="sm" hotkey={['g', 'w']} />)
           </Button>
         </HStack>

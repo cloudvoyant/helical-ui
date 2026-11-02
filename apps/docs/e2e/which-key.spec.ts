@@ -340,6 +340,7 @@ for (const framework of FRAMEWORKS) {
         }) => {
           // Arrange
           const demo = island(page, framework, 'jump-labels');
+          await demo.scrollIntoViewIfNeeded();
           await demo.getByTestId('wk-jump-target-0').focus();
 
           // Act: press g then w in default focus mode
@@ -392,6 +393,7 @@ for (const framework of FRAMEWORKS) {
           await demo.getByTestId('wk-jump-mode-activate').click();
           await demo.getByTestId('wk-jump-trigger').click();
           await expect(overlay).toBeVisible();
+          await expect(overlay).toHaveAttribute('data-jump-action', 'activate');
 
           const secondLabel = await findLabelForTarget();
           for (const ch of secondLabel) {
@@ -418,7 +420,7 @@ for (const framework of FRAMEWORKS) {
           // Arrange
           const editor = island(page, framework, 'default').locator('.ProseMirror').first();
           const firstParagraph = editor.locator('p').first();
-          await firstParagraph.click();
+          await firstParagraph.click({ position: { x: 16, y: 12 } });
 
           // Act: press Escape to switch from insert to normal mode
           await page.keyboard.press('Escape');

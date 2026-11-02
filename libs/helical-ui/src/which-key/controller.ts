@@ -214,7 +214,7 @@ function getPaneFocusableItems(container: HTMLElement, ownScope?: HTMLElement | 
       const nestedScope = el.closest('[data-which-key-scope]');
       if (nestedScope) return false;
     }
-    if (el.getAttribute('aria-hidden') === 'true' || el.hasAttribute(' inert')) {
+    if (el.getAttribute('aria-hidden') === 'true' || el.hasAttribute('inert')) {
       return false;
     }
     return true;
@@ -226,8 +226,19 @@ interface AttachedControllerEntry {
   isBusy: () => boolean;
 }
 
-const attachedEntriesByDoc = new WeakMap<Document, Set<AttachedControllerEntry>>();
-const lastInteractedScopeByDoc = new WeakMap<Document, HTMLElement | null>();
+const globalWhichKeyState = globalThis as typeof globalThis & {
+  __helicalAttachedEntriesByDoc__?: WeakMap<Document, Set<AttachedControllerEntry>>;
+  __helicalLastInteractedScopeByDoc__?: WeakMap<Document, HTMLElement | null>;
+};
+
+const attachedEntriesByDoc = (globalWhichKeyState.__helicalAttachedEntriesByDoc__ ??= new WeakMap<
+  Document,
+  Set<AttachedControllerEntry>
+>());
+const lastInteractedScopeByDoc = (globalWhichKeyState.__helicalLastInteractedScopeByDoc__ ??= new WeakMap<
+  Document,
+  HTMLElement | null
+>());
 
 function isScopeElementActive(scopeEl: HTMLElement | null, doc: Document): boolean {
   if (!scopeEl) return true;
@@ -563,10 +574,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
   function focusElementInActivePane(target: HTMLElement): void {
     runProgrammaticFocus(() => {
-      target.focus({ preventScroll: false });
+      target.focus({ preventScroll: true });
       if (typeof target.scrollIntoView === 'function') {
         try {
-          target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          target.scrollIntoView({
+            block: 'nearest',
+            inline: 'nearest',
+            behavior: 'instant' as ScrollBehavior,
+          });
         } catch {
           // Ignore in JSDOM/Node
         }
@@ -1466,6 +1481,28 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       event.stopPropagation();
       setMode('insert');
       return true;
+    }
+
+    // Preserve native Space key toggling on focused checkboxes, switches, radios, and component demo buttons.
+    if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && targetEl) {
+      const role = targetEl.getAttribute('role');
+      const isToggleControl =
+        (targetEl instanceof HTMLInputElement && (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
+        role === 'checkbox' ||
+        role === 'switch' ||
+        role === 'radio';
+      if (isToggleControl) {
+        return false;
+      }
+
+      const isButtonControl = targetEl.tagName === 'BUTTON' || role === 'button';
+      if (isButtonControl) {
+        const previewAncestor = targetEl.closest('[data-example-preview]');
+        const ownScope = options.getScopeElement?.() ?? null;
+        if (previewAncestor && (!ownScope || !previewAncestor.contains(ownScope))) {
+          return false;
+        }
+      }
     }
 
     const chordCandidates = eventToChordKeys(event);

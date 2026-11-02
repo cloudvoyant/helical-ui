@@ -73,8 +73,16 @@ export interface ModalEditorTarget {
   hasActiveSuggestion?(): boolean;
 }
 
-const modalEditorRegistry = new WeakMap<Element, ModalEditorTarget>();
-const activeModalEditors = new Set<ModalEditorTarget>();
+const globalModalState = globalThis as typeof globalThis & {
+  __helicalModalEditorRegistry__?: WeakMap<Element, ModalEditorTarget>;
+  __helicalActiveModalEditors__?: Set<ModalEditorTarget>;
+};
+
+const modalEditorRegistry = (globalModalState.__helicalModalEditorRegistry__ ??= new WeakMap<
+  Element,
+  ModalEditorTarget
+>());
+const activeModalEditors = (globalModalState.__helicalActiveModalEditors__ ??= new Set<ModalEditorTarget>());
 
 export function registerModalEditor(element: HTMLElement, target: ModalEditorTarget): () => void {
   modalEditorRegistry.set(element, target);

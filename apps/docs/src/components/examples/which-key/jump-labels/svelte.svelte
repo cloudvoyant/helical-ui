@@ -38,6 +38,7 @@
               data-testid="wk-jump-mode-focus"
               onclick={() => {
                 jumpAction = 'focus';
+                wk.setJumpAction('focus');
               }}
             >
               jumpAction: focus
@@ -48,6 +49,7 @@
               data-testid="wk-jump-mode-activate"
               onclick={() => {
                 jumpAction = 'activate';
+                wk.setJumpAction('activate');
               }}
             >
               jumpAction: activate
@@ -56,7 +58,7 @@
               size="sm"
               variant="outline"
               data-testid="wk-jump-trigger"
-              onclick={() => wk.startJumpMode(jumpAction)}
+              onclick={() => wk.startJumpMode()}
             >
               Trigger Jump (<Kbd size="sm" hotkey={['g', 'w']} />)
             </Button>

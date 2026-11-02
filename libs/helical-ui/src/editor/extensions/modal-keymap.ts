@@ -416,12 +416,36 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       let targetNode: PMNode | null = null;
       let targetPos = -1;
 
-      for (let d = $head.depth; d >= 1; d -= 1) {
-        const ancestor = $head.node(d);
-        if (matchesNodeType(ancestor.type.name)) {
-          targetNode = ancestor;
-          targetPos = $head.before(d);
-          break;
+      if (kind === 'p') {
+        for (let d = $head.depth; d >= 1; d -= 1) {
+          const ancestor = $head.node(d);
+          if (ancestor.type.name === 'paragraph') {
+            targetNode = ancestor;
+            targetPos = $head.before(d);
+            break;
+          }
+        }
+        if (!targetNode) {
+          doc.descendants((node, pos) => {
+            if (targetNode) return false;
+            if (node.type.name === 'paragraph') {
+              targetNode = node;
+              targetPos = pos;
+              return false;
+            }
+            return true;
+          });
+        }
+      }
+
+      if (!targetNode) {
+        for (let d = $head.depth; d >= 1; d -= 1) {
+          const ancestor = $head.node(d);
+          if (matchesNodeType(ancestor.type.name)) {
+            targetNode = ancestor;
+            targetPos = $head.before(d);
+            break;
+          }
         }
       }
 
@@ -694,9 +718,20 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
 
     setModalState({ mode: nextMode, preset: nextPreset }): void {
       const storage = getStorage();
-      if (storage.mode === nextMode && storage.preset === nextPreset) return;
+      const prev = modalKeymapPluginKey.getState(editor.state);
+      if (
+        storage.mode === nextMode &&
+        storage.preset === nextPreset &&
+        prev?.mode === nextMode &&
+        prev?.preset === nextPreset
+      ) {
+        return;
+      }
       storage.mode = nextMode;
       storage.preset = nextPreset;
+      if (prev && prev.mode === nextMode && prev.preset === nextPreset && prev.secondaryRanges.length === 0) {
+        return;
+      }
       try {
         const tr = updateMeta(editor.state.tr, {
           mode: nextMode,
@@ -838,15 +873,19 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
             mousedown(view) {
               if (storage.mode !== 'insert') {
                 storage.mode = 'insert';
-                const prev = modalKeymapPluginKey.getState(view.state);
-                if (prev && prev.mode !== 'insert') {
-                  view.dispatch(
-                    view.state.tr.setMeta(modalKeymapPluginKey, {
-                      ...prev,
-                      mode: 'insert',
-                      secondaryRanges: [],
-                    }),
-                  );
+                try {
+                  const prev = modalKeymapPluginKey.getState(view.state);
+                  if (prev && prev.mode !== 'insert') {
+                    view.dispatch(
+                      view.state.tr.setMeta(modalKeymapPluginKey, {
+                        ...prev,
+                        mode: 'insert',
+                        secondaryRanges: [],
+                      }),
+                    );
+                  }
+                } catch {
+                  // View may have been destroyed
                 }
               }
               return false;

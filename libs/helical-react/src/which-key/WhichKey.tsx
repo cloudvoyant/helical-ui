@@ -70,8 +70,6 @@ function WhichKeyInner({
     return controller.trackBranchElement(() => jumpOverlayRef.current);
   }, [controller, mode]);
 
-  const rootTrie = controller.getState();
-
   return (
     <>
       <Portal>
@@ -176,7 +174,7 @@ function WhichKeyInner({
                 </button>
               </Row>
               <span className="font-mono uppercase opacity-75">
-                {rootTrie.preset}
+                {preset}
               </span>
             </div>
           </div>

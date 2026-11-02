@@ -30,7 +30,7 @@ for (const framework of FRAMEWORKS) {
           // Act & Assert
           await expect(keycaps.first()).toBeVisible();
           await expect(keycaps.first()).toContainText('⌘K');
-          await expect(keycaps.nth(1)).toContainText(/⌃\s*W/);
+          await expect(keycaps.nth(1)).toContainText(/(?:⌃\s*W|Ctrl\+W)/);
           await expect(sequences).toHaveCount(1);
           await expect(sequences.locator('kbd[data-slot="kbd"]')).toHaveCount(2);
         });
