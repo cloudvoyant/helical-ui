@@ -51,7 +51,7 @@ export const whichKeyFooterBase =
   'flex items-center justify-between gap-2 px-3 pt-1 pb-2 text-[10px] text-muted-foreground';
 
 export const whichKeyModeBadgeVariants = cva(
-  'inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider uppercase select-none',
+  'inline-flex items-center gap-1 rounded font-mono font-semibold tracking-wider uppercase select-none',
   {
     variants: {
       mode: {
@@ -60,12 +60,20 @@ export const whichKeyModeBadgeVariants = cva(
         insert: 'bg-success/20 text-success',
         jump: 'bg-info/20 text-info',
       },
+      size: {
+        sm: 'px-1.5 py-0.5 text-[10px]',
+        md: 'px-2 py-0.5 text-xs',
+        lg: 'px-2.5 py-1 text-sm',
+      },
     },
     defaultVariants: {
       mode: 'normal',
+      size: 'sm',
     },
   },
 );
+
+export type WhichKeyModeBadgeVariants = VariantProps<typeof whichKeyModeBadgeVariants>;
 
 export const whichKeyExplorerContentBase =
   'flex max-h-[min(34rem,85vh)] w-full max-w-xl flex-col gap-0 overflow-hidden bg-popover p-0 text-popover-foreground';

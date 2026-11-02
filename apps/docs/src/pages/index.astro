@@ -3,7 +3,7 @@ import Shell from '../layouts/Shell.astro';
 import { getCollection } from 'astro:content';
 import { buttonVariants } from '@cloudvoyant/helical-ui';
 import { cn } from '@cloudvoyant/helical-ui';
-import { PageSection } from '@cloudvoyant/helical-react';
+import { Kbd, PageSection } from '@cloudvoyant/helical-react';
 import HeroWord from '../components/HeroWord.tsx';
 
 const components = (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
@@ -46,6 +46,30 @@ const components = (await getCollection('components')).sort((a, b) => a.data.ord
         >
           Browse components
         </a>
+      </div>
+      <div class="mt-8 hidden items-center justify-center gap-4 text-xs text-muted-foreground sm:inline-flex">
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">Space</Kbd>
+          <span>Leader menu</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">?</Kbd>
+          <span>Explore keybindings</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle" hotkey={['g', 'w']} />
+          <span>Jump labels</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">h</Kbd>
+          <Kbd size="sm" variant="subtle">j</Kbd>
+          <Kbd size="sm" variant="subtle">k</Kbd>
+          <Kbd size="sm" variant="subtle">l</Kbd>
+          <span>Navigate</span>
+        </span>
       </div>
     </div>
   </PageSection>

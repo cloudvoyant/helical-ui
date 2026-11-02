@@ -1,7 +1,6 @@
 <!-- apps/docs/src/components/examples/which-key/default/svelte.svelte -->
 <script lang="ts">
   import {
-    Badge,
     Button,
     Dialog,
     DialogBackdrop,
@@ -15,6 +14,7 @@
     Pane,
     VStack,
     WhichKey,
+    WhichKeyMode,
     WhichKeyProvider,
     useWhichKey,
   } from '@cloudvoyant/helical-svelte';
@@ -39,9 +39,7 @@
     >
       <HStack class="flex-wrap items-center justify-between gap-2">
         <HStack class="items-center gap-2">
-          <Badge variant="subtle" color="primary" data-testid="wk-default-mode">
-            {wk.mode.toUpperCase()}
-          </Badge>
+          <WhichKeyMode data-testid="wk-default-mode" />
           <span class="text-xs text-muted-foreground">
             Preset: <strong class="text-foreground">{wk.preset}</strong>
           </span>

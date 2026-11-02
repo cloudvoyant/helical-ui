@@ -48,11 +48,13 @@ export function WhichKeyProvider({
   keymap,
   commands,
   enabled = true,
+  disableOnMobile = true,
   scoped = true,
   onPresetChange,
   onModeChange,
   onJumpActionChange,
   onCommand,
+  onYank,
   children,
 }: WhichKeyProviderProps) {
   const env = useEnvironmentContext();
@@ -70,12 +72,14 @@ export function WhichKeyProvider({
       keymap,
       commands,
       enabled,
+      disableOnMobile,
       getDocument: () => env.getDocument(),
       getScopeElement: () => (scoped ? scopeRef.current : null),
       onPresetChange,
       onModeChange,
       onJumpActionChange,
       onCommand,
+      onYank,
     });
   }
 

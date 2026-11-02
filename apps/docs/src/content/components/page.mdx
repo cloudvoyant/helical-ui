@@ -73,15 +73,3 @@ A full-viewport section for the `landing` variant. Renders `<section>`.
 ## Accessibility
 
 `PageContent` renders a native `<main>`, `PageFooter` a native `<footer>`, and `PageSection` a native `<section>`, so landmarks come from the elements themselves. A document should contain one `<main>` and one `<footer>` — these parts are single-use per document (the demos on this page render several for illustration, which is why they sit inside the docs shell's own landmark). `PageGutter` renders a plain `<div>` (never a second complementary landmark) — add `role="complementary"` with an `aria-label` when a gutter carries meaningful content. The gutter scroll behavior is native `position: sticky`, so no JavaScript or keyboard handling is required.
-
-## Keybindings
-
-`PageContent` and `PageGutter` accept optional `paneId`, `paneTitle`, `paneDisabled`, and `paneOrder` props to register as spatial panes when wrapped in a [`WhichKeyProvider`](/helical-ui/components/which-key):
-
-| Keybinding | Action |
-| --- | --- |
-| `Ctrl+w h/j/k/l` (`Space w h/j/k/l`) | Move focus spatially between registered `PageGutter` and `PageContent` panes. |
-| `Ctrl+w w` / `Space 1..9` | Cycle panes or jump directly to a pane by index. |
-| `j` / `k` / `w` / `b` | Step through focusable items within the active pane. |
-| `] s` / `[ s` / `}` / `{` | Jump to the next or previous `PageSection` or heading inside `PageContent`. |
-| `g g` / `G` (`g e`) | Jump to the first or last item in the active pane and scroll to the boundary. |

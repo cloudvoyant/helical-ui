@@ -13,7 +13,6 @@
     whichKeyHeaderBase,
     whichKeyItemBase,
     whichKeyItemLabelBase,
-    whichKeyModeBadgeVariants,
     whichKeyTitleBase,
     whichKeyVariants,
     type WhichKeyProps as CoreWhichKeyProps,
@@ -23,6 +22,7 @@
   import Scroll from '../Scroll.svelte';
   import { getOptionalWhichKeyContext } from './context.svelte';
   import WhichKeyExplorer from './WhichKeyExplorer.svelte';
+  import WhichKeyMode from './WhichKeyMode.svelte';
 
   type Props = Omit<CoreWhichKeyProps, 'className'> & {
     class?: string;
@@ -71,12 +71,7 @@
         <div class={whichKeyHeaderBase}>
           <div class={whichKeyTitleBase}>
             {#if showModeBadge}
-              <span
-                data-testid="which-key-mode-badge"
-                class={whichKeyModeBadgeVariants({ mode: ctx.state.mode })}
-              >
-                {ctx.state.sticky ? `${ctx.state.mode}·lock` : ctx.state.mode}
-              </span>
+              <WhichKeyMode mode={ctx.state.mode} sticky={ctx.state.sticky} />
             {/if}
             <span data-testid="which-key-title">
               {ctx.state.title === 'Space' ? 'Leader' : ctx.state.title}

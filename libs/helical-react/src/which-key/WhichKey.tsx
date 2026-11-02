@@ -16,7 +16,6 @@ import {
   whichKeyHeaderBase,
   whichKeyItemBase,
   whichKeyItemLabelBase,
-  whichKeyModeBadgeVariants,
   whichKeyTitleBase,
   whichKeyVariants,
   type WhichKeyProps as CoreWhichKeyProps,
@@ -26,6 +25,7 @@ import { Row } from '../row';
 import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 import { WhichKeyExplorer } from './WhichKeyExplorer';
+import { WhichKeyMode } from './WhichKeyMode';
 
 export type WhichKeyProps = CoreWhichKeyProps;
 
@@ -89,14 +89,7 @@ function WhichKeyInner({
           >
             <div className={whichKeyHeaderBase}>
               <div className={whichKeyTitleBase}>
-                {showModeBadge && (
-                  <span
-                    data-testid="which-key-mode-badge"
-                    className={whichKeyModeBadgeVariants({ mode })}
-                  >
-                    {sticky ? `${mode}·lock` : mode}
-                  </span>
-                )}
+                {showModeBadge && <WhichKeyMode mode={mode} sticky={sticky} />}
                 <span data-testid="which-key-title">
                   {title === 'Space' ? 'Leader' : title}
                 </span>

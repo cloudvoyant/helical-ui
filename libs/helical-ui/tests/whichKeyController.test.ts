@@ -234,16 +234,20 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
   describe('When modal motions, text objects, selection transforms, and operators are dispatched in normal mode', () => {
     it('Then delegates directly to ModalEditorTarget methods with active preset, mode, and count', () => {
       // Arrange
-      const fakeEditorElement = { parentElement: null } as unknown as HTMLElement;
+      const onYank = vi.fn();
+      const fakeEditorElement = { parentElement: null, dispatchEvent: vi.fn() } as unknown as HTMLElement;
       const target: ModalEditorTarget = {
         move: vi.fn(() => true),
         selectTextObject: vi.fn(() => true),
         transformSelection: vi.fn(() => true),
-        execOperator: vi.fn(() => ({ enterInsert: false })),
+        execOperator: vi.fn((op) => ({
+          enterInsert: false,
+          ...(op === 'yank' ? { yankedText: 'yanked line' } : {}),
+        })),
         setModalState: vi.fn(),
       };
       const unregister = registerModalEditor(fakeEditorElement, target);
-      const controller = createWhichKeyController();
+      const controller = createWhichKeyController({ onYank });
 
       try {
         // Act
@@ -256,6 +260,7 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
 
         controller.handleKeyDown(createKeyEvent(';', { altKey: true, target: fakeEditorElement }));
         controller.handleKeyDown(createKeyEvent('d', { target: fakeEditorElement }));
+        controller.handleKeyDown(createKeyEvent('x', { target: fakeEditorElement }));
 
         // Assert
         expect(target.move).toHaveBeenCalledWith('wordForward', {
@@ -273,6 +278,20 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
           mode: 'normal',
           count: 1,
         });
+        expect(target.move).toHaveBeenCalledWith('lineSelect', {
+          preset: 'helix',
+          mode: 'normal',
+          count: 1,
+        });
+        expect(controller.getState().mode).toBe('select');
+
+        controller.handleKeyDown(createKeyEvent('y', { target: fakeEditorElement }));
+        expect(onYank).toHaveBeenCalledWith(
+          'yanked line',
+          expect.objectContaining({ mode: 'select', preset: 'helix' }),
+        );
+        expect(fakeEditorElement.dispatchEvent).toHaveBeenCalled();
+        expect(controller.getState().mode).toBe('normal');
       } finally {
         // Cleanup
         unregister();
@@ -295,6 +314,35 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
       // Assert
       expect(controller.getState().jumpAction).toBe('focus');
       expect(onJumpActionChange).toHaveBeenCalledWith('focus');
+    });
+  });
+
+  describe('When running on a mobile touch-only viewport', () => {
+    it('Then disables key handling by default unless disableOnMobile is false', () => {
+      // Arrange
+      const fakeDoc = {
+        defaultView: {
+          matchMedia: (query: string) => ({
+            matches: query.includes('pointer: coarse'),
+          }),
+        },
+      } as unknown as Document;
+
+      const mobileController = createWhichKeyController({ getDocument: () => fakeDoc });
+      const forcedController = createWhichKeyController({
+        getDocument: () => fakeDoc,
+        disableOnMobile: false,
+      });
+
+      // Act
+      const handledByDefault = mobileController.handleKeyDown(createKeyEvent(' ', { code: 'Space' }));
+      const handledWhenForced = forcedController.handleKeyDown(createKeyEvent(' ', { code: 'Space' }));
+
+      // Assert
+      expect(handledByDefault).toBe(false);
+      expect(mobileController.getState().isOpen).toBe(false);
+      expect(handledWhenForced).toBe(true);
+      expect(forcedController.getState().isOpen).toBe(true);
     });
   });
 });

@@ -1,14 +1,13 @@
 <!-- apps/docs/src/components/examples/which-key/forms/svelte.svelte -->
 <script lang="ts">
   import {
-    Badge,
     HStack,
     Kbd,
     Pane,
     VStack,
     WhichKey,
+    WhichKeyMode,
     WhichKeyProvider,
-    useWhichKey,
   } from '@cloudvoyant/helical-svelte';
 
   let name = $state('');
@@ -17,7 +16,6 @@
 
 <WhichKeyProvider preset="helix">
   {#snippet children()}
-    {@const wk = useWhichKey()}
     <Pane
       paneId="wk-forms-pane"
       paneTitle="Form Controls"
@@ -31,13 +29,7 @@
           <Kbd size="sm">Enter</Kbd> to enter <strong>insert</strong> mode, and
           <Kbd size="sm">Esc</Kbd> to return to <strong>normal</strong> mode.
         </span>
-        <Badge
-          variant="subtle"
-          color={wk.mode === 'insert' ? 'success' : 'primary'}
-          data-testid="wk-forms-mode"
-        >
-          {wk.mode.toUpperCase()}
-        </Badge>
+        <WhichKeyMode data-testid="wk-forms-mode" />
       </HStack>
 
       <VStack class="items-stretch gap-2.5">

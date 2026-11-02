@@ -18,63 +18,61 @@ const codeId = `example-${slug}-code`;
 ---
 
 <div
-  class="group/example w-full rounded-lg outline-none"
+  class="flex w-full flex-col rounded-lg border border-border bg-background outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25"
   data-example
   data-example-id={id || undefined}
   tabindex="0"
 >
-  <div class="flex flex-col rounded-lg border border-border bg-background transition-colors group-focus-visible/example:border-primary group-focus-visible/example:ring-2 group-focus-visible/example:ring-primary/25">
-    <div data-example-preview class="rounded-t-lg bg-background outline-none" data-demo tabindex="-1">
-      <ExampleScreen fullscreen={fullscreen}>
-        <slot />
-      </ExampleScreen>
-    </div>
+  <div data-example-preview class="rounded-t-lg bg-background outline-none" data-demo tabindex="-1">
+    <ExampleScreen fullscreen={fullscreen}>
+      <slot />
+    </ExampleScreen>
+  </div>
 
-    <div class="overflow-hidden rounded-b-lg">
-      <div id={codeId} data-example-code hidden data-demo>
-        <div data-fw="react">
-          <Code
-            code={reactCode}
-            lang="tsx"
-            themes={{ light: 'github-light', dark: 'github-dark' }}
-            defaultColor={false}
-          />
-        </div>
-        <div data-fw="svelte">
-          <Code
-            code={svelteCode}
-            lang="svelte"
-            themes={{ light: 'github-light', dark: 'github-dark' }}
-            defaultColor={false}
-          />
-        </div>
+  <div class="overflow-hidden rounded-b-lg">
+    <div id={codeId} data-example-code hidden data-demo>
+      <div data-fw="react">
+        <Code
+          code={reactCode}
+          lang="tsx"
+          themes={{ light: 'github-light', dark: 'github-dark' }}
+          defaultColor={false}
+        />
       </div>
-
-      <button
-        type="button"
-        class="flex w-full items-center justify-center gap-1.5 border-t border-border bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        data-example-toggle
-        aria-expanded="false"
-        aria-controls={codeId}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          data-example-chevron
-          class="transition-transform duration-200"
-        >
-          <path d="m6 9 6 6 6-6"></path>
-        </svg>
-        <span data-example-toggle-label>Show code</span>
-      </button>
+      <div data-fw="svelte">
+        <Code
+          code={svelteCode}
+          lang="svelte"
+          themes={{ light: 'github-light', dark: 'github-dark' }}
+          defaultColor={false}
+        />
+      </div>
     </div>
+
+    <button
+      type="button"
+      class="flex w-full items-center justify-center gap-1.5 border-t border-border bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      data-example-toggle
+      aria-expanded="false"
+      aria-controls={codeId}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        data-example-chevron
+        class="transition-transform duration-200"
+      >
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+      <span data-example-toggle-label>Show code</span>
+    </button>
   </div>
 </div>
 

@@ -26,7 +26,7 @@ const items = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
           <a
             href={`#${h.slug}`}
             class:list={[
-              'block border-l py-0.5 text-muted-foreground transition-colors hover:text-foreground',
+              'block border-l py-0.5 text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:bg-accent/60 focus-visible:text-foreground',
               h.depth === 3 ? 'border-transparent pl-8' : 'border-border pl-4',
             ]}
           >

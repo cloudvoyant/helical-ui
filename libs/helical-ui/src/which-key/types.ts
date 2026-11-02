@@ -70,7 +70,7 @@ export interface ModalEditorTarget {
   execOperator(
     op: ModalOperator,
     options: { preset: KeybindingPreset; mode: KeymapMode; count: number },
-  ): { enterInsert?: boolean } | boolean;
+  ): { enterInsert?: boolean; yankedText?: string } | boolean;
   setModalState(state: { mode: KeymapMode; preset: KeybindingPreset }): void;
   hasActiveSuggestion?(): boolean;
 }
@@ -163,12 +163,18 @@ export interface WhichKeyControllerOptions {
   keymap?: Record<string, WhichKeyNode>;
   commands?: Record<string, KeymapHandler>;
   enabled?: boolean;
+  /**
+   * Automatically disable WhichKey on mobile / touch-only viewports (`(pointer: coarse)` or `< 768px`).
+   * @default true
+   */
+  disableOnMobile?: boolean;
   getDocument?: () => Document;
   getScopeElement?: () => HTMLElement | null;
   onPresetChange?: (preset: KeybindingPreset) => void;
   onModeChange?: (mode: KeymapMode) => void;
   onJumpActionChange?: (action: JumpAction) => void;
   onCommand?: (commandId: string, ctx: KeymapCommandContext) => void;
+  onYank?: (text: string, ctx: KeymapCommandContext) => void;
 }
 
 export interface WhichKeyController {
@@ -219,6 +225,14 @@ export interface WhichKeyProps {
   variant?: WhichKeyVariant;
   showModeBadge?: boolean;
   showExplorer?: boolean;
+  className?: string;
+}
+
+export interface WhichKeyModeProps {
+  mode?: KeymapMode;
+  sticky?: boolean;
+  showPreset?: boolean;
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 

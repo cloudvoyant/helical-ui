@@ -38,6 +38,15 @@ import Examples from '../../components/Examples.astro';
 | `showModeBadge` | `boolean` | `true` | Displays the current mode badge (`normal`, `select`, `insert`, `jump`, or `·lock`). |
 | `showExplorer` | `boolean` | `true` | Automatically mounts the `<leader>?` `WhichKeyExplorer` modal. |
 
+### WhichKeyMode
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `mode` | `'normal' \| 'select' \| 'insert' \| 'jump'` | — | Optional mode override; defaults to the active `WhichKeyProvider` or document controller mode. |
+| `sticky` | `boolean` | — | Optional sticky-lock override (`·lock` suffix); defaults to the active controller's sticky state. |
+| `showPreset` | `boolean` | `false` | Prepends the active preset name (`helix · normal`). |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Badge size variant. |
+
 ### WhichKeyExplorer
 
 | Prop | Type | Default | Description |

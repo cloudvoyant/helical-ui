@@ -1,13 +1,13 @@
 <!-- apps/docs/src/components/examples/which-key/presets/svelte.svelte -->
 <script lang="ts">
   import {
-    Badge,
     Button,
     HStack,
     Kbd,
     Pane,
     VStack,
     WhichKey,
+    WhichKeyMode,
     WhichKeyProvider,
     useWhichKey,
     type KeybindingPreset,
@@ -47,9 +47,7 @@
             {/each}
           </HStack>
           <HStack class="items-center gap-2">
-            <Badge variant="subtle" color="primary" data-testid="wk-presets-active">
-              {wk.preset} · {wk.sticky ? `${wk.mode}·lock` : wk.mode}
-            </Badge>
+            <WhichKeyMode showPreset data-testid="wk-presets-active" />
             <span class="text-xs text-muted-foreground" data-testid="wk-presets-last-cmd">
               {lastCommand}
             </span>

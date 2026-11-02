@@ -1,5 +1,6 @@
 // libs/helical-svelte/src/which-key/index.ts
 export { default as WhichKey } from './WhichKey.svelte';
+export { default as WhichKeyMode } from './WhichKeyMode.svelte';
 export { default as WhichKeyExplorer } from './WhichKeyExplorer.svelte';
 export { default as WhichKeyProvider } from './WhichKeyProvider.svelte';
 export { default as Pane } from './Pane.svelte';
@@ -32,6 +33,7 @@ export type {
   WhichKeyController,
   WhichKeyControllerOptions,
   WhichKeyExplorerProps,
+  WhichKeyModeProps,
   WhichKeyNode,
   WhichKeyProps,
   WhichKeyState,

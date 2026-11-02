@@ -315,5 +315,43 @@ describe('Given a Tiptap/ProseMirror Editor instance built with buildExtensions 
       expect(textAfterUndo).toBe('Hello World');
       expect(textAfterRedo).toBe(' World');
     });
+
+    it('Then expands selection characterwise in select mode on the first cursor motion (right, left, down, up)', () => {
+      // Arrange
+      const editor = createTestEditor({
+        type: 'doc',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: 'Alpha' }],
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Bravo' }],
+          },
+        ],
+      });
+      const target = getEditorModalTarget(editor)!;
+
+      // Act & Assert: at 'A' (pos 1), moving right once in select mode selects 'Al' (2 chars)
+      target.move('docStart', { preset: 'helix', mode: 'normal', count: 1 });
+      target.setModalState({ mode: 'select', preset: 'helix' });
+      target.move('right', { preset: 'helix', mode: 'select', count: 1 });
+      expect(getSelectedText(editor)).toBe('Al');
+
+      // Moving right again selects 'Alp' (3 chars)
+      target.move('right', { preset: 'helix', mode: 'select', count: 1 });
+      expect(getSelectedText(editor)).toBe('Alp');
+
+      // Moving left once shrinks back to 'Al'
+      target.move('left', { preset: 'helix', mode: 'select', count: 1 });
+      expect(getSelectedText(editor)).toBe('Al');
+
+      // Collapse on 'l' (pos 2) and move left once in select mode -> selects 'Al'
+      target.transformSelection('collapse');
+      target.move('left', { preset: 'helix', mode: 'select', count: 1 });
+      expect(getSelectedText(editor)).toBe('Al');
+    });
   });
 });

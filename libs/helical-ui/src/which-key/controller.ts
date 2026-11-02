@@ -395,6 +395,27 @@ function shouldEntryHandleEvent(entry: AttachedControllerEntry, doc: Document): 
 export function createWhichKeyController(options: WhichKeyControllerOptions = {}): WhichKeyController {
   const storageKey = options.storageKey;
 
+  function isMobileViewport(): boolean {
+    if (options.disableOnMobile === false) return false;
+    const doc = resolveDoc();
+    const win = doc?.defaultView ?? (typeof window !== 'undefined' ? window : null);
+    if (!win || typeof win.matchMedia !== 'function') return false;
+    try {
+      return (
+        win.matchMedia('(pointer: coarse) and (hover: none)').matches ||
+        win.matchMedia('(max-width: 767px) and (pointer: coarse)').matches
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function isControllerEnabled(): boolean {
+    if (options.enabled === false) return false;
+    if (isMobileViewport()) return false;
+    return true;
+  }
+
   function readStoredPreset(): KeybindingPreset | null {
     if (!storageKey || typeof window === 'undefined') return null;
     try {
@@ -1451,7 +1472,11 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       return true;
     }
     if (commandId === 'mode.toggleSelect') {
-      setMode(mode === 'select' ? 'normal' : 'select');
+      const nextMode = mode === 'select' ? 'normal' : 'select';
+      if (nextMode === 'normal' && editorTarget) {
+        editorTarget.transformSelection('collapse');
+      }
+      setMode(nextMode);
       return true;
     }
     if (commandId === 'jump.start') {
@@ -1513,13 +1538,17 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
           mode,
           count: ctx.count,
         });
-        if (preset === 'vim' && motion === 'lineSelect' && mode === 'normal') {
+        if (motion === 'lineSelect' && mode === 'normal') {
           setMode('select');
         }
         return handled;
       }
       if (activeEl && (activeEl.isContentEditable || activeEl.getAttribute('contenteditable') === 'true')) {
-        return handleGenericContentEditableMotion(activeEl, motion, ctx.count);
+        const handled = handleGenericContentEditableMotion(activeEl, motion, ctx.count);
+        if (handled && motion === 'lineSelect' && mode === 'normal') {
+          setMode('select');
+        }
+        return handled;
       }
 
       const activeTab = activeEl?.closest<HTMLElement>('[role="tab"]');
@@ -1616,12 +1645,34 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     // Operator commands
     if (commandId.startsWith('operator.')) {
       const op = commandId.slice('operator.'.length) as ModalOperator;
+      const emitYankNotification = (yankedText: string) => {
+        if (!yankedText) return;
+        options.onYank?.(yankedText, ctx);
+        if (typeof CustomEvent === 'function') {
+          const dispatchTarget: EventTarget | null = activeEl ?? doc ?? null;
+          dispatchTarget?.dispatchEvent?.(
+            new CustomEvent('helical:yank', {
+              bubbles: true,
+              detail: {
+                text: yankedText,
+                preset: ctx.preset,
+                mode: ctx.mode,
+                count: ctx.count,
+              },
+            }),
+          );
+        }
+      };
+
       if (editorTarget) {
         const res = editorTarget.execOperator(op, {
           preset,
           mode,
           count: ctx.count,
         });
+        if (op === 'yank' && typeof res === 'object' && res !== null && typeof res.yankedText === 'string') {
+          emitYankNotification(res.yankedText);
+        }
         const shouldEnterInsert =
           (typeof res === 'object' && res !== null && res.enterInsert) ||
           op === 'change' ||
@@ -1635,6 +1686,25 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
           setMode('normal');
         }
         return Boolean(res);
+      }
+
+      if (op === 'yank') {
+        let selectedText = '';
+        if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
+          const start = activeEl.selectionStart ?? 0;
+          const end = activeEl.selectionEnd ?? 0;
+          selectedText = activeEl.value.slice(start, end);
+        } else {
+          selectedText = doc?.defaultView?.getSelection?.()?.toString() ?? '';
+        }
+        if (selectedText && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          void navigator.clipboard.writeText(selectedText).catch(() => {});
+        }
+        emitYankNotification(selectedText);
+        if (mode === 'select') {
+          setMode('normal');
+        }
+        return Boolean(selectedText);
       }
 
       if (op === 'insertStart' && activeEl?.hasAttribute('data-example')) {
@@ -1871,7 +1941,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function handleKeyDown(event: KeyboardEvent): boolean {
-    if (options.enabled === false) return false;
+    if (!isControllerEnabled()) return false;
     if (event.defaultPrevented && activePath.length === 0 && mode !== 'jump') {
       return false;
     }
@@ -1952,7 +2022,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     // 5. At root of normal / select mode:
     if (event.key === 'Escape') {
-      if (editorTarget && !editorTarget.hasActiveSuggestion?.()) {
+      if (editorTarget && (mode === 'select' || !editorTarget.hasActiveSuggestion?.())) {
         event.preventDefault();
         event.stopPropagation();
         countBuffer = '';
@@ -1983,7 +2053,12 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         targetEl instanceof HTMLElement && !targetEl.hasAttribute('data-example')
           ? targetEl.closest<HTMLElement>('[data-example]')
           : null;
-      if (parentExample && (!doc || !getTopMostModalDialog(doc))) {
+      const hasOpenFloatingSurface = Boolean(
+        doc?.querySelector(
+          '[data-scope="popover"][data-state="open"], [data-scope="menu"][data-state="open"], [data-scope="select"][data-state="open"], [data-scope="combobox"][data-state="open"], [role="dialog"]:not([hidden]):not([data-state="closed"]), [role="listbox"]:not([hidden]):not([data-state="closed"]), [aria-expanded="true"]',
+        ),
+      );
+      if (parentExample && (!doc || (!getTopMostModalDialog(doc) && !hasOpenFloatingSurface))) {
         event.preventDefault();
         event.stopPropagation();
         if (doc) {
@@ -2040,6 +2115,35 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
           return false;
         }
       }
+    }
+
+    if (
+      editorTarget &&
+      !editorTarget.hasActiveSuggestion?.() &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown')
+    ) {
+      const arrowMotion: ModalMotion =
+        event.key === 'ArrowLeft'
+          ? 'left'
+          : event.key === 'ArrowRight'
+            ? 'right'
+            : event.key === 'ArrowUp'
+              ? 'up'
+              : 'down';
+      if (event.shiftKey && mode === 'normal') {
+        setMode('select');
+      }
+      const effectiveMode: KeymapMode = event.shiftKey ? 'select' : mode;
+      const count = countBuffer.length > 0 ? Math.max(1, Number.parseInt(countBuffer, 10)) : 1;
+      countBuffer = '';
+      event.preventDefault();
+      event.stopPropagation();
+      editorTarget.move(arrowMotion, { preset, mode: effectiveMode, count });
+      emit();
+      return true;
     }
 
     const chordCandidates = eventToChordKeys(event);
@@ -2146,6 +2250,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     emit();
 
     const onPointerDown = (e: Event) => {
+      if (!isControllerEnabled()) return;
       const targetNode = e.target instanceof Element ? e.target : null;
       if (!targetNode) return;
 
@@ -2179,6 +2284,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     };
 
     const onFocusIn = (e: FocusEvent) => {
+      if (!isControllerEnabled()) return;
       const targetNode = e.target instanceof HTMLElement ? e.target : null;
       if (!targetNode) return;
 
@@ -2212,7 +2318,9 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         return;
       }
 
-      if (isTextEntryElement(targetNode)) {
+      // When focusing a ProseMirror modal editor via keyboard navigation in normal/select mode,
+      // keep normal/select mode active so modal motions (h/j/k/l, w/b/e, v, x, d, c, y, i) work immediately.
+      if (isTextEntryElement(targetNode) && !getModalEditor(targetNode)) {
         if (mode === 'normal' || mode === 'select') {
           setMode('insert');
         }

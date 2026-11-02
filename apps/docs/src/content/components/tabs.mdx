@@ -54,21 +54,6 @@ Returns Ark's [tabs context](https://ark-ui.com/docs/components/tabs#context) â€
 
 Follows the [Tabs WAI-ARIA pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). Ark sets `role="tablist"`/`role="tab"`/`role="tabpanel"`, `aria-selected`, and `aria-controls`; arrow keys rove between triggers and `Tab` moves focus to the active panel.
 
-## Keybindings
-
-When wrapped in a [`WhichKeyProvider`](/helical-ui/components/which-key), `Tabs` natively supports modal tab navigation across the Helix, Vim, and Kakoune presets:
-
-| Keybinding | Action |
-| --- | --- |
-| `g n` / `g t` / `] t` | Activate the next tab in the active tablist (supports numeric counts such as `2 g t`). |
-| `g p` / `g T` / `[ t` | Activate the previous tab in the active tablist. |
-| `l` / `w` / `e` | Activate the next tab when focused on a horizontal tab trigger. |
-| `h` / `b` | Activate the previous tab when focused on a horizontal tab trigger. |
-| `j` / `k` | Activate the next or previous tab when focused on a `vertical` tablist trigger. |
-| `0` / `g h` | Activate the first tab in the active tablist. |
-| `$` / `g l` | Activate the last tab in the active tablist. |
-| `g w` (`s` in Vim) | Overlay 2D jump labels on all visible tabs (including inactive tabs) and click/focus the selected tab. |
-
 ## Theming
 
 No theme extension is required â€” the indicator and hover states use existing tokens (`bg-accent`, `bg-primary`, `text-muted-foreground`, `--radius-*`), light and dark.

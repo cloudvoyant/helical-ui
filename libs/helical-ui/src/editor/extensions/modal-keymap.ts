@@ -155,6 +155,49 @@ export function getEditorModalTarget(editor: Editor): ModalEditorTarget | undefi
 
 let sharedRegisterSlice: Slice | null = null;
 
+function getCharEnd(doc: PMNode, pos: number): number {
+  if (pos < 0 || pos >= doc.content.size) return pos;
+  const $pos = doc.resolve(pos);
+  if ($pos.parent.isTextblock && pos < $pos.end()) {
+    const after = $pos.nodeAfter;
+    if (after && after.isAtom && !after.isText) {
+      return pos + after.nodeSize;
+    }
+    return pos + 1;
+  }
+  return pos;
+}
+
+function getCursorCharPos(doc: PMNode, sel: Selection): number {
+  if (sel.empty) return sel.head;
+  if (sel.head > sel.anchor) {
+    const $head = doc.resolve(sel.head);
+    if ($head.parent.isTextblock && sel.head > $head.start() && sel.head - 1 >= sel.from) {
+      return sel.head - 1;
+    }
+  }
+  return sel.head;
+}
+
+function getAnchorCharPos(doc: PMNode, sel: Selection): number {
+  if (sel.empty) return sel.anchor;
+  if (sel.head < sel.anchor) {
+    const $anchor = doc.resolve(sel.anchor);
+    if ($anchor.parent.isTextblock && sel.anchor > $anchor.start() && sel.anchor - 1 >= sel.from) {
+      return sel.anchor - 1;
+    }
+  }
+  return sel.anchor;
+}
+
+function createExtendedSelection(doc: PMNode, sel: Selection, nextCursorChar: number): TextSelection {
+  const anchorChar = getAnchorCharPos(doc, sel);
+  if (nextCursorChar >= anchorChar) {
+    return TextSelection.create(doc, anchorChar, getCharEnd(doc, nextCursorChar));
+  }
+  return TextSelection.create(doc, getCharEnd(doc, anchorChar), nextCursorChar);
+}
+
 function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions): ModalEditorTarget {
   const getStorage = (): ModalKeymapStorage =>
     (editor.storage as unknown as { modalKeymap: ModalKeymapStorage }).modalKeymap;
@@ -223,8 +266,9 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         if (!targetWord) return false;
 
         if (isExtend) {
-          const headPos = motion === 'wordBackward' ? targetWord.start : targetWord.end;
-          tr = tr.setSelection(TextSelection.create(doc, sel.anchor, headPos));
+          const nextCursor =
+            motion === 'wordBackward' ? targetWord.start : Math.max(targetWord.start, targetWord.end - 1);
+          tr = tr.setSelection(createExtendedSelection(doc, sel, nextCursor));
         } else if (isSelectionFirst) {
           if (motion === 'wordBackward') {
             tr = tr.setSelection(TextSelection.create(doc, targetWord.end, targetWord.start));
@@ -266,9 +310,15 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       }
 
       if (motion === 'lineStart' || motion === 'lineEnd') {
-        const $head = sel.$head;
-        const dest = motion === 'lineStart' ? $head.start() : $head.end();
-        tr = tr.setSelection(isExtend ? TextSelection.create(doc, sel.anchor, dest) : TextSelection.create(doc, dest));
+        const cursorPos = getCursorCharPos(doc, sel);
+        const $head = doc.resolve(cursorPos);
+        if (isExtend) {
+          const dest = motion === 'lineStart' ? $head.start() : Math.max($head.start(), $head.end() - 1);
+          tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
+        } else {
+          const dest = motion === 'lineStart' ? $head.start() : $head.end();
+          tr = tr.setSelection(TextSelection.create(doc, dest));
+        }
         tr = updateMeta(tr, { goalColumn: null });
         dispatchTransaction(editor, tr.scrollIntoView());
         return true;
@@ -276,7 +326,12 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
 
       if (motion === 'docStart' || motion === 'docEnd') {
         const edgeSel = motion === 'docStart' ? Selection.atStart(doc) : Selection.atEnd(doc);
-        tr = tr.setSelection(isExtend ? TextSelection.create(doc, sel.anchor, edgeSel.head) : edgeSel);
+        if (isExtend) {
+          const dest = motion === 'docStart' ? edgeSel.head : Math.max(edgeSel.$head.start(), edgeSel.head - 1);
+          tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
+        } else {
+          tr = tr.setSelection(edgeSel);
+        }
         tr = updateMeta(tr, { goalColumn: null });
         dispatchTransaction(editor, tr.scrollIntoView());
         return true;
@@ -287,8 +342,9 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const blocks = collectLeafBlocks(doc);
         if (blocks.length === 0) return false;
 
+        const cursorPos = getCursorCharPos(doc, sel);
         let currentIdx = blocks.findIndex((b) =>
-          b.isTextblock ? sel.head >= b.start && sel.head <= b.end : sel.from === b.pos,
+          b.isTextblock ? cursorPos >= b.start && cursorPos <= b.end : sel.from === b.pos,
         );
         if (currentIdx === -1) {
           currentIdx = 0;
@@ -299,8 +355,8 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
           tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
         } else if (isExtend) {
-          const dest = dir > 0 ? targetBlock.end : targetBlock.start;
-          tr = tr.setSelection(TextSelection.create(doc, sel.anchor, dest));
+          const dest = dir > 0 ? Math.max(targetBlock.start, targetBlock.end - 1) : targetBlock.start;
+          tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
         } else if (isSelectionFirst) {
           tr = tr.setSelection(TextSelection.create(doc, targetBlock.start, targetBlock.end));
         } else {
@@ -317,7 +373,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const blocks = collectLeafBlocks(doc);
         if (blocks.length === 0) return false;
 
-        let targetPos = sel.head;
+        let targetPos = getCursorCharPos(doc, sel);
         for (let i = 0; i < steps; i += 1) {
           const $pos = doc.resolve(targetPos);
           const nextInBlock = targetPos + dir;
@@ -344,7 +400,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         }
 
         tr = tr.setSelection(
-          isExtend ? TextSelection.create(doc, sel.anchor, targetPos) : TextSelection.create(doc, targetPos),
+          isExtend ? createExtendedSelection(doc, sel, targetPos) : TextSelection.create(doc, targetPos),
         );
         tr = updateMeta(tr, { goalColumn: null });
         dispatchTransaction(editor, tr.scrollIntoView());
@@ -356,14 +412,15 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const blocks = collectLeafBlocks(doc);
         if (blocks.length === 0) return false;
 
+        const cursorPos = getCursorCharPos(doc, sel);
         let currentIdx = blocks.findIndex((b) =>
-          b.isTextblock ? sel.head >= b.start && sel.head <= b.end : sel.from === b.pos,
+          b.isTextblock ? cursorPos >= b.start && cursorPos <= b.end : sel.from === b.pos,
         );
         if (currentIdx === -1) {
           currentIdx = 0;
         }
         const currentBlock = blocks[currentIdx]!;
-        const currentColumn = currentBlock.isTextblock ? sel.head - currentBlock.start : 0;
+        const currentColumn = currentBlock.isTextblock ? cursorPos - currentBlock.start : 0;
         const goalCol = pluginState?.goalColumn ?? currentColumn;
 
         const targetIdx = Math.max(0, Math.min(blocks.length - 1, currentIdx + dir * steps));
@@ -372,9 +429,10 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
           tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
         } else {
-          const nextHead = Math.min(targetBlock.start + goalCol, targetBlock.end);
+          const maxTargetPos = targetBlock.end > targetBlock.start ? targetBlock.end - 1 : targetBlock.start;
+          const nextHead = Math.min(targetBlock.start + goalCol, isExtend ? maxTargetPos : targetBlock.end);
           tr = tr.setSelection(
-            isExtend ? TextSelection.create(doc, sel.anchor, nextHead) : TextSelection.create(doc, nextHead),
+            isExtend ? createExtendedSelection(doc, sel, nextHead) : TextSelection.create(doc, nextHead),
           );
         }
 
@@ -539,7 +597,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       const currentSecondary = pluginState?.secondaryRanges ?? [];
 
       if (action === 'collapse') {
-        let tr = state.tr.setSelection(TextSelection.create(doc, sel.head));
+        let tr = state.tr.setSelection(TextSelection.create(doc, getCursorCharPos(doc, sel)));
         tr = updateMeta(tr, { secondaryRanges: [] });
         dispatchTransaction(editor, tr);
         return true;
@@ -593,7 +651,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       return false;
     },
 
-    execOperator(op: ModalOperator, { count }): { enterInsert?: boolean } | boolean {
+    execOperator(op: ModalOperator, { count }): { enterInsert?: boolean; yankedText?: string } | boolean {
       const state = editor.state;
       const doc = state.doc;
       const sel = state.selection;
@@ -676,9 +734,13 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const slice = doc.slice(primaryFrom, primaryTo);
         storage.registerSlice = slice;
         sharedRegisterSlice = slice;
+        const yankedText = doc.textBetween(primaryFrom, primaryTo, '\n');
+        if (yankedText && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          void navigator.clipboard.writeText(yankedText).catch(() => {});
+        }
         const tr = state.tr.setSelection(TextSelection.create(doc, primaryFrom));
         dispatchTransaction(editor, tr);
-        return true;
+        return { enterInsert: false, yankedText };
       }
 
       if (op === 'delete' || op === 'change') {
@@ -984,6 +1046,21 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
 
             if (selection.empty) {
               pushCursorDecoration(head, false);
+            } else if (selection.from < selection.to) {
+              decos.push(
+                Decoration.inline(selection.from, selection.to, {
+                  class: 'pm-modal-selection',
+                  'data-pm-modal-selection': pluginState.mode,
+                }),
+              );
+              const $head = doc.resolve(head);
+              const cursorPos =
+                selection.head > selection.anchor
+                  ? $head.nodeBefore?.isText && head - 1 >= selection.from
+                    ? head - 1
+                    : head
+                  : head;
+              pushCursorDecoration(cursorPos, false);
             }
 
             for (const range of pluginState.secondaryRanges) {

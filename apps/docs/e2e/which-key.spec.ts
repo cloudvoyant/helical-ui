@@ -296,12 +296,12 @@ for (const framework of FRAMEWORKS) {
           const notesInput = demo.getByTestId('wk-form-input-notes');
 
           await startBtn.focus();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText('NORMAL');
+          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
 
           // Act: press j to focus nameInput in normal mode, then press j again to focus notesInput
           await page.keyboard.press('j');
           await expect(nameInput).toBeFocused();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText('NORMAL');
+          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
 
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
@@ -311,7 +311,7 @@ for (const framework of FRAMEWORKS) {
           await page.keyboard.press('k');
           await expect(nameInput).toBeFocused();
           await page.keyboard.press('i');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText('INSERT');
+          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/insert/i);
 
           // Type modal keys into input while in insert mode
           await page.keyboard.type('jk g');
@@ -319,7 +319,7 @@ for (const framework of FRAMEWORKS) {
 
           // Act: press Escape to return to normal mode and step down with j
           await page.keyboard.press('Escape');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText('NORMAL');
+          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
         });
@@ -462,6 +462,104 @@ for (const framework of FRAMEWORKS) {
           // Act: press i to return to insert mode and type text
           await page.keyboard.press('i');
           await expect(editor).toHaveAttribute('data-modal-mode', 'insert');
+        });
+      });
+
+      test.describe('When the user enters select mode via v or x, expands selection with cursor motions, and yanks with y', () => {
+        test('Then matches cursor and selection height/colors, updates WhichKeyMode to SEL on v and x, expands selection on first move, and copies yanked text to clipboard on y', async ({
+          page,
+        }) => {
+          // Arrange
+          await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+          const editor = island(page, framework, 'default').locator('.ProseMirror').first();
+          const firstParagraph = editor.locator('p').first();
+          await firstParagraph.click({ position: { x: 16, y: 12 } });
+          await expect(editor).toHaveAttribute('data-modal-mode', 'insert');
+
+          // Act: press Escape to enter normal mode and move deterministically to start of first paragraph (gg, j, 0)
+          await page.keyboard.press('Escape');
+          await page.keyboard.press('g');
+          await page.keyboard.press('g');
+          await page.keyboard.press('j');
+          await page.keyboard.press('0');
+          await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
+
+          const cursorEl = editor.locator('[data-pm-modal-cursor]').first();
+          await expect(cursorEl).toBeVisible();
+          const cursorBoxBefore = await cursorEl.boundingBox();
+          expect(cursorBoxBefore).not.toBeNull();
+
+          // Act: press v to enter select mode, then press l once and ArrowRight once
+          await page.keyboard.press('v');
+          await expect(editor).toHaveAttribute('data-modal-mode', 'select');
+
+          await page.keyboard.press('l');
+          const selAfterFirstL = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
+          expect(selAfterFirstL.length).toBe(2);
+
+          await page.keyboard.press('ArrowRight');
+          const selAfterArrowRight = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
+          expect(selAfterArrowRight.length).toBe(3);
+
+          // Assert: cursor decoration height and colors match selection decoration and ::selection
+          const selectionEl = editor.locator('[data-pm-modal-selection]').first();
+          const selectionBox = await selectionEl.boundingBox();
+          expect(selectionBox).not.toBeNull();
+          expect(Math.abs(cursorBoxBefore!.height - selectionBox!.height)).toBeLessThanOrEqual(1);
+
+          const styleParity = await editor.evaluate((el) => {
+            const c = el.querySelector('[data-pm-modal-cursor]');
+            const s = el.querySelector('[data-pm-modal-selection]');
+            const p = el.querySelector('p');
+            if (!c || !s || !p) return null;
+            const cs = getComputedStyle(c);
+            const ss = getComputedStyle(s);
+            const ps = getComputedStyle(p, '::selection');
+            return {
+              cursorBg: cs.backgroundColor,
+              cursorColor: cs.color,
+              selBg: ss.backgroundColor,
+              selColor: ss.color,
+              nativeSelColor: ps.color,
+            };
+          });
+          expect(styleParity).not.toBeNull();
+          expect(styleParity!.cursorBg).toBe(styleParity!.selBg);
+          expect(styleParity!.cursorColor).toBe(styleParity!.selColor);
+          expect(styleParity!.selColor).toBe(styleParity!.nativeSelColor);
+
+          // Act: press y to yank selection to clipboard, fire helical:yank event, and return to normal mode
+          await page.evaluate(() => {
+            (window as unknown as { __lastYankDetail?: unknown }).__lastYankDetail = null;
+            window.addEventListener(
+              'helical:yank',
+              (e) => {
+                (window as unknown as { __lastYankDetail?: unknown }).__lastYankDetail = (e as CustomEvent).detail;
+              },
+              { once: true },
+            );
+          });
+          await page.keyboard.press('y');
+          await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
+          const clipboardAfterV = await page.evaluate(() => navigator.clipboard.readText());
+          expect(clipboardAfterV).toBe(selAfterArrowRight);
+          const yankDetail = await page.evaluate(
+            () => (window as unknown as { __lastYankDetail?: { text?: string } }).__lastYankDetail,
+          );
+          expect(yankDetail?.text).toBe(selAfterArrowRight);
+
+          // Act: press x to select full line and verify it enters select mode (SEL)
+          const expectedLineText = (await firstParagraph.textContent()) ?? '';
+          await page.keyboard.press('x');
+          await expect(editor).toHaveAttribute('data-modal-mode', 'select');
+          const selAfterX = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
+          expect(selAfterX).toBe(expectedLineText);
+
+          // Act: press y to yank the selected line to clipboard
+          await page.keyboard.press('y');
+          await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
+          const clipboardAfterX = await page.evaluate(() => navigator.clipboard.readText());
+          expect(clipboardAfterX).toBe(expectedLineText);
         });
       });
     });

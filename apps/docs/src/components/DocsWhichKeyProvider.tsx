@@ -1,10 +1,10 @@
-// apps/docs/src/components/DocsKeyboardShell.tsx
+// apps/docs/src/components/DocsWhichKeyProvider.tsx
 // Site-wide WhichKeyProvider + WhichKey command panel for the Astro docs shell.
 import { useMemo } from 'react';
 import { WhichKey, WhichKeyProvider, type KeymapHandler, type WhichKeyNode } from '@cloudvoyant/helical-react';
 import { getStoredFramework, setFramework } from '../lib/framework';
 
-export default function DocsKeyboardShell() {
+export default function DocsWhichKeyProvider() {
   const keymap = useMemo<Record<string, WhichKeyNode>>(
     () => ({
       Space: {

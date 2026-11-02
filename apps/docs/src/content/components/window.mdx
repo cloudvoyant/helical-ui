@@ -76,17 +76,6 @@ Accepts all [Ark `FloatingPanelResizeTriggerProps`](https://ark-ui.com/docs/comp
 
 The panel content carries `role="dialog"` with an accessible name from `WindowTitle`. Keyboard: `Esc` closes (when `closeOnEscape` is set); focus moves to the content on open and back to the trigger on close; the header drag and corner resize handles are exposed as controls.
 
-## Keybindings
-
-`Window` accepts optional `paneId`, `paneTitle`, `paneDisabled`, and `paneOrder` props to register as a spatial pane while open inside a [`WhichKeyProvider`](/helical-ui/components/which-key):
-
-| Keybinding | Action |
-| --- | --- |
-| `Ctrl+w h/j/k/l` (`Space w h/j/k/l`) | Move focus spatially between open floating `Window` panels and underlying page panes using live bounding boxes. |
-| `Ctrl+w w` / `Space 1..9` | Cycle focus across open windows and panes or jump by index. |
-| `j` / `k` / `w` / `b` | Step through interactive controls and stage triggers inside the active window. |
-| `Escape` | Close the window when `closeOnEscape` is enabled. |
-
 ## Theme extensions
 
 None. The panel reuses existing tokens (`--popover`, `--popover-foreground`, `--border`, `--accent`, `--muted`, `--ring`) — no `theme.css` changes.

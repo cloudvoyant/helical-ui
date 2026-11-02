@@ -1,13 +1,13 @@
 // apps/docs/src/components/examples/which-key/presets/react.tsx
 import { useState } from 'react';
 import {
-  Badge,
   Button,
   HStack,
   Kbd,
   Pane,
   VStack,
   WhichKey,
+  WhichKeyMode,
   WhichKeyProvider,
   useWhichKey,
   type KeybindingPreset,
@@ -16,7 +16,7 @@ import {
 const PRESET_ITEMS = ['Alpha Item', 'Bravo Item', 'Charlie Item', 'Delta Item'];
 
 function PresetsSurface({ lastCommand }: { lastCommand: string }) {
-  const { preset, mode, sticky, setPreset } = useWhichKey();
+  const { preset, setPreset } = useWhichKey();
   const [focusedItem, setFocusedItem] = useState(PRESET_ITEMS[0]!);
 
   return (
@@ -36,9 +36,7 @@ function PresetsSurface({ lastCommand }: { lastCommand: string }) {
           ))}
         </HStack>
         <HStack className="items-center gap-2">
-          <Badge variant="subtle" color="primary" data-testid="wk-presets-active">
-            {preset} · {sticky ? `${mode}·lock` : mode}
-          </Badge>
+          <WhichKeyMode showPreset data-testid="wk-presets-active" />
           <span className="text-xs text-muted-foreground" data-testid="wk-presets-last-cmd">
             {lastCommand}
           </span>

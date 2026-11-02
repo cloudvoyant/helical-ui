@@ -25,11 +25,13 @@
     keymap,
     commands,
     enabled = true,
+    disableOnMobile = true,
     scoped = true,
     onPresetChange,
     onModeChange,
     onJumpActionChange,
     onCommand,
+    onYank,
     children,
   }: Props = $props();
 
@@ -47,6 +49,7 @@
       keymap,
       commands,
       enabled,
+      disableOnMobile,
       getDocument: () => {
         try {
           return env?.().getDocument?.() ?? document;
@@ -59,6 +62,7 @@
       onModeChange: (next) => onModeChange?.(next),
       onJumpActionChange: (next) => onJumpActionChange?.(next),
       onCommand: (id, ctx) => onCommand?.(id, ctx),
+      onYank: (text, ctx) => onYank?.(text, ctx),
     }),
   );
 

@@ -1,7 +1,6 @@
 // apps/docs/src/components/examples/which-key/default/react.tsx
 import { useState } from 'react';
 import {
-  Badge,
   Button,
   Dialog,
   DialogBackdrop,
@@ -16,12 +15,13 @@ import {
   Pane,
   VStack,
   WhichKey,
+  WhichKeyMode,
   WhichKeyProvider,
   useWhichKey,
 } from '@cloudvoyant/helical-react';
 
 function DefaultDemoSurface() {
-  const { mode, preset, activePath, openPrefix, openExplorer } = useWhichKey();
+  const { preset, activePath, openPrefix, openExplorer } = useWhichKey();
   const [lastAction, setLastAction] = useState('None');
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -34,9 +34,7 @@ function DefaultDemoSurface() {
     >
       <HStack className="flex-wrap items-center justify-between gap-2">
         <HStack className="items-center gap-2">
-          <Badge variant="subtle" color="primary" data-testid="wk-default-mode">
-            {mode.toUpperCase()}
-          </Badge>
+          <WhichKeyMode data-testid="wk-default-mode" />
           <span className="text-xs text-muted-foreground">
             Preset: <strong className="text-foreground">{preset}</strong>
           </span>

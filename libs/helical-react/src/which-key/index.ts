@@ -14,6 +14,7 @@ export {
 } from './context';
 export { Pane, type PaneProps } from './Pane';
 export { WhichKey, type WhichKeyProps } from './WhichKey';
+export { WhichKeyMode, type WhichKeyModeProps } from './WhichKeyMode';
 export { WhichKeyExplorer, type WhichKeyExplorerProps } from './WhichKeyExplorer';
 export type {
   JumpAction,

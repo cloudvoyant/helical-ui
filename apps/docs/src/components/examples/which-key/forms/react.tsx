@@ -1,9 +1,8 @@
 // apps/docs/src/components/examples/which-key/forms/react.tsx
 import { useState } from 'react';
-import { Badge, HStack, Kbd, Pane, VStack, WhichKey, WhichKeyProvider, useWhichKey } from '@cloudvoyant/helical-react';
+import { HStack, Kbd, Pane, VStack, WhichKey, WhichKeyMode, WhichKeyProvider } from '@cloudvoyant/helical-react';
 
 function FormsSurface() {
-  const { mode } = useWhichKey();
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -20,9 +19,7 @@ function FormsSurface() {
           without typing. Press <Kbd size="sm">i</Kbd> or <Kbd size="sm">Enter</Kbd> to enter <strong>insert</strong>{' '}
           mode, and <Kbd size="sm">Esc</Kbd> to return to <strong>normal</strong> mode.
         </span>
-        <Badge variant="subtle" color={mode === 'insert' ? 'success' : 'primary'} data-testid="wk-forms-mode">
-          {mode.toUpperCase()}
-        </Badge>
+        <WhichKeyMode data-testid="wk-forms-mode" />
       </HStack>
 
       <VStack className="items-stretch gap-2.5">

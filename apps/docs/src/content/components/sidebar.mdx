@@ -90,18 +90,6 @@ Accepts all `HTMLButtonProps` plus `className`/`class`, and:
 
 Below the `md` breakpoint the sidebar renders as a mobile sheet on Ark's `drawer` primitive over a dimmed backdrop: `side="left"` slides in as a full-height left side sheet, and `side="right"` slides up as a rounded bottom sheet — swipe-to-dismiss follows each sheet's axis, and focus trapping, `Esc`/backdrop dismissal, and the dialog role come from Ark. Tooltips use Ark's `tooltip` primitive. `SidebarTrigger`, `SidebarRail`, and `SidebarMenuButton` are native buttons with accessible labels; `Cmd/Ctrl+B` toggles the sidebar. Non-interactive parts stay non-focusable.
 
-## Keybindings
-
-`Sidebar` accepts optional `paneId`, `paneTitle`, `paneDisabled`, and `paneOrder` props to register as a navigable pane with [`WhichKeyProvider`](/helical-ui/components/which-key):
-
-| Keybinding | Action |
-| --- | --- |
-| `Cmd/Ctrl+B` | Toggle the sidebar between expanded and collapsed states. |
-| `Ctrl+w h` / `Space w h` (`Space 1`) | Focus the sidebar pane from adjacent content panes. |
-| `j` / `k` | Step vertically through `SidebarMenuLink` and `SidebarMenuButton` items. |
-| `g g` / `G` (`g e`) | Jump to the first or last navigation item in the sidebar. |
-| `g w` (`s` in Vim) | Overlay jump labels on visible sidebar links to activate or focus them directly. |
-
 ## Theming
 
 No theme extension is required — the sidebar uses the `--sidebar-*` tokens already shipped in `@cloudvoyant/helical-ui`'s `theme.css` (light and dark).
