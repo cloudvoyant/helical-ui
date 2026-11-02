@@ -1,4 +1,4 @@
-<!-- libs/helical-svelte/src/Sidebar.svelte -->
+<!-- libs/helical-svelte/src/sidebar/Root.svelte -->
 <!-- Source: @ark-ui/svelte/drawer (Ark UI), mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import {
@@ -18,13 +18,15 @@
     SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
     sidebarStyles,
     cn,
+    type SidebarPaneRegistrationProps,
   } from '@cloudvoyant/helical-ui';
   import Col from '../Col.svelte';
+  import { useOptionalPaneRegistration } from '../which-key/context.svelte';
   import { getSidebarContext } from './context.svelte';
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
 
-  type Props = {
+  type Props = SidebarPaneRegistrationProps & {
     side?: 'left' | 'right';
     variant?: 'sidebar' | 'floating' | 'inset';
     collapsible?: 'offcanvas' | 'icon' | 'none';
@@ -36,13 +38,16 @@
     side = 'left',
     variant = 'sidebar',
     collapsible = 'offcanvas',
+    paneId,
+    paneTitle,
+    paneDisabled,
     class: className = '',
     children,
     ...rest
   }: Props = $props();
 
   const sidebar = getSidebarContext();
-  const state = $derived(sidebar.state);
+  const sidebarState = $derived(sidebar.state);
   const isMobile = $derived(sidebar.isMobile);
   const open = $derived(sidebar.open);
   const setOpen = sidebar.setOpen;
@@ -56,6 +61,18 @@
   const snapPoints = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_SNAP_POINTS : undefined);
   const defaultSnapPoint = $derived(isBottomWidgetSheet ? SIDEBAR_WIDGET_DEFAULT_SNAP_POINT : undefined);
   const snapToSequentialPoints = $derived(isBottomWidgetSheet);
+
+  let containerRef: HTMLDivElement | null = $state(null);
+
+  const pane = useOptionalPaneRegistration(
+    () => containerRef,
+    () => ({
+      paneId,
+      paneTitle,
+      paneDisabled: paneDisabled || sidebarState === 'collapsed',
+      defaultTitle: 'Sidebar',
+    }),
+  );
 
   const containerClasses = $derived(
     cn(
@@ -82,14 +99,16 @@
 </script>
 
 {#if collapsible === 'none'}
-  <Col
+  <div
+    bind:this={containerRef}
     data-slot="sidebar"
     data-sidebar="sidebar"
-    class={cn('h-full w-(--sidebar-width) bg-sidebar text-sidebar-foreground', className)}
+    {...pane.dataAttributes}
+    class={cn('flex flex-col h-full w-(--sidebar-width) bg-sidebar text-sidebar-foreground', className)}
     {...rest}
   >
     {@render children?.()}
-  </Col>
+  </div>
 {:else if isMobile}
   <DrawerRoot
     open={mobileSheetOpen}
@@ -130,14 +149,20 @@
 {:else}
   <div
     class="group peer hidden text-sidebar-foreground md:block"
-    data-state={state}
-    data-collapsible={state === 'collapsed' ? collapsible : ''}
+    data-state={sidebarState}
+    data-collapsible={sidebarState === 'collapsed' ? collapsible : ''}
     data-variant={variant}
     data-side={side}
     data-slot="sidebar"
   >
     <div data-slot="sidebar-gap" class={gapClasses}></div>
-    <div data-slot="sidebar-container" class={containerClasses} {...rest}>
+    <div
+      bind:this={containerRef}
+      data-slot="sidebar-container"
+      {...pane.dataAttributes}
+      class={containerClasses}
+      {...rest}
+    >
       <Col data-sidebar="sidebar" data-slot="sidebar-inner" data-variant={variant} class={cn(sidebarStyles.innerClass)}>
         {@render children?.()}
       </Col>

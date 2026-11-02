@@ -2,6 +2,8 @@
 export { default as Listbox } from './Listbox.svelte';
 export { default as ListboxContent } from './ListboxContent.svelte';
 export { default as ListboxItem } from './ListboxItem.svelte';
+export { default as ListboxItemGroup } from './ListboxItemGroup.svelte';
+export { default as ListboxItemGroupLabel } from './ListboxItemGroupLabel.svelte';
 export { default as ListboxItemText } from './ListboxItemText.svelte';
 export { default as ListboxItemIndicator } from './ListboxItemIndicator.svelte';
 export { default as ListboxInput } from './ListboxInput.svelte';

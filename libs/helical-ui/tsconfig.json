@@ -5,7 +5,8 @@
     "lib": ["ES2022", "DOM"],
     "baseUrl": ".",
     "paths": {
-      "@cloudvoyant/helical-ui": ["src/index.ts"]
+      "@cloudvoyant/helical-ui": ["src/index.ts"],
+      "@cloudvoyant/utils": ["../utils/src/index.ts"]
     }
   },
   "include": ["src", "tests"]

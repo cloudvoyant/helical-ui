@@ -14,8 +14,10 @@ import {
   type PageVariants,
   type PageGutterVariants,
   type PageGutterContentVariants,
+  type PagePaneRegistrationProps,
   cn,
 } from '@cloudvoyant/helical-ui';
+import { useOptionalPaneRegistration } from './which-key/context';
 
 export type PageProps = HTMLArkProps<'div'> & {
   variant?: PageVariants['variant'];
@@ -29,23 +31,40 @@ export function Page({ variant = 'default', className, children, ...props }: Pag
   );
 }
 
-export type PageGutterProps = HTMLArkProps<'div'> & {
-  side?: PageGutterVariants['side'];
-  align?: PageGutterContentVariants['align'];
-  contentClassName?: string;
-};
+export type PageGutterProps = HTMLArkProps<'div'> &
+  PagePaneRegistrationProps & {
+    side?: PageGutterVariants['side'];
+    align?: PageGutterContentVariants['align'];
+    contentClassName?: string;
+  };
 
 export function PageGutter({
   side = 'left',
   align = 'start',
   contentClassName,
+  paneId,
+  paneTitle,
+  paneDisabled,
   className,
   children,
   ...props
 }: PageGutterProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled,
+    defaultTitle: side === 'right' ? 'Right Gutter' : 'Left Gutter',
+  });
+
   return (
     <ark.div data-slot="page-gutter-area" className={cn(pageGutterAreaBase, side === 'right' && '[grid-area:right]')}>
-      <ark.div data-slot="page-gutter" className={cn(pageGutterVariants({ side }), className)} {...props}>
+      <ark.div
+        ref={pane.ref}
+        data-slot="page-gutter"
+        {...pane.dataAttributes}
+        className={cn(pageGutterVariants({ side }), className)}
+        {...props}
+      >
         <ark.div data-slot="page-gutter-content" className={cn(pageGutterContentVariants({ align }), contentClassName)}>
           {children}
         </ark.div>
@@ -54,9 +73,31 @@ export function PageGutter({
   );
 }
 
-export function PageContent({ className, children, ...props }: HTMLArkProps<'main'>) {
+export type PageContentProps = HTMLArkProps<'main'> & PagePaneRegistrationProps;
+
+export function PageContent({
+  paneId,
+  paneTitle,
+  paneDisabled,
+  className,
+  children,
+  ...props
+}: PageContentProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled,
+    defaultTitle: 'Main Content',
+  });
+
   return (
-    <ark.main data-slot="page-content" className={cn(pageContentBase, className)} {...props}>
+    <ark.main
+      ref={pane.ref}
+      data-slot="page-content"
+      {...pane.dataAttributes}
+      className={cn(pageContentBase, className)}
+      {...props}
+    >
       {children}
     </ark.main>
   );

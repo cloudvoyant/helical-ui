@@ -31,3 +31,12 @@ export { createUrlMention } from './extensions/url-mention';
 export { createLinkPreview } from './extensions/link-preview';
 export { createInternalMention } from './extensions/internal-mention';
 export { createNoticeNode, type NoticeAttributes, type NoticeVariant } from './extensions/notice-node';
+export {
+  ModalKeymap,
+  modalKeymapPluginKey,
+  getEditorModalTarget,
+  isEditorInInsertMode,
+  type ModalKeymapOptions,
+  type ModalKeymapPluginState,
+  type SecondaryCursorRange,
+} from './extensions/modal-keymap';

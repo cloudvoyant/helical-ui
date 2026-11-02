@@ -59,3 +59,9 @@ export const pageSectionBase = cn(colBase, 'min-h-svh w-full');
 export type PageVariants = VariantProps<typeof pageVariants>;
 export type PageGutterVariants = VariantProps<typeof pageGutterVariants>;
 export type PageGutterContentVariants = VariantProps<typeof pageGutterContentVariants>;
+
+export interface PagePaneRegistrationProps {
+  paneId?: string;
+  paneTitle?: string;
+  paneDisabled?: boolean;
+}

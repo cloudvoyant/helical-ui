@@ -1,0 +1,1067 @@
+// libs/helical-ui/src/which-key/presets.ts
+// Preset keymap tries for Helix (default), Vim, and Kakoune.
+import type { KeybindingPreset, WhichKeyNode } from './types';
+
+function createTextObjectChildren(): {
+  i: WhichKeyNode;
+  a: WhichKeyNode;
+} {
+  return {
+    i: {
+      key: 'i',
+      label: '+inner',
+      group: 'Inner Text Object',
+      category: 'Match / Text Objects',
+      mode: ['normal', 'select'],
+      children: {
+        w: {
+          key: 'w',
+          label: 'Inner Word',
+          description: 'Select inner word (iw)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.iw',
+        },
+        p: {
+          key: 'p',
+          label: 'Inner Paragraph',
+          description: 'Select inner paragraph (ip)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.ip',
+        },
+        c: {
+          key: 'c',
+          label: 'Inner Code Block',
+          description: 'Select inner code block (ic)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.ic',
+        },
+        n: {
+          key: 'n',
+          label: 'Inner Notice / Callout',
+          description: 'Select inner notice or blockquote (in)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.in',
+        },
+        l: {
+          key: 'l',
+          label: 'Inner List Item',
+          description: 'Select inner list item (il)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.il',
+        },
+      },
+    },
+    a: {
+      key: 'a',
+      label: '+around',
+      group: 'Around Text Object',
+      category: 'Match / Text Objects',
+      mode: ['normal', 'select'],
+      children: {
+        w: {
+          key: 'w',
+          label: 'Around Word',
+          description: 'Select word and surrounding whitespace (aw)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.aw',
+        },
+        p: {
+          key: 'p',
+          label: 'Around Paragraph',
+          description: 'Select entire paragraph block (ap)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.ap',
+        },
+        c: {
+          key: 'c',
+          label: 'Around Code Block',
+          description: 'Select entire code block (ac)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.ac',
+        },
+        n: {
+          key: 'n',
+          label: 'Around Notice / Callout',
+          description: 'Select entire notice or blockquote (an)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.an',
+        },
+        l: {
+          key: 'l',
+          label: 'Around List Item',
+          description: 'Select entire list item (al)',
+          category: 'Match / Text Objects',
+          commandId: 'textObject.al',
+        },
+      },
+    },
+  };
+}
+
+function createWindowMenu(): WhichKeyNode {
+  return {
+    key: 'Control+w',
+    label: '+window',
+    group: 'Window / Pane',
+    category: 'Window / Pane',
+    mode: ['normal', 'select'],
+    children: {
+      h: {
+        key: 'h',
+        label: 'Focus Pane Left',
+        description: 'Move focus to the pane on the left',
+        category: 'Window / Pane',
+        commandId: 'pane.left',
+      },
+      j: {
+        key: 'j',
+        label: 'Focus Pane Down',
+        description: 'Move focus to the pane below',
+        category: 'Window / Pane',
+        commandId: 'pane.down',
+      },
+      k: {
+        key: 'k',
+        label: 'Focus Pane Up',
+        description: 'Move focus to the pane above',
+        category: 'Window / Pane',
+        commandId: 'pane.up',
+      },
+      l: {
+        key: 'l',
+        label: 'Focus Pane Right',
+        description: 'Move focus to the pane on the right',
+        category: 'Window / Pane',
+        commandId: 'pane.right',
+      },
+      ArrowLeft: {
+        key: 'ArrowLeft',
+        label: 'Focus Pane Left',
+        category: 'Window / Pane',
+        commandId: 'pane.left',
+        hidden: true,
+      },
+      ArrowDown: {
+        key: 'ArrowDown',
+        label: 'Focus Pane Down',
+        category: 'Window / Pane',
+        commandId: 'pane.down',
+        hidden: true,
+      },
+      ArrowUp: {
+        key: 'ArrowUp',
+        label: 'Focus Pane Up',
+        category: 'Window / Pane',
+        commandId: 'pane.up',
+        hidden: true,
+      },
+      ArrowRight: {
+        key: 'ArrowRight',
+        label: 'Focus Pane Right',
+        category: 'Window / Pane',
+        commandId: 'pane.right',
+        hidden: true,
+      },
+      w: {
+        key: 'w',
+        label: 'Cycle Next Pane',
+        description: 'Cycle focus to the next registered pane',
+        category: 'Window / Pane',
+        commandId: 'pane.next',
+      },
+      W: {
+        key: 'W',
+        label: 'Cycle Previous Pane',
+        description: 'Cycle focus to the previous registered pane',
+        category: 'Window / Pane',
+        commandId: 'pane.prev',
+      },
+      s: {
+        key: 's',
+        label: '+sticky window',
+        group: 'Sticky Window Mode',
+        description: 'Keep Window menu open until Escape',
+        category: 'Window / Pane',
+        sticky: true,
+        loop: true,
+        proxy: ['Control+w'],
+      },
+    },
+  };
+}
+
+function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
+  const paneSlots: Record<string, WhichKeyNode> = {};
+  for (let i = 1; i <= 9; i += 1) {
+    paneSlots[String(i)] = {
+      key: String(i),
+      label: `Focus Pane ${i}`,
+      description: `Switch focus directly to pane #${i}`,
+      category: 'Window / Pane',
+      commandId: `pane.focus.${i}`,
+      hidden: i > 4,
+    };
+  }
+
+  return {
+    key: leaderKey,
+    label: '+space',
+    group: 'Space',
+    category: 'Space',
+    mode: ['normal', 'select'],
+    children: {
+      '?': {
+        key: '?',
+        label: 'Explore Keybindings',
+        description: 'Open searchable keybinding exploration menu (<leader>?)',
+        category: 'Space',
+        commandId: 'whichKey.openExplorer',
+      },
+      w: {
+        key: 'w',
+        label: '+window',
+        group: 'Window / Pane',
+        description: 'Spatial and indexed pane navigation',
+        category: 'Window / Pane',
+        proxy: ['Control+w'],
+      },
+      j: {
+        key: 'j',
+        label: 'Jump to Element',
+        description: 'Show 2D home-row jump labels over visible controls',
+        category: 'Navigation',
+        commandId: 'jump.start',
+      },
+      g: {
+        key: 'g',
+        label: '+goto',
+        group: 'Goto',
+        description: 'Go to locations and boundaries',
+        category: 'Goto',
+        proxy: ['g'],
+      },
+      v: {
+        key: 'v',
+        label: '+view',
+        group: 'View / Scroll',
+        description: 'Scroll and align viewport',
+        category: 'View',
+        proxy: [viewKey],
+      },
+      k: {
+        key: 'k',
+        label: '+preset',
+        group: 'Keybinding Preset',
+        description: 'Switch modal grammar (Helix / Vim / Kakoune)',
+        category: 'Space',
+        children: {
+          h: {
+            key: 'h',
+            label: 'Helix Preset',
+            description: 'Switch to Helix selection-first grammar (default)',
+            category: 'Preset',
+            commandId: 'preset.helix',
+          },
+          v: {
+            key: 'v',
+            label: 'Vim Preset',
+            description: 'Switch to Vim operator-motion grammar',
+            category: 'Preset',
+            commandId: 'preset.vim',
+          },
+          k: {
+            key: 'k',
+            label: 'Kakoune Preset',
+            description: 'Switch to Kakoune object-verb grammar',
+            category: 'Preset',
+            commandId: 'preset.kakoune',
+          },
+        },
+      },
+      ...paneSlots,
+    },
+  };
+}
+
+function createViewMenu(key: string, centerKey: string): WhichKeyNode {
+  return {
+    key,
+    label: '+view',
+    group: 'View',
+    category: 'View',
+    mode: ['normal', 'select'],
+    children: {
+      [centerKey]: {
+        key: centerKey,
+        label: 'Center Viewport',
+        description: 'Center the focused item in the viewport',
+        category: 'View',
+        commandId: 'view.center',
+      },
+      c: {
+        key: 'c',
+        label: 'Center Viewport',
+        description: 'Center the focused item in the viewport',
+        category: 'View',
+        commandId: 'view.center',
+      },
+      t: {
+        key: 't',
+        label: 'Align Top',
+        description: 'Align focused item to top of viewport',
+        category: 'View',
+        commandId: 'view.top',
+      },
+      b: {
+        key: 'b',
+        label: 'Align Bottom',
+        description: 'Align focused item to bottom of viewport',
+        category: 'View',
+        commandId: 'view.bottom',
+      },
+      j: {
+        key: 'j',
+        label: 'Scroll Down',
+        description: 'Scroll active pane down',
+        category: 'View',
+        commandId: 'view.scrollDown',
+      },
+      k: {
+        key: 'k',
+        label: 'Scroll Up',
+        description: 'Scroll active pane up',
+        category: 'View',
+        commandId: 'view.scrollUp',
+      },
+    },
+  };
+}
+
+function createUnimpairedMenus(): { '[': WhichKeyNode; ']': WhichKeyNode } {
+  return {
+    '[': {
+      key: '[',
+      label: '+prev',
+      group: 'Previous (Unimpaired)',
+      category: 'Unimpaired',
+      mode: ['normal', 'select'],
+      children: {
+        s: {
+          key: 's',
+          label: 'Previous Section',
+          description: 'Jump to previous heading or PageSection',
+          category: 'Unimpaired',
+          commandId: 'section.prev',
+        },
+        p: {
+          key: 'p',
+          label: 'Previous Paragraph / Section',
+          description: 'Jump to previous paragraph or section',
+          category: 'Unimpaired',
+          commandId: 'section.prev',
+        },
+        f: {
+          key: 'f',
+          label: 'Previous Focusable Block',
+          description: 'Move focus to previous interactive control',
+          category: 'Unimpaired',
+          commandId: 'focus.prevBlock',
+        },
+        Space: {
+          key: 'Space',
+          label: 'Blank Line Above',
+          description: 'Insert blank line above current block',
+          category: 'Unimpaired',
+          commandId: 'operator.openAbove',
+        },
+      },
+    },
+    ']': {
+      key: ']',
+      label: '+next',
+      group: 'Next (Unimpaired)',
+      category: 'Unimpaired',
+      mode: ['normal', 'select'],
+      children: {
+        s: {
+          key: 's',
+          label: 'Next Section',
+          description: 'Jump to next heading or PageSection',
+          category: 'Unimpaired',
+          commandId: 'section.next',
+        },
+        p: {
+          key: 'p',
+          label: 'Next Paragraph / Section',
+          description: 'Jump to next paragraph or section',
+          category: 'Unimpaired',
+          commandId: 'section.next',
+        },
+        f: {
+          key: 'f',
+          label: 'Next Focusable Block',
+          description: 'Move focus to next interactive control',
+          category: 'Unimpaired',
+          commandId: 'focus.nextBlock',
+        },
+        Space: {
+          key: 'Space',
+          label: 'Blank Line Below',
+          description: 'Insert blank line below current block',
+          category: 'Unimpaired',
+          commandId: 'operator.openBelow',
+        },
+      },
+    },
+  };
+}
+
+function createSharedMotionsAndOperators(): Record<string, WhichKeyNode> {
+  return {
+    h: {
+      key: 'h',
+      label: 'Move Left',
+      description: 'Move cursor or focus left',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.left',
+      hidden: true,
+    },
+    j: {
+      key: 'j',
+      label: 'Move Down / Next Item',
+      description: 'Step focus to next item or line down',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.down',
+      hidden: true,
+    },
+    k: {
+      key: 'k',
+      label: 'Move Up / Previous Item',
+      description: 'Step focus to previous item or line up',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.up',
+      hidden: true,
+    },
+    l: {
+      key: 'l',
+      label: 'Move Right',
+      description: 'Move cursor or focus right',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.right',
+      hidden: true,
+    },
+    w: {
+      key: 'w',
+      label: 'Next Word',
+      description: 'Select or move to next word (w)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.wordForward',
+    },
+    b: {
+      key: 'b',
+      label: 'Previous Word',
+      description: 'Select or move to previous word (b)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.wordBackward',
+    },
+    e: {
+      key: 'e',
+      label: 'Word End',
+      description: 'Select or move to end of word (e)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.wordEnd',
+    },
+    i: {
+      key: 'i',
+      label: 'Insert Mode',
+      description: 'Enter insert mode at start of selection or control',
+      category: 'Mode / Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.insertStart',
+    },
+    a: {
+      key: 'a',
+      label: 'Append / Insert After',
+      description: 'Enter insert mode at end of selection or control',
+      category: 'Mode / Operator',
+      mode: ['normal'],
+      commandId: 'operator.appendEnd',
+    },
+    o: {
+      key: 'o',
+      label: 'Open Line Below',
+      description: 'Open new paragraph below and enter insert mode',
+      category: 'Mode / Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.openBelow',
+    },
+    O: {
+      key: 'O',
+      label: 'Open Line Above',
+      description: 'Open new paragraph above and enter insert mode',
+      category: 'Mode / Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.openAbove',
+    },
+    d: {
+      key: 'd',
+      label: 'Delete Selection',
+      description: 'Delete active selection and store in register',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.delete',
+    },
+    c: {
+      key: 'c',
+      label: 'Change Selection',
+      description: 'Delete selection and enter insert mode',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.change',
+    },
+    y: {
+      key: 'y',
+      label: 'Yank Selection',
+      description: 'Copy selection slice into register',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.yank',
+    },
+    p: {
+      key: 'p',
+      label: 'Paste After',
+      description: 'Paste yanked slice after selection',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.pasteAfter',
+    },
+    P: {
+      key: 'P',
+      label: 'Paste Before',
+      description: 'Paste yanked slice before selection',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.pasteBefore',
+    },
+    u: {
+      key: 'u',
+      label: 'Undo',
+      description: 'Undo last editor transaction',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.undo',
+    },
+    'Control+o': {
+      key: 'Control+o',
+      label: 'Jump Back',
+      description: 'Navigate backward in Jumplist history',
+      category: 'Navigation',
+      mode: ['normal', 'select'],
+      commandId: 'jumplist.back',
+    },
+    'Control+i': {
+      key: 'Control+i',
+      label: 'Jump Forward',
+      description: 'Navigate forward in Jumplist history',
+      category: 'Navigation',
+      mode: ['normal', 'select'],
+      commandId: 'jumplist.forward',
+    },
+  };
+}
+
+export function createHelixPreset(leaderKey = 'Space'): Record<string, WhichKeyNode> {
+  const textObjects = createTextObjectChildren();
+  const unimpaired = createUnimpairedMenus();
+
+  return {
+    ...createSharedMotionsAndOperators(),
+    [leaderKey]: createSpaceMenu(leaderKey, 'z'),
+    'Control+w': createWindowMenu(),
+    g: {
+      key: 'g',
+      label: '+goto',
+      group: 'Goto',
+      category: 'Goto',
+      mode: ['normal', 'select'],
+      children: {
+        g: {
+          key: 'g',
+          label: 'Go to Top',
+          description: 'Jump to first item or top of document (gg)',
+          category: 'Goto',
+          commandId: 'motion.docStart',
+        },
+        e: {
+          key: 'e',
+          label: 'Go to End',
+          description: 'Jump to last item or bottom of document (ge)',
+          category: 'Goto',
+          commandId: 'motion.docEnd',
+        },
+        h: {
+          key: 'h',
+          label: 'Line / Group Start',
+          description: 'Move to start of line or control group (gh)',
+          category: 'Goto',
+          commandId: 'motion.lineStart',
+        },
+        l: {
+          key: 'l',
+          label: 'Line / Group End',
+          description: 'Move to end of line or control group (gl)',
+          category: 'Goto',
+          commandId: 'motion.lineEnd',
+        },
+        t: {
+          key: 't',
+          label: 'Window Top',
+          description: 'Jump to top of visible viewport (gt)',
+          category: 'Goto',
+          commandId: 'view.top',
+        },
+        c: {
+          key: 'c',
+          label: 'Window Center',
+          description: 'Jump to center of visible viewport (gc)',
+          category: 'Goto',
+          commandId: 'view.center',
+        },
+        b: {
+          key: 'b',
+          label: 'Window Bottom',
+          description: 'Jump to bottom of visible viewport (gb)',
+          category: 'Goto',
+          commandId: 'view.bottom',
+        },
+        n: {
+          key: 'n',
+          label: 'Next Section / Buffer',
+          description: 'Jump to next section or tab (gn)',
+          category: 'Goto',
+          commandId: 'section.next',
+        },
+        p: {
+          key: 'p',
+          label: 'Previous Section / Buffer',
+          description: 'Jump to previous section or tab (gp)',
+          category: 'Goto',
+          commandId: 'section.prev',
+        },
+        w: {
+          key: 'w',
+          label: 'Jump Label (2D)',
+          description: 'Overlay 2D home-row jump labels (gw)',
+          category: 'Goto',
+          commandId: 'jump.start',
+        },
+      },
+    },
+    z: createViewMenu('z', 'z'),
+    Z: {
+      key: 'Z',
+      label: '+sticky view',
+      group: 'View (Sticky)',
+      description: 'Lock View menu open until Escape',
+      category: 'View',
+      mode: ['normal', 'select'],
+      sticky: true,
+      loop: true,
+      proxy: ['z'],
+    },
+    m: {
+      key: 'm',
+      label: '+match',
+      group: 'Match / Text Objects',
+      category: 'Match / Text Objects',
+      mode: ['normal', 'select'],
+      children: {
+        m: {
+          key: 'm',
+          label: 'Goto Matching Bracket / Flip',
+          description: 'Flip selection anchor and head (mm)',
+          category: 'Match / Text Objects',
+          commandId: 'selection.flip',
+        },
+        ...textObjects,
+      },
+    },
+    v: {
+      key: 'v',
+      label: 'Select / Extend Mode',
+      description: 'Toggle Helix select/extend mode (v)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'mode.toggleSelect',
+    },
+    x: {
+      key: 'x',
+      label: 'Select Line',
+      description: 'Select current line or extend to next line (x)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'motion.lineSelect',
+    },
+    ';': {
+      key: ';',
+      label: 'Collapse Selection',
+      description: 'Collapse selection to cursor head (;)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.collapse',
+    },
+    'Alt+;': {
+      key: 'Alt+;',
+      label: 'Flip Selection Direction',
+      description: 'Swap selection anchor and head (Alt-;)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.flip',
+    },
+    C: {
+      key: 'C',
+      label: 'Copy Selection Below',
+      description: 'Add secondary cursor on next line/block (C)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.addCursorBelow',
+    },
+    ',': {
+      key: ',',
+      label: 'Keep Primary Selection',
+      description: 'Clear secondary cursors and keep primary selection (,)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.keepPrimary',
+    },
+    U: {
+      key: 'U',
+      label: 'Redo',
+      description: 'Redo last undone editor transaction (U)',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.redo',
+    },
+    ...unimpaired,
+  };
+}
+
+export function createVimPreset(leaderKey = 'Space'): Record<string, WhichKeyNode> {
+  const textObjects = createTextObjectChildren();
+  const unimpaired = createUnimpairedMenus();
+
+  return {
+    ...createSharedMotionsAndOperators(),
+    [leaderKey]: createSpaceMenu(leaderKey, 'z'),
+    'Control+w': createWindowMenu(),
+    g: {
+      key: 'g',
+      label: '+goto',
+      group: 'Goto',
+      category: 'Goto',
+      mode: ['normal', 'select'],
+      children: {
+        g: {
+          key: 'g',
+          label: 'First Line / Top',
+          description: 'Jump to first item or top of document (gg)',
+          category: 'Goto',
+          commandId: 'motion.docStart',
+        },
+        e: {
+          key: 'e',
+          label: 'Backward Word End / Bottom',
+          description: 'Jump to bottom of pane or document (ge)',
+          category: 'Goto',
+          commandId: 'motion.docEnd',
+        },
+        h: {
+          key: 'h',
+          label: 'Start of Line',
+          description: 'Move to start of line or group (gh)',
+          category: 'Goto',
+          commandId: 'motion.lineStart',
+        },
+        l: {
+          key: 'l',
+          label: 'End of Line',
+          description: 'Move to end of line or group (gl)',
+          category: 'Goto',
+          commandId: 'motion.lineEnd',
+        },
+        t: {
+          key: 't',
+          label: 'Next Tab / Section',
+          description: 'Go to next tab or section (gt)',
+          category: 'Goto',
+          commandId: 'section.next',
+        },
+        T: {
+          key: 'T',
+          label: 'Previous Tab / Section',
+          description: 'Go to previous tab or section (gT)',
+          category: 'Goto',
+          commandId: 'section.prev',
+        },
+        w: {
+          key: 'w',
+          label: 'Jump Label (2D)',
+          description: 'Overlay 2D home-row jump labels (gw)',
+          category: 'Goto',
+          commandId: 'jump.start',
+        },
+      },
+    },
+    G: {
+      key: 'G',
+      label: 'Last Line / Bottom',
+      description: 'Jump immediately to bottom of pane or document (G)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.docEnd',
+    },
+    '0': {
+      key: '0',
+      label: 'Start of Line',
+      description: 'Move to beginning of line or group (0)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.lineStart',
+    },
+    $: {
+      key: '$',
+      label: 'End of Line',
+      description: 'Move to end of line or group ($)',
+      category: 'Motion',
+      mode: ['normal', 'select'],
+      commandId: 'motion.lineEnd',
+    },
+    s: {
+      key: 's',
+      label: 'Flash / Sneak Jump',
+      description: 'Trigger 2D forward jump labels (s)',
+      category: 'Navigation',
+      mode: ['normal', 'select'],
+      commandId: 'jump.start',
+    },
+    v: {
+      key: 'v',
+      label: 'Visual Mode',
+      description: 'Toggle characterwise Visual selection mode (v)',
+      category: 'Mode',
+      mode: ['normal', 'select'],
+      commandId: 'mode.toggleSelect',
+    },
+    V: {
+      key: 'V',
+      label: 'Visual Line Mode',
+      description: 'Select entire line in Visual Line mode (V)',
+      category: 'Mode',
+      mode: ['normal', 'select'],
+      commandId: 'motion.lineSelect',
+    },
+    z: createViewMenu('z', 'z'),
+    m: {
+      key: 'm',
+      label: '+text-objects',
+      group: 'Text Objects',
+      category: 'Match / Text Objects',
+      mode: ['normal', 'select'],
+      children: textObjects,
+    },
+    'Control+r': {
+      key: 'Control+r',
+      label: 'Redo',
+      description: 'Redo last undone editor transaction (Ctrl-r)',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.redo',
+    },
+    ...unimpaired,
+  };
+}
+
+export function createKakounePreset(leaderKey = 'Space'): Record<string, WhichKeyNode> {
+  const textObjects = createTextObjectChildren();
+  const unimpaired = createUnimpairedMenus();
+
+  return {
+    ...createSharedMotionsAndOperators(),
+    [leaderKey]: createSpaceMenu(leaderKey, 'v'),
+    'Control+w': createWindowMenu(),
+    g: {
+      key: 'g',
+      label: '+goto',
+      group: 'Goto',
+      category: 'Goto',
+      mode: ['normal', 'select'],
+      children: {
+        g: {
+          key: 'g',
+          label: 'Buffer Top',
+          description: 'Go to top of buffer or first item (gg)',
+          category: 'Goto',
+          commandId: 'motion.docStart',
+        },
+        k: {
+          key: 'k',
+          label: 'Buffer Top',
+          description: 'Go to top of buffer (gk)',
+          category: 'Goto',
+          commandId: 'motion.docStart',
+        },
+        j: {
+          key: 'j',
+          label: 'Buffer Bottom',
+          description: 'Go to bottom of buffer (gj)',
+          category: 'Goto',
+          commandId: 'motion.docEnd',
+        },
+        e: {
+          key: 'e',
+          label: 'Buffer End',
+          description: 'Go to end of buffer (ge)',
+          category: 'Goto',
+          commandId: 'motion.docEnd',
+        },
+        h: {
+          key: 'h',
+          label: 'Line Start',
+          description: 'Go to start of line or group (gh)',
+          category: 'Goto',
+          commandId: 'motion.lineStart',
+        },
+        l: {
+          key: 'l',
+          label: 'Line End',
+          description: 'Go to end of line or group (gl)',
+          category: 'Goto',
+          commandId: 'motion.lineEnd',
+        },
+        t: {
+          key: 't',
+          label: 'Window Top',
+          description: 'Go to top of visible window (gt)',
+          category: 'Goto',
+          commandId: 'view.top',
+        },
+        c: {
+          key: 'c',
+          label: 'Window Center',
+          description: 'Go to center of visible window (gc)',
+          category: 'Goto',
+          commandId: 'view.center',
+        },
+        b: {
+          key: 'b',
+          label: 'Window Bottom',
+          description: 'Go to bottom of visible window (gb)',
+          category: 'Goto',
+          commandId: 'view.bottom',
+        },
+        a: {
+          key: 'a',
+          label: 'Previous Location',
+          description: 'Jump to alternate / previous location (ga)',
+          category: 'Goto',
+          commandId: 'jumplist.back',
+        },
+        w: {
+          key: 'w',
+          label: 'Jump Label (2D)',
+          description: 'Overlay 2D home-row jump labels (gw)',
+          category: 'Goto',
+          commandId: 'jump.start',
+        },
+      },
+    },
+    v: createViewMenu('v', 'v'),
+    V: {
+      key: 'V',
+      label: '+lock view',
+      group: 'View (Lock)',
+      description: 'Lock Kakoune View mode open until Escape (V)',
+      category: 'View',
+      mode: ['normal', 'select'],
+      sticky: true,
+      loop: true,
+      proxy: ['v'],
+    },
+    m: {
+      key: 'm',
+      label: '+object',
+      group: 'Object / Match',
+      category: 'Match / Text Objects',
+      mode: ['normal', 'select'],
+      children: textObjects,
+    },
+    x: {
+      key: 'x',
+      label: 'Select Line',
+      description: 'Select current line (x)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'motion.lineSelect',
+    },
+    ';': {
+      key: ';',
+      label: 'Reduce Selection to Cursor',
+      description: 'Collapse selection to single cursor (;)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.collapse',
+    },
+    'Alt+;': {
+      key: 'Alt+;',
+      label: 'Flip Selection Direction',
+      description: 'Swap anchor and cursor (Alt-;)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.flip',
+    },
+    C: {
+      key: 'C',
+      label: 'Copy Selection on Next Line',
+      description: 'Add secondary selection on next line (C)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.addCursorBelow',
+    },
+    ',': {
+      key: ',',
+      label: 'Keep Main Selection',
+      description: 'Clear secondary selections (,)',
+      category: 'Selection',
+      mode: ['normal', 'select'],
+      commandId: 'selection.keepPrimary',
+    },
+    U: {
+      key: 'U',
+      label: 'Redo',
+      description: 'Redo last undone change (U)',
+      category: 'Operator',
+      mode: ['normal', 'select'],
+      commandId: 'operator.redo',
+    },
+    ...unimpaired,
+  };
+}
+
+export function getPresetKeymap(preset: KeybindingPreset, leaderKey = 'Space'): Record<string, WhichKeyNode> {
+  switch (preset) {
+    case 'vim':
+      return createVimPreset(leaderKey);
+    case 'kakoune':
+      return createKakounePreset(leaderKey);
+    case 'helix':
+    default:
+      return createHelixPreset(leaderKey);
+  }
+}

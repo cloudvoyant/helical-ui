@@ -47,8 +47,11 @@
     "@ark-ui/svelte": "catalog:",
     "@cloudvoyant/helical-ui": "workspace:*",
     "@tanstack/charts": "catalog:",
+    "@tanstack/svelte-hotkeys": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/suggestion": "catalog:",
+    "@zag-js/dismissable": "catalog:",
+    "@zag-js/dom-query": "catalog:",
     "lucide-svelte": "catalog:",
     "lowlight": "catalog:",
     "svelte-tiptap": "catalog:"

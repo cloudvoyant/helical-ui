@@ -25,3 +25,9 @@ export const splitterResizeTriggerSeparatorBase =
 
 export const splitterResizeTriggerIndicatorBase =
   'relative z-10 rounded-full border border-border bg-muted shadow-xs data-[dragging]:bg-muted-foreground data-[focus]:bg-accent data-[disabled]:hidden data-[orientation=horizontal]:h-6 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-6';
+
+export interface SplitterPanelPaneRegistrationProps {
+  paneId?: string;
+  paneTitle?: string;
+  paneDisabled?: boolean;
+}

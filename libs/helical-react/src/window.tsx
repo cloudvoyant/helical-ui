@@ -38,20 +38,44 @@ import {
   windowCloseTriggerBase,
   windowBodyBase,
   windowResizeTriggerBase,
+  type WindowPaneRegistrationProps,
   cn,
 } from '@cloudvoyant/helical-ui';
+import { useOptionalPaneRegistration } from './which-key/context';
 
-export type WindowProps = WindowRootProps & {
-  className?: string;
-  positionerClassName?: string;
-};
+export type WindowProps = WindowRootProps &
+  WindowPaneRegistrationProps & {
+    className?: string;
+    positionerClassName?: string;
+  };
 
-export function Window({ className, positionerClassName, children, ...props }: WindowProps) {
+export function Window({
+  paneId,
+  paneTitle,
+  paneDisabled,
+  className,
+  positionerClassName,
+  children,
+  ...props
+}: WindowProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled: paneDisabled || props.open === false,
+    defaultTitle: 'Window',
+  });
+
   return (
     <ArkWindowRoot {...props}>
       <Portal>
         <ArkWindowPositioner className={cn(windowPositionerBase, positionerClassName)}>
-          <ArkWindowContent className={cn(windowContentBase, className)}>{children}</ArkWindowContent>
+          <ArkWindowContent
+            ref={pane.ref}
+            {...pane.dataAttributes}
+            className={cn(windowContentBase, className)}
+          >
+            {children}
+          </ArkWindowContent>
         </ArkWindowPositioner>
       </Portal>
     </ArkWindowRoot>

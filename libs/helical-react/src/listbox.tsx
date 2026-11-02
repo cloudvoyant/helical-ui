@@ -15,6 +15,8 @@ import {
   ListboxInput as ArkListboxInput,
   ListboxEmpty as ArkListboxEmpty,
   ListboxLabel as ArkListboxLabel,
+  ListboxItemGroup as ArkListboxItemGroup,
+  ListboxItemGroupLabel as ArkListboxItemGroupLabel,
   createListCollection,
   useListboxContext,
   type ListboxRootProps,
@@ -25,6 +27,8 @@ import {
   type ListboxInputProps as ArkListboxInputProps,
   type ListboxEmptyProps as ArkListboxEmptyProps,
   type ListboxLabelProps as ArkListboxLabelProps,
+  type ListboxItemGroupProps as ArkListboxItemGroupProps,
+  type ListboxItemGroupLabelProps as ArkListboxItemGroupLabelProps,
   type CollectionItem,
   type ListCollection,
 } from '@ark-ui/react/listbox';
@@ -37,6 +41,8 @@ import {
   listboxInputBase,
   listboxEmptyBase,
   listboxLabelBase,
+  listboxItemGroupBase,
+  listboxItemGroupLabelBase,
   cn,
   type ListboxItemData,
 } from '@cloudvoyant/helical-ui';
@@ -130,5 +136,31 @@ export function ListboxLabel({ className, children, ...rest }: ListboxLabelProps
     <ArkListboxLabel className={cn(listboxLabelBase, className)} {...rest}>
       {children}
     </ArkListboxLabel>
+  );
+}
+
+export type ListboxItemGroupProps = ArkListboxItemGroupProps & {
+  className?: string;
+  children?: ReactNode;
+};
+
+export function ListboxItemGroup({ className, children, ...rest }: ListboxItemGroupProps) {
+  return (
+    <ArkListboxItemGroup className={cn(listboxItemGroupBase, className)} {...rest}>
+      {children}
+    </ArkListboxItemGroup>
+  );
+}
+
+export type ListboxItemGroupLabelProps = ArkListboxItemGroupLabelProps & {
+  className?: string;
+  children?: ReactNode;
+};
+
+export function ListboxItemGroupLabel({ className, children, ...rest }: ListboxItemGroupLabelProps) {
+  return (
+    <ArkListboxItemGroupLabel className={cn(listboxItemGroupLabelBase, className)} {...rest}>
+      {children}
+    </ArkListboxItemGroupLabel>
   );
 }

@@ -45,6 +45,12 @@ export interface SidebarContextProps {
   isControlled: boolean;
 }
 
+export interface SidebarPaneRegistrationProps {
+  paneId?: string;
+  paneTitle?: string;
+  paneDisabled?: boolean;
+}
+
 export const sidebarStyles = {
   wrapperClass: 'group/sidebar-wrapper min-h-svh w-full has-data-[variant=inset]:bg-sidebar',
 

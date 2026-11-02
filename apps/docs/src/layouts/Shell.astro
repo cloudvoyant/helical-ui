@@ -4,6 +4,7 @@ import { NAV_GROUPS } from '../lib/nav';
 import { Page, PageGutter, PageContent, PageFooter } from '@cloudvoyant/helical-react';
 import '../styles/global.css';
 import TopNav from '../components/TopNav.tsx';
+import DocsKeyboardShell from '../components/DocsKeyboardShell.tsx';
 import Sidebar from '../components/Sidebar.astro';
 import Toc from '../components/Toc.astro';
 import Footer from '../components/Footer.astro';
@@ -136,6 +137,7 @@ const groups = NAV_GROUPS.map((g) => {
     ) : variant === 'landing' ? (
       <>
         <TopNav client:load currentPath={currentPath} groups={groups} />
+        <DocsKeyboardShell client:load />
         <Page variant="landing">
           <slot />
           <PageFooter>
@@ -146,6 +148,7 @@ const groups = NAV_GROUPS.map((g) => {
     ) : (
       <>
         <TopNav client:load currentPath={currentPath} groups={groups} />
+        <DocsKeyboardShell client:load />
         <Page>
           <PageGutter
             side="left"

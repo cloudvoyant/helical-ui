@@ -22,3 +22,9 @@ export const windowCloseTriggerBase =
 export const windowBodyBase = 'flex flex-1 flex-col gap-4 overflow-auto p-4 text-sm';
 
 export const windowResizeTriggerBase = 'absolute bottom-0 right-0 size-4 cursor-se-resize';
+
+export interface WindowPaneRegistrationProps {
+  paneId?: string;
+  paneTitle?: string;
+  paneDisabled?: boolean;
+}
