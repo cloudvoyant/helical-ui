@@ -1,3 +1,10 @@
+## [0.21.1](https://github.com/cloudvoyant/helical-ui/compare/v0.21.0...v0.21.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **which-key:** fix gg and gb navigation on docs homepage ([#35](https://github.com/cloudvoyant/helical-ui/issues/35)) ([e273f38](https://github.com/cloudvoyant/helical-ui/commit/e273f38b9c628d4de0d27ae19d63b2402f71bc7f))
+
 # [0.21.0](https://github.com/cloudvoyant/helical-ui/compare/v0.20.1...v0.21.0) (2026-11-02)
 
 
