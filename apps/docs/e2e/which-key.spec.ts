@@ -340,7 +340,9 @@ for (const framework of FRAMEWORKS) {
         }) => {
           // Arrange
           const demo = island(page, framework, 'jump-labels');
-          await demo.scrollIntoViewIfNeeded();
+          await demo.evaluate((el) =>
+            el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior }),
+          );
           await demo.getByTestId('wk-jump-target-0').focus();
 
           // Act: press g then w in default focus mode

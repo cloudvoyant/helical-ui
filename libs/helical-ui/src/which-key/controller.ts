@@ -813,15 +813,18 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     const visible = allFocusable.filter((el) => {
       const rect = el.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return false;
+      if (ownScope) {
+        return true;
+      }
+      const intersectsViewport =
+        rect.bottom > 0 &&
+        rect.right > 0 &&
+        rect.top < (doc.defaultView?.innerHeight ?? 1080) &&
+        rect.left < (doc.defaultView?.innerWidth ?? 1920);
       try {
-        return isInView(el, doc.defaultView ?? scopeRoot);
+        return isInView(el, doc.defaultView ?? scopeRoot) || intersectsViewport;
       } catch {
-        return (
-          rect.bottom > 0 &&
-          rect.right > 0 &&
-          rect.top < (doc.defaultView?.innerHeight ?? 1080) &&
-          rect.left < (doc.defaultView?.innerWidth ?? 1920)
-        );
+        return intersectsViewport;
       }
     });
 
