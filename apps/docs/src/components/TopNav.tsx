@@ -11,6 +11,8 @@ import {
   NavbarMenuList,
   NavbarMenuItem,
   NavbarMenuLink,
+  Kbd,
+  useWhichKey,
 } from '@cloudvoyant/helical-react';
 import { HelicalLogo } from './examples/HelicalLogo';
 import ThemeSelector from './ThemeSelector';
@@ -38,6 +40,8 @@ const links = [
 ];
 
 export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups = [] }: Props) {
+  const { openExplorer } = useWhichKey();
+
   return (
     <NavbarProvider>
       <Navbar
@@ -66,6 +70,18 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
         <NavbarActions>
           <FrameworkSelector />
           <div className="flex-1" />
+          <button
+            type="button"
+            aria-label="Explore keybindings"
+            title="Explore keybindings (?)"
+            data-keybinding-explorer-trigger
+            onClick={openExplorer}
+            className="hidden h-8 items-center justify-center rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
+          >
+            <Kbd size="sm" variant="subtle">
+              ?
+            </Kbd>
+          </button>
           <ThemeSelector />
           <a
             href="https://github.com/cloudvoyant/helical-ui"

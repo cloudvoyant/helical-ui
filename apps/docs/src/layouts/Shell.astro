@@ -4,6 +4,7 @@ import { NAV_GROUPS } from '../lib/nav';
 import { Page, PageGutter, PageContent, PageFooter } from '@cloudvoyant/helical-react';
 import '../styles/global.css';
 import TopNav from '../components/TopNav.tsx';
+import DocsWhichKeyProvider from '../components/DocsWhichKeyProvider.tsx';
 import Sidebar from '../components/Sidebar.astro';
 import Toc from '../components/Toc.astro';
 import Footer from '../components/Footer.astro';
@@ -54,6 +55,8 @@ const groups = NAV_GROUPS.map((g) => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="vimium-disable" content="true" />
+    <meta name="vimium" content="disable" />
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon-light.svg`} data-favicon="light" />
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon-dark.svg`} data-favicon="dark" />
     <link rel="alternate icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
@@ -136,6 +139,7 @@ const groups = NAV_GROUPS.map((g) => {
     ) : variant === 'landing' ? (
       <>
         <TopNav client:load currentPath={currentPath} groups={groups} />
+        <DocsWhichKeyProvider client:load />
         <Page variant="landing">
           <slot />
           <PageFooter>
@@ -146,22 +150,34 @@ const groups = NAV_GROUPS.map((g) => {
     ) : (
       <>
         <TopNav client:load currentPath={currentPath} groups={groups} />
+        <DocsWhichKeyProvider client:load />
         <Page>
           <PageGutter
             side="left"
+            paneId="docs-sidebar"
+            paneTitle="Sidebar"
+            paneOrder={1}
             className="top-16 hidden h-[calc(100svh-4rem)] lg:block lg:w-56 lg:p-0"
           >
             <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pl-4 lg:pl-8">
               <Sidebar currentPath={currentPath} />
             </div>
           </PageGutter>
-          <PageContent className="pt-16 px-4 pb-10 md:px-8">
+          <PageContent
+            paneId="docs-main"
+            paneTitle="Main Content"
+            paneOrder={2}
+            className="pt-16 px-4 pb-10 md:px-8"
+          >
             <div class="mx-auto w-full max-w-4xl">
               <slot />
             </div>
           </PageContent>
           <PageGutter
             side="right"
+            paneId="docs-toc"
+            paneTitle="Table of Contents"
+            paneOrder={3}
             className="top-16 hidden h-[calc(100svh-4rem)] xl:block xl:w-64 xl:p-0"
           >
             <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pr-4 xl:pr-8">

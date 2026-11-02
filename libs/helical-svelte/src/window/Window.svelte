@@ -9,15 +9,41 @@
     FloatingPanelContent,
     type FloatingPanelRootProps,
   } from '@ark-ui/svelte/floating-panel';
-  import { windowPositionerBase, windowContentBase, cn } from '@cloudvoyant/helical-ui';
+  import {
+    windowPositionerBase,
+    windowContentBase,
+    cn,
+    type WindowPaneRegistrationProps,
+  } from '@cloudvoyant/helical-ui';
+  import { useOptionalPaneRegistration } from '../which-key/context.svelte';
 
-  interface Props extends FloatingPanelRootProps {
+  interface Props extends FloatingPanelRootProps, WindowPaneRegistrationProps {
     class?: string;
     positionerClass?: string;
     children?: Snippet;
   }
 
-  let { class: className = '', positionerClass = '', children, ...rest }: Props = $props();
+  let {
+    class: className = '',
+    positionerClass = '',
+    paneId,
+    paneTitle,
+    paneDisabled,
+    children,
+    ...rest
+  }: Props = $props();
+
+  let contentRef: Element | null = $state(null);
+
+  const pane = useOptionalPaneRegistration(
+    () => (contentRef instanceof HTMLElement ? contentRef : null),
+    () => ({
+      paneId,
+      paneTitle,
+      paneDisabled: paneDisabled || rest.open === false,
+      defaultTitle: 'Window',
+    }),
+  );
 
   const positionerClasses = $derived(cn(windowPositionerBase, positionerClass));
   const contentClasses = $derived(cn(windowContentBase, className));
@@ -26,7 +52,7 @@
 <FloatingPanelRoot {...rest}>
   <Portal>
     <FloatingPanelPositioner class={positionerClasses}>
-      <FloatingPanelContent class={contentClasses}>
+      <FloatingPanelContent bind:ref={contentRef} {...pane.dataAttributes} class={contentClasses}>
         {@render children?.()}
       </FloatingPanelContent>
     </FloatingPanelPositioner>

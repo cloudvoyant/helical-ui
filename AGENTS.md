@@ -11,6 +11,10 @@
 
 ## Organization
 
+- [Proposed] Keep component-specific core logic and state machines in `libs/helical-ui` rather than `libs/utils`; reserve `libs/utils` for generic, domain-independent helpers.
+- [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
+- [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
+
 ### Repository layout
 
 ```mermaid

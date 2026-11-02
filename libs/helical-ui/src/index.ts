@@ -35,6 +35,7 @@ export {
   windowCloseTriggerBase,
   windowBodyBase,
   windowResizeTriggerBase,
+  type WindowPaneRegistrationProps,
 } from './window';
 export { badgeVariants, type BadgeProps, type BadgeVariants } from './badge';
 export { containerBase, rowBase, colBase, stackBase, hstackBase, vstackBase, centerBase } from './layout';
@@ -70,6 +71,7 @@ export {
   type PageVariants,
   type PageGutterVariants,
   type PageGutterContentVariants,
+  type PagePaneRegistrationProps,
 } from './page';
 export {
   splitterRootBase,
@@ -77,6 +79,7 @@ export {
   splitterResizeTriggerBase,
   splitterResizeTriggerSeparatorBase,
   splitterResizeTriggerIndicatorBase,
+  type SplitterPanelPaneRegistrationProps,
 } from './splitter';
 export {
   SIDEBAR_WIDTH,
@@ -88,6 +91,7 @@ export {
   sidebarMenuButtonVariants,
   type SidebarMenuButtonVariants,
   type SidebarContextProps,
+  type SidebarPaneRegistrationProps,
   sidebarStyles,
 } from './sidebar';
 export {
@@ -349,6 +353,10 @@ export {
   listboxInputBase,
   listboxEmptyBase,
   listboxLabelBase,
+  listboxItemGroupBase,
+  listboxItemGroupLabelBase,
   type ListboxItemData,
 } from './listbox';
+export { kbdVariants, kbdGroupBase, formatKeyChord, formatKeySequence, type KbdProps, type KbdVariants } from './kbd';
+export * from './which-key';
 export * from './editor';

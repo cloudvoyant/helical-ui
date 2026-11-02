@@ -6,6 +6,7 @@ import { Extension } from '@tiptap/core';
 import { PluginKey } from '@tiptap/pm/state';
 import Suggestion from '@tiptap/suggestion';
 import type { SlashCommandItem } from '../types';
+import { isEditorInInsertMode } from './modal-keymap';
 
 type InsertCallback = (position: number) => void;
 
@@ -48,6 +49,7 @@ export const slashCommands = Extension.create({
       suggestion: {
         char: '/',
         pluginKey: new PluginKey('slashCommands'),
+        allow: ({ editor }: { editor: import('@tiptap/core').Editor }) => isEditorInInsertMode(editor),
         command: ({
           editor,
           range,

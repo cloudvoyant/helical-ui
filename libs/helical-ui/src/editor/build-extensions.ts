@@ -36,6 +36,7 @@ import { createLinkPreview } from './extensions/link-preview';
 import { createInternalMention } from './extensions/internal-mention';
 import { createNoticeNode } from './extensions/notice-node';
 import { CurrentEmptyBlock } from './extensions/current-empty-block';
+import { ModalKeymap } from './extensions/modal-keymap';
 import type { BuildExtensionsOptions } from './types';
 
 export function buildExtensions(options: BuildExtensionsOptions): Extensions {
@@ -100,5 +101,6 @@ export function buildExtensions(options: BuildExtensionsOptions): Extensions {
     createImageNode(nodeViews.image),
     createUrlMention(nodeViews.urlMention),
     slashCommands.configure({ suggestion: { render: slashRender ?? (() => ({})) } }),
+    ModalKeymap.configure({ enforceTitle }),
   ] as Extensions;
 }

@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@tanstack/charts": "catalog:",
+    "@tanstack/hotkeys": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/pm": "catalog:",
     "@tiptap/starter-kit": "catalog:",
@@ -59,6 +60,10 @@
     "@tiptap/extension-text-style": "catalog:",
     "@tiptap/extension-typography": "catalog:",
     "@tiptap/extension-underline": "catalog:",
+    "@zag-js/dismissable": "catalog:",
+    "@zag-js/dom-query": "catalog:",
+    "@zag-js/focus-visible": "catalog:",
+    "@zag-js/live-region": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "katex": "catalog:",

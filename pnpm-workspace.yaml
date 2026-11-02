@@ -30,6 +30,9 @@ catalog:
   lowlight: ^3.3.0
   svelte-tiptap: ^3.0.1
   '@tanstack/charts': ^0.16.0
+  '@tanstack/hotkeys': ^0.23.0
+  '@tanstack/react-hotkeys': ^0.21.0
+  '@tanstack/svelte-hotkeys': ^0.20.0
   '@astrojs/check': ^0.9.10
   '@astrojs/mdx': ^7.0.6
   '@astrojs/react': ^6.0.3
@@ -44,6 +47,10 @@ catalog:
   '@types/react-dom': ^19.2.4
   '@typescript-eslint/eslint-plugin': ^8.0.0
   '@typescript-eslint/parser': ^8.0.0
+  '@zag-js/dismissable': 1.43.1
+  '@zag-js/dom-query': 1.43.1
+  '@zag-js/focus-visible': 1.43.1
+  '@zag-js/live-region': 1.43.1
   astro: ^7.2.3
   '@playwright/test': ^1.62.1
   'class-variance-authority': ^0.7.1

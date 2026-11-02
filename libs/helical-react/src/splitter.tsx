@@ -6,7 +6,7 @@ import {
   SplitterResizeTrigger as ArkSplitterResizeTrigger,
   SplitterResizeTriggerIndicator as ArkSplitterResizeTriggerIndicator,
   type SplitterRootProps,
-  type SplitterPanelProps,
+  type SplitterPanelProps as ArkSplitterPanelProps,
   type SplitterResizeTriggerProps,
   type SplitterResizeTriggerIndicatorProps,
 } from '@ark-ui/react/splitter';
@@ -16,15 +16,39 @@ import {
   splitterResizeTriggerBase,
   splitterResizeTriggerSeparatorBase,
   splitterResizeTriggerIndicatorBase,
+  type SplitterPanelPaneRegistrationProps,
   cn,
 } from '@cloudvoyant/helical-ui';
+import { useOptionalPaneRegistration } from './which-key/context';
+
+export type SplitterPanelProps = ArkSplitterPanelProps & SplitterPanelPaneRegistrationProps;
 
 export function Splitter({ className, ...props }: SplitterRootProps) {
   return <ArkSplitterRoot className={cn(splitterRootBase, className)} {...props} />;
 }
 
-export function SplitterPanel({ className, ...props }: SplitterPanelProps) {
-  return <ArkSplitterPanel className={cn(splitterPanelBase, className)} {...props} />;
+export function SplitterPanel({
+  paneId,
+  paneTitle,
+  paneDisabled,
+  className,
+  ...props
+}: SplitterPanelProps) {
+  const pane = useOptionalPaneRegistration({
+    paneId: paneId ?? (typeof props.id === 'string' ? `splitter-${props.id}` : undefined),
+    paneTitle: paneTitle ?? (typeof props.id === 'string' ? `Panel ${props.id}` : 'Splitter Panel'),
+    paneDisabled,
+    defaultTitle: 'Splitter Panel',
+  });
+
+  return (
+    <ArkSplitterPanel
+      ref={pane.ref}
+      {...pane.dataAttributes}
+      className={cn(splitterPanelBase, className)}
+      {...props}
+    />
+  );
 }
 
 export function SplitterResizeTrigger({ className, children, ...props }: SplitterResizeTriggerProps) {
@@ -42,7 +66,6 @@ export function SplitterResizeTriggerIndicator({ className, ...props }: Splitter
 
 export type {
   SplitterRootProps as SplitterProps,
-  SplitterPanelProps,
   SplitterResizeTriggerProps,
   SplitterResizeTriggerIndicatorProps,
 };

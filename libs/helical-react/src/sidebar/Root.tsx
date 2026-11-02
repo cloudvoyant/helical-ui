@@ -21,29 +21,43 @@ import {
   SIDEBAR_WIDGET_DEFAULT_SNAP_POINT,
   sidebarStyles,
   cn,
+  type SidebarPaneRegistrationProps,
 } from '@cloudvoyant/helical-ui';
 import { Col } from '../col';
+import { useOptionalPaneRegistration } from '../which-key/context';
 import { useSidebar } from './context';
 
 export function Root({
   side = 'left',
   variant = 'sidebar',
   collapsible = 'offcanvas',
+  paneId,
+  paneTitle,
+  paneDisabled,
   className,
   children,
   ...props
-}: React.ComponentProps<'div'> & {
-  side?: 'left' | 'right';
-  variant?: 'sidebar' | 'floating' | 'inset';
-  collapsible?: 'offcanvas' | 'icon' | 'none';
-}) {
+}: React.ComponentProps<'div'> &
+  SidebarPaneRegistrationProps & {
+    side?: 'left' | 'right';
+    variant?: 'sidebar' | 'floating' | 'inset';
+    collapsible?: 'offcanvas' | 'icon' | 'none';
+  }) {
   const { isMobile, state, open, setOpen, openMobile, setOpenMobile, isControlled } = useSidebar();
+  const pane = useOptionalPaneRegistration({
+    paneId,
+    paneTitle,
+    paneDisabled: paneDisabled || state === 'collapsed',
+    defaultTitle: 'Sidebar',
+  });
 
   if (collapsible === 'none') {
     return (
       <Col
+        ref={pane.ref}
         data-slot="sidebar"
         data-sidebar="sidebar"
+        {...pane.dataAttributes}
         className={cn('h-full w-(--sidebar-width) bg-sidebar text-sidebar-foreground', className)}
         {...props}
       >
@@ -119,7 +133,9 @@ export function Root({
         )}
       />
       <div
+        ref={pane.ref}
         data-slot="sidebar-container"
+        {...pane.dataAttributes}
         className={cn(
           sidebarStyles.containerClass,
           side === 'left'

@@ -176,3 +176,43 @@
     opacity: 0;
   }
 }
+
+/* ModalKeymap block caret and multi-cursor decorations in normal and select modes */
+.ProseMirror[data-modal-mode='normal'],
+.ProseMirror[data-modal-mode='select'] {
+  caret-color: transparent;
+}
+
+.ProseMirror::selection,
+.ProseMirror ::selection {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  -webkit-text-fill-color: var(--color-primary-foreground) !important;
+}
+
+.ProseMirror[data-modal-mode='normal']::selection,
+.ProseMirror[data-modal-mode='normal'] ::selection,
+.ProseMirror[data-modal-mode='select']::selection,
+.ProseMirror[data-modal-mode='select'] ::selection {
+  background-color: transparent !important;
+  color: var(--color-primary-foreground) !important;
+  -webkit-text-fill-color: var(--color-primary-foreground) !important;
+}
+
+.ProseMirror [data-pm-modal-selection],
+.ProseMirror [data-pm-multi-selection],
+.ProseMirror [data-pm-modal-cursor],
+.ProseMirror [data-pm-multi-cursor] {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  -webkit-text-fill-color: var(--color-primary-foreground) !important;
+  border-radius: 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.ProseMirror .pm-modal-cursor-eol {
+  display: inline;
+  pointer-events: none;
+  user-select: none;
+}

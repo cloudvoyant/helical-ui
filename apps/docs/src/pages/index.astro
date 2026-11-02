@@ -3,7 +3,7 @@ import Shell from '../layouts/Shell.astro';
 import { getCollection } from 'astro:content';
 import { buttonVariants } from '@cloudvoyant/helical-ui';
 import { cn } from '@cloudvoyant/helical-ui';
-import { PageSection } from '@cloudvoyant/helical-react';
+import { Kbd, PageSection } from '@cloudvoyant/helical-react';
 import HeroWord from '../components/HeroWord.tsx';
 
 const components = (await getCollection('components')).sort((a, b) => a.data.order - b.data.order);
@@ -14,7 +14,12 @@ const components = (await getCollection('components')).sort((a, b) => a.data.ord
   title="helical-ui — React and Svelte components"
   description="Accessible React and Svelte components built on Ark UI with a shared shadcn-style theme."
 >
-  <PageSection className="relative items-center justify-center overflow-hidden px-4 py-16">
+  <PageSection
+    paneId="landing-hero"
+    paneTitle="Hero"
+    paneOrder={1}
+    className="relative items-center justify-center overflow-hidden px-4 py-16"
+  >
     <div aria-hidden="true" class="pointer-events-none absolute inset-0">
       <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_8%,transparent),transparent_62%)]" />
       <canvas
@@ -42,16 +47,45 @@ const components = (await getCollection('components')).sort((a, b) => a.data.ord
           Browse components
         </a>
       </div>
+      <div class="mt-8 hidden items-center justify-center gap-4 text-xs text-muted-foreground sm:inline-flex">
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">Space</Kbd>
+          <span>Leader menu</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">?</Kbd>
+          <span>Explore keybindings</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle" hotkey={['g', 'w']} />
+          <span>Jump labels</span>
+        </span>
+        <span aria-hidden="true" class="text-border">·</span>
+        <span class="inline-flex items-center gap-1.5">
+          <Kbd size="sm" variant="subtle">h</Kbd>
+          <Kbd size="sm" variant="subtle">j</Kbd>
+          <Kbd size="sm" variant="subtle">k</Kbd>
+          <Kbd size="sm" variant="subtle">l</Kbd>
+          <span>Navigate</span>
+        </span>
+      </div>
     </div>
   </PageSection>
 
-  <section class="mx-auto grid w-full max-w-6xl gap-4 px-4 pb-20 pt-10 sm:grid-cols-2 md:grid-cols-3">
+  <section
+    data-pane-id="landing-catalog"
+    data-pane-title="Components"
+    data-pane-order="2"
+    class="mx-auto grid w-full max-w-6xl gap-4 px-4 pb-20 pt-10 sm:grid-cols-2 md:grid-cols-3"
+  >
     {components.map((entry) => {
       const href = `${import.meta.env.BASE_URL}components/${entry.id}`;
       return (
         <a
           href={href}
-          class="group rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary hover:bg-accent dark:hover:bg-accent/40"
+          class="group rounded-lg border border-border bg-card p-6 outline-none transition-colors hover:border-primary hover:bg-accent focus-visible:border-primary focus-visible:bg-accent dark:hover:bg-accent/40 dark:focus-visible:bg-accent/40"
         >
           <h2 class="text-lg font-semibold">{entry.data.title}</h2>
           <p class="mt-2 text-sm text-muted-foreground">{entry.data.description}</p>

@@ -38,3 +38,8 @@ export const listboxInputBase =
 export const listboxEmptyBase = 'px-2 py-6 text-center text-sm text-muted-foreground';
 
 export const listboxLabelBase = 'px-2 py-1.5 text-xs font-semibold text-muted-foreground';
+
+export const listboxItemGroupBase = 'flex flex-col py-1 first:pt-0 last:pb-0';
+
+export const listboxItemGroupLabelBase =
+  'px-2 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase select-none';

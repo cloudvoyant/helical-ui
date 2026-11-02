@@ -8,6 +8,7 @@
 import { Mention } from '@tiptap/extension-mention';
 import type { SuggestionOptions } from '@tiptap/suggestion';
 import type { EditorSeams, MentionItem } from '../types';
+import { isEditorInInsertMode } from './modal-keymap';
 
 export interface InternalMentionConfig extends EditorSeams {
   render: SuggestionOptions<MentionItem>['render'];
@@ -93,6 +94,7 @@ export const createInternalMention = ({ mentionSource, hrefBuilder, render }: In
     suggestion: {
       char: '@',
       allowSpaces: true,
+      allow: ({ editor }) => isEditorInInsertMode(editor),
       command: ({ editor, range, props }) => {
         // Insert mention without trailing space
         editor
