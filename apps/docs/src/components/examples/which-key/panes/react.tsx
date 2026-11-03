@@ -95,9 +95,21 @@ function PanesSurface() {
   );
 }
 
+const PANES_DEMO_KEYMAP = {
+  Space: {
+    key: 'Space',
+    label: '+leader',
+    children: {
+      '1': { key: '1', label: 'Focus Pane 1', commandId: 'pane.focus.1' },
+      '2': { key: '2', label: 'Focus Pane 2', commandId: 'pane.focus.2' },
+      '3': { key: '3', label: 'Focus Pane 3', commandId: 'pane.focus.3' },
+    },
+  },
+};
+
 export default function ReactWhichKeyPanes() {
   return (
-    <WhichKeyProvider preset="helix">
+    <WhichKeyProvider preset="helix" keymap={PANES_DEMO_KEYMAP}>
       <PanesSurface />
       <WhichKey />
     </WhichKeyProvider>

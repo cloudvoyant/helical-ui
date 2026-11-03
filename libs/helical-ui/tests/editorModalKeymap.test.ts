@@ -353,5 +353,100 @@ describe('Given a Tiptap/ProseMirror Editor instance built with buildExtensions 
       target.move('left', { preset: 'helix', mode: 'select', count: 1 });
       expect(getSelectedText(editor)).toBe('Al');
     });
+
+    it('Then distinguishes "in" (inner notice body) from "an" (full notice block) and yanks/deletes/pastes notices, images, and link previews cleanly', () => {
+      // Arrange
+      const editor = createTestEditor({
+        type: 'doc',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: 'Article Title' }],
+          },
+          {
+            type: 'notice',
+            attrs: { variant: 'warning', title: 'Watch out' },
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Careful inside notice' }],
+              },
+            ],
+          },
+          {
+            type: 'imageNode',
+            attrs: { src: 'https://example.com/diagram.png', alt: 'Architecture diagram' },
+          },
+          {
+            type: 'linkPreview',
+            attrs: { url: 'https://example.com/guide', kind: 'bookmark', title: 'Guide' },
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Closing paragraph' }],
+          },
+        ],
+      });
+      const target = getEditorModalTarget(editor)!;
+
+      // Act & Assert: m i n + delete clears only the notice text while keeping the notice block
+      target.move('docStart', { preset: 'helix', mode: 'normal', count: 1 });
+      target.move('down', { preset: 'helix', mode: 'normal', count: 1 });
+      target.selectTextObject('in', { preset: 'helix', mode: 'normal' });
+      target.execOperator('delete', { preset: 'helix', mode: 'normal', count: 1 });
+      expect(editor.state.doc.child(1).type.name).toBe('notice');
+      expect(editor.state.doc.child(1).attrs.title).toBe('Watch out');
+      expect(editor.state.doc.child(1).textContent).toBe('');
+
+      // Undo to restore notice body
+      target.execOperator('undo', { preset: 'helix', mode: 'normal', count: 1 });
+      expect(editor.state.doc.child(1).textContent).toBe('Careful inside notice');
+
+      // Act & Assert: m a n + yank + pasteAfter duplicates the entire notice block with attrs preserved
+      target.selectTextObject('an', { preset: 'helix', mode: 'normal' });
+      const yankNoticeRes = target.execOperator('yank', { preset: 'helix', mode: 'normal', count: 1 });
+      expect(typeof yankNoticeRes === 'object' && yankNoticeRes.yankedText).toContain('Watch out');
+      target.execOperator('pasteAfter', { preset: 'helix', mode: 'normal', count: 1 });
+      expect(editor.state.doc.child(1).type.name).toBe('notice');
+      expect(editor.state.doc.child(2).type.name).toBe('notice');
+      expect(editor.state.doc.child(2).attrs).toMatchObject({ variant: 'warning', title: 'Watch out' });
+      expect(editor.state.doc.child(2).textContent).toBe('Careful inside notice');
+
+      // Act & Assert: m a n + delete removes the duplicate notice block without leaving an empty shell
+      target.selectTextObject('an', { preset: 'helix', mode: 'normal' });
+      target.execOperator('delete', { preset: 'helix', mode: 'normal', count: 1 });
+      let noticeCount = 0;
+      editor.state.doc.forEach((child) => {
+        if (child.type.name === 'notice') noticeCount += 1;
+      });
+      expect(noticeCount).toBe(1);
+
+      // Act & Assert: navigate to imageNode, yank, pasteAfter, and delete
+      target.move('docStart', { preset: 'helix', mode: 'normal', count: 1 });
+      target.move('down', { preset: 'helix', mode: 'normal', count: 2 });
+      expect(editor.state.selection).toBeInstanceOf(NodeSelection);
+      expect((editor.state.selection as NodeSelection).node.type.name).toBe('imageNode');
+
+      const yankImgRes = target.execOperator('yank', { preset: 'helix', mode: 'normal', count: 1 });
+      expect(typeof yankImgRes === 'object' && yankImgRes.yankedText).toBe(
+        '![Architecture diagram](https://example.com/diagram.png)',
+      );
+
+      target.execOperator('pasteAfter', { preset: 'helix', mode: 'normal', count: 1 });
+      let imageCount = 0;
+      editor.state.doc.forEach((child) => {
+        if (child.type.name === 'imageNode') imageCount += 1;
+      });
+      expect(imageCount).toBe(2);
+
+      // Delete the pasted imageNode
+      target.execOperator('delete', { preset: 'helix', mode: 'normal', count: 1 });
+      imageCount = 0;
+      editor.state.doc.forEach((child) => {
+        if (child.type.name === 'imageNode') imageCount += 1;
+      });
+      expect(imageCount).toBe(1);
+    });
   });
 });

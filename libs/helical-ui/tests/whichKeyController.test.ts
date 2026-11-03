@@ -69,6 +69,7 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(stateAfterDirectQuestion.explorerOpen).toBe(true);
       expect(stateAfterSpace.isOpen).toBe(true);
       expect(stateAfterSpace.activePath).toEqual(['Space']);
+      expect(stateAfterSpace.items.some((item) => item.commandId?.startsWith('pane.focus.'))).toBe(false);
       expect(stateAfterQuestion.explorerOpen).toBe(true);
       expect(stateAfterQuestion.activePath).toEqual([]);
       expect(stateAfterQuestion.explorerEntries.length).toBeGreaterThan(15);
