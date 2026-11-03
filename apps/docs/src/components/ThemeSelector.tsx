@@ -6,8 +6,21 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
-import { THEMES, type JumpAction, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import {
+  THEMES,
+  type CommandStyle,
+  type JumpAction,
+  type KeybindingPreset,
+  type ThemeMeta,
+} from '@cloudvoyant/helical-ui';
 import { useWhichKey } from '@cloudvoyant/helical-react';
+import {
+  APPEARANCE_CHANGE_EVENT,
+  COMMAND_STYLE_EVENT,
+  OPEN_SETTINGS_MODAL_EVENT,
+  getStoredCommandStyle,
+  setCommandStyle,
+} from '../lib/commands';
 import {
   applyColorMode,
   getInitialColorMode,
@@ -34,6 +47,11 @@ const JUMP_ACTIONS: { value: JumpAction; label: string }[] = [
   { value: 'focus', label: 'Focus' },
 ];
 
+const COMMAND_STYLES: { value: CommandStyle; label: string }[] = [
+  { value: 'palette', label: 'Palette (⌘K)' },
+  { value: 'colon', label: 'Colon (:)' },
+];
+
 /**
  * Light/Dark/System segmented button group. Owns the color-mode state and drives
  * it through applyColorMode; reports the resolved dark/light back up so the
@@ -46,6 +64,16 @@ function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDa
     applyColorMode(m);
     setMode(m);
   }
+
+  useEffect(() => {
+    const onAppearanceChange = () => {
+      const next = getInitialColorMode();
+      setMode(next);
+      onResolvedDarkChange(resolveColorMode(next) === 'dark');
+    };
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+    return () => window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+  }, [onResolvedDarkChange]);
 
   useEffect(() => {
     onResolvedDarkChange(resolveColorMode(mode) === 'dark');
@@ -131,6 +159,71 @@ function KeybindingPresetToggle() {
             >
               {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
               <span>{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Palette (⌘K) vs Colon (:) segmented button group for selecting the preferred command style.
+ */
+function CommandStyleToggle() {
+  const [style, setStyleState] = useState<CommandStyle>(() => getStoredCommandStyle());
+
+  useEffect(() => {
+    const onStyleEvent = (e: Event) => {
+      const detail = (e as CustomEvent<CommandStyle>).detail;
+      if (detail === 'palette' || detail === 'colon') {
+        setStyleState(detail);
+      } else {
+        setStyleState(getStoredCommandStyle());
+      }
+    };
+    window.addEventListener(COMMAND_STYLE_EVENT, onStyleEvent);
+    return () => window.removeEventListener(COMMAND_STYLE_EVENT, onStyleEvent);
+  }, []);
+
+  function selectStyle(next: CommandStyle) {
+    setCommandStyle(next);
+    setStyleState(next);
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-muted-foreground">Command style</div>
+      <div
+        role="group"
+        className="flex w-full items-stretch"
+        aria-label="Command style"
+        data-command-style-selector
+        data-ready="true"
+      >
+        {COMMAND_STYLES.map((item, i) => {
+          const active = style === item.value;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => selectStyle(item.value)}
+              aria-pressed={active}
+              data-command-style={item.value}
+              className={[
+                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
+                i === 0 && 'rounded-l-md',
+                i === COMMAND_STYLES.length - 1 && 'rounded-r-md',
+                i > 0 && '-ml-px',
+                active
+                  ? 'z-10 border-foreground text-foreground'
+                  : 'border-border text-muted-foreground hover:border-muted-foreground',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
+              <span>{item.label}</span>
             </button>
           );
         })}
@@ -238,6 +331,14 @@ function ThemeSwatch({
 function ThemeGrid({ isDark }: { isDark: boolean }) {
   const [theme, setTheme] = useState<string>(() => getInitialTheme());
 
+  useEffect(() => {
+    const onAppearanceChange = () => {
+      setTheme(getInitialTheme());
+    };
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+    return () => window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+  }, []);
+
   function selectTheme(name: string) {
     applyTheme(name);
     setTheme(name);
@@ -276,6 +377,12 @@ export default function ThemeSelector() {
   const [isDark, setIsDark] = useState(() => resolveColorMode(getInitialColorMode()) === 'dark');
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const onOpenSettings = () => setOpen(true);
+    window.addEventListener(OPEN_SETTINGS_MODAL_EVENT, onOpenSettings);
+    return () => window.removeEventListener(OPEN_SETTINGS_MODAL_EVENT, onOpenSettings);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -360,6 +467,7 @@ export default function ThemeSelector() {
 
               <ColorModeToggle onResolvedDarkChange={setIsDark} />
               <KeybindingPresetToggle />
+              <CommandStyleToggle />
               <JumpActionToggle />
               <ThemeGrid isDark={isDark} />
             </div>

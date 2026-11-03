@@ -1,0 +1,38 @@
+---
+title: ColonCommand
+description: Helix/Vim-inspired :command prompt and fzf completion popup supporting aliases, Tab completion, multi-level nested subcommands, and inline error diagnostics.
+order: 13
+group: navigation
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`ColonCommand` provides a Helix/Vim-inspired `:` command-line prompt and completion menu built on Ark UI's `Dialog`, `Listbox` (`ListboxInput autoHighlight`, `ListboxContent`, `ListboxItem`, `ListboxEmpty`), `Highlight`, and `@zag-js/collection`'s `TreeCollection<CommandNode>` with `fzf` fuzzy ranking.
+
+<Demo component="colon-command" example="default" />
+
+## Examples
+
+<Examples component="colon-command" exclude="default" />
+
+## API Reference
+
+### ColonCommand
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `items` | `CommandNode[]` | `[]` | Hierarchical command tree nodes. |
+| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `@zag-js/collection` `TreeCollection` instance. |
+| `open` | `boolean` | — | Controlled modal open state. |
+| `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled. |
+| `onOpenChange` | `(open: boolean) => void` | — | Callback invoked when the prompt opens or closes. |
+| `inputValue` | `string` | — | Controlled command input string. |
+| `onInputValueChange` | `(value: string) => void` | — | Callback invoked when the input value changes. |
+| `onSelectCommand` | `(ctx: CommandSelectContext) => void` | — | Callback invoked when a leaf command is executed. |
+| `placeholder` | `string` | `'Type a command (e.g. theme, mode, keybind)...'` | Input placeholder text. |
+| `emptyText` | `string` | `'No matching commands.'` | Text rendered when commands are registered but none match the typed filter. |
+| `noCommandsText` | `string` | `'No commands registered.'` | Text rendered in the UI when zero commands are registered in the tree. |
+| `placement` | `'bottom' \| 'center' \| 'top'` | `'bottom'` | Position variant for the command bar and completion popup. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Typography and spacing size variant. |
+| `inline` | `boolean` | `false` | Renders the colon command surface inline inside its container instead of a modal `Dialog`. |

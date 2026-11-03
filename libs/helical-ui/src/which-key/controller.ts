@@ -1990,6 +1990,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     const doc = resolveDoc();
     const targetEl = (isElementLike(event.target) ? event.target : null) ?? doc?.activeElement ?? null;
+    if (
+      targetEl &&
+      isHTMLElementLike(targetEl) &&
+      typeof targetEl.closest === 'function' &&
+      targetEl.closest('[data-command-palette], [data-colon-command]')
+    ) {
+      return false;
+    }
     const editorTarget = getModalEditor(targetEl);
     const inEditable = isTextEntryElement(targetEl);
 
@@ -2308,7 +2316,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         }
       }
 
-      if (isTextEntryElement(targetNode) && (mode === 'normal' || mode === 'select')) {
+      if (
+        isTextEntryElement(targetNode) &&
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette][data-modal="true"], [data-colon-command][data-modal="true"]',
+        ) &&
+        (mode === 'normal' || mode === 'select')
+      ) {
         setMode('insert');
       }
     };
@@ -2350,7 +2364,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
       // When focusing a ProseMirror modal editor via keyboard navigation in normal/select mode,
       // keep normal/select mode active so modal motions (h/j/k/l, w/b/e, v, x, d, c, y, i) work immediately.
-      if (isTextEntryElement(targetNode) && !getModalEditor(targetNode)) {
+      if (
+        isTextEntryElement(targetNode) &&
+        !getModalEditor(targetNode) &&
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette][data-modal="true"], [data-colon-command][data-modal="true"]',
+        )
+      ) {
         if (mode === 'normal' || mode === 'select') {
           setMode('insert');
         }

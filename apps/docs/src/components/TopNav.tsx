@@ -1,5 +1,7 @@
 // apps/docs/src/components/TopNav.tsx
 // The docs site top navigation, built from the helical-ui Navbar (shrink variant).
+import { useEffect, useState } from 'react';
+import { type CommandStyle } from '@cloudvoyant/helical-ui';
 import {
   Navbar,
   NavbarProvider,
@@ -14,6 +16,7 @@ import {
   Kbd,
   useWhichKey,
 } from '@cloudvoyant/helical-react';
+import { COMMAND_STYLE_EVENT, dispatchOpenCommandMenu, getStoredCommandStyle } from '../lib/commands';
 import { HelicalLogo } from './examples/HelicalLogo';
 import ThemeSelector from './ThemeSelector';
 import FrameworkSelector from './FrameworkSelector';
@@ -41,6 +44,21 @@ const links = [
 
 export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups = [] }: Props) {
   const { openExplorer } = useWhichKey();
+  const [commandStyle, setCommandStyleState] = useState<CommandStyle>(() => getStoredCommandStyle());
+
+  useEffect(() => {
+    setCommandStyleState(getStoredCommandStyle());
+    const onStyleChange = (e: Event) => {
+      const detail = (e as CustomEvent<CommandStyle>).detail;
+      if (detail === 'palette' || detail === 'colon') {
+        setCommandStyleState(detail);
+      } else {
+        setCommandStyleState(getStoredCommandStyle());
+      }
+    };
+    window.addEventListener(COMMAND_STYLE_EVENT, onStyleChange);
+    return () => window.removeEventListener(COMMAND_STYLE_EVENT, onStyleChange);
+  }, []);
 
   return (
     <NavbarProvider>
@@ -70,6 +88,20 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
         <NavbarActions>
           <FrameworkSelector />
           <div className="flex-1" />
+          <button
+            type="button"
+            aria-label={commandStyle === 'colon' ? 'Open colon command menu (:)' : 'Open command palette (⌘K)'}
+            title={commandStyle === 'colon' ? 'Open colon command menu (:)' : 'Open command palette (⌘K)'}
+            data-command-trigger
+            data-command-style={commandStyle}
+            onClick={() => dispatchOpenCommandMenu(commandStyle)}
+            className="hidden h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
+          >
+            <span className="hidden lg:inline">Commands</span>
+            <Kbd size="sm" variant="subtle">
+              {commandStyle === 'colon' ? ':' : '⌘K'}
+            </Kbd>
+          </button>
           <button
             type="button"
             aria-label="Explore keybindings"

@@ -47,9 +47,11 @@ catalog:
   '@types/react-dom': ^19.2.4
   '@typescript-eslint/eslint-plugin': ^8.0.0
   '@typescript-eslint/parser': ^8.0.0
+  '@zag-js/collection': 1.43.1
   '@zag-js/dismissable': 1.43.1
   '@zag-js/dom-query': 1.43.1
   '@zag-js/focus-visible': 1.43.1
+  '@zag-js/i18n-utils': 1.43.1
   '@zag-js/live-region': 1.43.1
   astro: ^7.2.3
   '@playwright/test': ^1.62.1
@@ -57,6 +59,7 @@ catalog:
   clsx: ^2.1.1
   commander: ^15.0.0
   eslint: ^9.0.0
+  fzf: ^0.5.2
   globals: ^15.0.0
   katex: ^0.16.11
   'lucide-react': ^1.32.0

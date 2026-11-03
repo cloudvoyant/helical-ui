@@ -322,5 +322,7 @@ export {
   type ListboxItemGroupLabelProps,
 } from './listbox';
 export { Kbd, type KbdProps } from './kbd';
+export { CommandPalette, type CommandPaletteProps } from './command-palette';
+export { ColonCommand, type ColonCommandProps } from './colon-command';
 export * from './which-key';
 export * from './editor';

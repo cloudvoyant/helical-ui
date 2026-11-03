@@ -91,6 +91,7 @@ flowchart LR
 - **Docs & Demo Site:** [docs/architecture/docs-site.md](docs-site.md)
 - **Component Designs (`docs/architecture/components/`):**
   - [docs/architecture/components/sidebar.md](components/sidebar.md) — Sidebar layout, state transitions, and mobile sheet implementation.
+  - [docs/architecture/components/commands.md](components/commands.md) — `CommandPalette` (`⌘K`) and `ColonCommand` (`:menu`) shared `TreeCollection` and `fzf` architecture.
 
 ### Release Pipeline
 
