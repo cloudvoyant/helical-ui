@@ -36,7 +36,9 @@ export {
   modalKeymapPluginKey,
   getEditorModalTarget,
   isEditorInInsertMode,
+  serializeModalSliceText,
   type ModalKeymapOptions,
   type ModalKeymapPluginState,
+  type ModalKeymapStorage,
   type SecondaryCursorRange,
 } from './extensions/modal-keymap';
