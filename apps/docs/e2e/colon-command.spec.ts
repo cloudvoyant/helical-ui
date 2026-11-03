@@ -3,14 +3,8 @@
 // default modal trigger, Tab completion and nested subcommand drill-down,
 // direct ":mode dark" leaf execution, inline "Unknown command:" error diagnostic,
 // empty commands UI state ("No commands registered."), and docs normal-mode ":" trigger.
-import { test, expect, type Page } from '@playwright/test';
-import { FRAMEWORKS, selectFramework } from './helpers';
-
-// --- Helpers ---
-
-function island(page: Page, framework: string, example: string) {
-  return page.locator(`[data-example-id="${example}"] [data-example-preview] [data-fw="${framework}"]`);
-}
+import { test, expect } from '@playwright/test';
+import { FRAMEWORKS, island, selectFramework } from './helpers';
 
 // --- Tests ---
 

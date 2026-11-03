@@ -3,14 +3,8 @@
 // default modal trigger, nested submenu drill-down & Backspace/breadcrumb pop,
 // fuzzy search with <mark> character highlights, empty commands UI state,
 // and docs shell integration with commandStyle preference toggle.
-import { test, expect, type Page } from '@playwright/test';
-import { FRAMEWORKS, selectFramework } from './helpers';
-
-// --- Helpers ---
-
-function island(page: Page, framework: string, example: string) {
-  return page.locator(`[data-example-id="${example}"] [data-example-preview] [data-fw="${framework}"]`);
-}
+import { test, expect } from '@playwright/test';
+import { FRAMEWORKS, island, selectFramework } from './helpers';
 
 // --- Tests ---
 

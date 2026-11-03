@@ -18,11 +18,9 @@ import {
   buildDocsCommandTree,
   dispatchOpenCommandMenu,
   getStoredCommandStyle,
-  notifyAppearanceChange,
-  setCommandStyle,
 } from '../lib/commands';
 import { FRAMEWORK_EVENT, getStoredFramework, setFramework, type Framework } from '../lib/framework';
-import { applyColorMode, applyTheme, getInitialColorMode, getInitialTheme, type ColorMode } from '../lib/theme';
+import { getInitialColorMode, getInitialTheme, type ColorMode } from '../lib/theme';
 
 function DocsCommandShell({
   paletteOpen,
@@ -111,29 +109,11 @@ function DocsCommandShell({
         currentJumpAction: jumpAction,
         currentFramework: framework,
         currentCommandStyle: commandStyle,
-        onThemeSelect: (nextTheme) => {
-          applyTheme(nextTheme);
-          setThemeState(nextTheme);
-          notifyAppearanceChange();
-        },
-        onColorModeSelect: (nextMode) => {
-          applyColorMode(nextMode);
-          setColorModeState(nextMode);
-          notifyAppearanceChange();
-        },
         onPresetSelect: (nextPreset) => {
           setPreset(nextPreset);
         },
         onJumpActionSelect: (nextJump) => {
           setJumpAction(nextJump);
-        },
-        onFrameworkSelect: (nextFw) => {
-          setFramework(nextFw);
-          setFrameworkState(nextFw);
-        },
-        onCommandStyleSelect: (nextStyle) => {
-          setCommandStyle(nextStyle);
-          setCommandStyleState(nextStyle);
         },
         onOpenExplorer: () => {
           setPaletteOpen(false);

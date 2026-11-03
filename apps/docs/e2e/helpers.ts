@@ -35,3 +35,7 @@ export async function selectFramework(page: Page, framework: Framework) {
   await page.locator(`[data-framework-selector] button[data-fw="${framework}"]`).click();
   await expectIslandRendered(page, framework);
 }
+
+export function island(page: Page, framework: string, example: string) {
+  return page.locator(`[data-example-id="${example}"] [data-example-preview] [data-fw="${framework}"]`);
+}
