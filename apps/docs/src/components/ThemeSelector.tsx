@@ -47,6 +47,11 @@ const JUMP_ACTIONS: { value: JumpAction; label: string }[] = [
   { value: 'focus', label: 'Focus' },
 ];
 
+const WHICH_KEY_TRIGGERS: { value: boolean; label: string }[] = [
+  { value: false, label: 'All prefixes' },
+  { value: true, label: 'Leader only' },
+];
+
 const COMMAND_STYLES: { value: CommandStyle; label: string }[] = [
   { value: 'palette', label: 'Palette (⌘K)' },
   { value: 'colon', label: 'Colon (:)' },
@@ -280,6 +285,53 @@ function JumpActionToggle() {
 }
 
 /**
+ * All prefixes vs Leader only segmented button group for controlling when the WhichKey popup opens.
+ */
+function WhichKeyTriggerToggle() {
+  const { leaderOnly, setLeaderOnly } = useWhichKey();
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-muted-foreground">WhichKey popup</div>
+      <div
+        role="group"
+        className="flex w-full items-stretch"
+        aria-label="WhichKey popup trigger"
+        data-which-key-leader-only-selector
+        data-ready="true"
+      >
+        {WHICH_KEY_TRIGGERS.map((item, i) => {
+          const active = leaderOnly === item.value;
+          return (
+            <button
+              key={String(item.value)}
+              type="button"
+              onClick={() => setLeaderOnly(item.value)}
+              aria-pressed={active}
+              data-leader-only={String(item.value)}
+              className={[
+                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
+                i === 0 && 'rounded-l-md',
+                i === WHICH_KEY_TRIGGERS.length - 1 && 'rounded-r-md',
+                i > 0 && '-ml-px',
+                active
+                  ? 'z-10 border-foreground text-foreground'
+                  : 'border-border text-muted-foreground hover:border-muted-foreground',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
  * A single theme swatch: applies its own `theme-{name}` class (plus `dark` when
  * the effective mode is dark) so its mini preview renders in that theme's actual
  * colors, and applies the theme on click.
@@ -467,6 +519,7 @@ export default function ThemeSelector() {
 
               <ColorModeToggle onResolvedDarkChange={setIsDark} />
               <KeybindingPresetToggle />
+              <WhichKeyTriggerToggle />
               <CommandStyleToggle />
               <JumpActionToggle />
               <ThemeGrid isDark={isDark} />

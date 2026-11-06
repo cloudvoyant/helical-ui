@@ -6,9 +6,17 @@
     ColonCommand,
     HStack,
     Kbd,
+    Toaster,
     VStack,
+    createToaster,
   } from '@cloudvoyant/helical-svelte';
   import { buildDocsCommandTree } from '../../../../lib/commands';
+
+  const demoToaster = createToaster({
+    placement: 'bottom-end',
+    overlap: true,
+    max: 3,
+  });
 
   let open = $state(false);
   let lastSelected = $state('None');
@@ -76,6 +84,12 @@
     bind:open
     onSelectCommand={(ctx) => {
       lastSelected = `${ctx.node.label} (${ctx.commandString})`;
+      demoToaster.create({
+        title: `Executed ${ctx.commandString}`,
+        description: ctx.node.label,
+        type: ctx.node.badge === 'Future' ? 'info' : 'success',
+      });
     }}
   />
+  <Toaster toaster={demoToaster} />
 </VStack>

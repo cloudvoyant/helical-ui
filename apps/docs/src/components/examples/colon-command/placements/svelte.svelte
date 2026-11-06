@@ -1,5 +1,6 @@
 <!-- apps/docs/src/components/examples/colon-command/placements/svelte.svelte -->
 <script lang="ts">
+  import { type ColonCommandColumns } from '@cloudvoyant/helical-ui';
   import {
     Badge,
     Button,
@@ -10,6 +11,7 @@
   import { buildDocsCommandTree } from '../../../../lib/commands';
 
   let placement = $state<'bottom' | 'center' | 'top'>('bottom');
+  let columns = $state<ColonCommandColumns>('auto');
   let emptyTree = $state(false);
   let selected = $state('None');
 
@@ -32,6 +34,18 @@
           {p}
         </Button>
       {/each}
+      {#each ['auto', 1, 2, 3, 4] as const as col (col)}
+        <Button
+          size="sm"
+          variant={columns === col ? 'solid' : 'outline'}
+          data-testid={`cc-columns-${col}`}
+          onclick={() => {
+            columns = col;
+          }}
+        >
+          {col === 'auto' ? 'auto cols' : `${col} col`}
+        </Button>
+      {/each}
     </HStack>
     <HStack class="items-center gap-2">
       <Badge variant="subtle" color="primary" data-testid="cc-placements-selected">
@@ -52,6 +66,7 @@
   <ColonCommand
     inline
     {placement}
+    {columns}
     {items}
     onSelectCommand={(ctx) => {
       selected = `${ctx.node.label} (${ctx.commandString})`;

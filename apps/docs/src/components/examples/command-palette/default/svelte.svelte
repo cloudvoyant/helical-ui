@@ -6,9 +6,17 @@
     CommandPalette,
     HStack,
     Kbd,
+    Toaster,
     VStack,
+    createToaster,
   } from '@cloudvoyant/helical-svelte';
   import { buildDocsCommandTree } from '../../../../lib/commands';
+
+  const demoToaster = createToaster({
+    placement: 'bottom-end',
+    overlap: true,
+    max: 3,
+  });
 
   let open = $state(false);
   let lastSelected = $state('None');
@@ -65,8 +73,7 @@
     </Button>
   </HStack>
   <p class="text-xs text-muted-foreground">
-    Click the button to open the modal CommandPalette, search across nested commands with
-    <code class="font-mono text-foreground">fzf</code> fuzzy ranking, or drill into
+    Click the button to open the command palette, search across nested commands, or drill into
     <strong>Change Theme</strong>, <strong>Change Light/Dark Mode</strong>,
     <strong>Change Keybind Style</strong>, and <strong>Change Framework</strong>.
   </p>
@@ -74,7 +81,16 @@
     {items}
     bind:open
     onSelectCommand={(ctx) => {
-      lastSelected = `${ctx.node.label} (${ctx.commandString})`;
+      lastSelected = ctx.node.label;
+      demoToaster.create({
+        title: ctx.node.label,
+        description:
+          ctx.node.badge === 'Future'
+            ? 'Full-text documentation search is coming soon.'
+            : `Executed ${ctx.valuePath.join(' › ')}`,
+        type: ctx.node.badge === 'Future' ? 'info' : 'success',
+      });
     }}
   />
+  <Toaster toaster={demoToaster} />
 </VStack>

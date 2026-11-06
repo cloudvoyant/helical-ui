@@ -13,19 +13,21 @@ import {
   colonCommandErrorBase,
   colonCommandInputBase,
   colonCommandItemBase,
-  colonCommandListBase,
+  colonCommandListVariants,
+  colonCommandPositionerVariants,
   colonCommandPrefixBase,
   colonCommandPromptBarBase,
   colonCommandVariants,
   createCommandTree,
   formatColonCompletionInput,
+  resolveColonCommandGridNavigation,
+  resolveColonCommandGridStyle,
   resolveColonCommandState,
   splitHighlightSegments,
   type ColonCommandProps as CoreColonCommandProps,
   type CommandFlatItem,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
-import { Badge } from './badge';
 import {
   Dialog,
   DialogBackdrop,
@@ -102,6 +104,8 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       emptyText = 'No matching commands.',
       noCommandsText = 'No commands registered.',
       placement = 'bottom',
+      columns = 'auto',
+      showShortcuts = false,
       size = 'md',
       inline = false,
       className,
@@ -110,6 +114,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
   ) => {
     const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
     const [uncontrolledInput, setUncontrolledInput] = useState('');
+    const [tabBaseInput, setTabBaseInput] = useState<string | null>(null);
     const [highlightedValue, setHighlightedValue] = useState<string | null>(null);
     const [submittedError, setSubmittedError] = useState<string | null>(null);
 
@@ -121,21 +126,17 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
           '[data-testid="colon-command-input"]',
         );
       }
-      if (typeof document !== 'undefined') {
-        return document.querySelector<HTMLInputElement>(
-          '[data-colon-command] [data-testid="colon-command-input"]',
-        );
-      }
       return null;
     };
 
     const isOpen = inline ? true : (controlledOpen ?? uncontrolledOpen);
     const currentInput = controlledInputValue ?? uncontrolledInput;
 
-    const setInputValue = (nextValue: string) => {
+    const setInputValue = (nextValue: string, nextTabBase: string | null = null) => {
       if (controlledInputValue === undefined) {
         setUncontrolledInput(nextValue);
       }
+      setTabBaseInput(nextTabBase);
       setSubmittedError(null);
       onInputValueChange?.(nextValue);
     };
@@ -145,7 +146,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
-        setInputValue('');
+        setInputValue('', null);
         setSubmittedError(null);
       }
       onOpenChange?.(nextOpen);
@@ -156,9 +157,11 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       [externalCollection, items],
     );
 
+    const effectiveResolutionInput = tabBaseInput ?? currentInput;
+
     const resolution = useMemo(
-      () => resolveColonCommandState(tree, currentInput),
-      [tree, currentInput],
+      () => resolveColonCommandState(tree, effectiveResolutionInput),
+      [tree, effectiveResolutionInput],
     );
 
     const enabledSuggestions = useMemo(
@@ -263,11 +266,12 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
         data-colon-command="true"
         data-modal={inline ? 'false' : undefined}
         data-colon-placement={placement}
+        data-colon-columns={String(columns)}
         data-colon-command-inline={inline ? 'true' : undefined}
         data-testid={inline ? 'colon-command' : 'colon-command-surface'}
         className={cn(
           colonCommandVariants({ placement, size }),
-          inline ? className : 'max-w-none border-0 shadow-none',
+          inline ? cn('rounded-lg border', className) : 'max-w-none border-0 shadow-none',
         )}
       >
         <Listbox
@@ -281,15 +285,19 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
           }}
           className="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
         >
-          <Scroll className="max-h-64 min-h-0 flex-1" viewportClassName="max-h-64">
+          <Scroll className="max-h-60 min-h-0 flex-1" viewportClassName="max-h-60">
             <ListboxContent
+              tabIndex={-1}
               data-testid="colon-command-list"
-              className={colonCommandListBase}
+              data-columns={String(columns)}
+              style={resolveColonCommandGridStyle(columns, resolution.suggestions.length)}
+              className={colonCommandListVariants({ columns })}
             >
               {!resolution.hasCommands ? (
                 <ListboxEmpty
                   data-testid="colon-command-empty"
                   data-empty-kind="no-commands"
+                  className="col-span-full"
                 >
                   {noCommandsText}
                 </ListboxEmpty>
@@ -297,6 +305,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
                 <ListboxEmpty
                   data-testid="colon-command-empty"
                   data-empty-kind="no-matches"
+                  className="col-span-full"
                 >
                   {activeError ?? emptyText}
                 </ListboxEmpty>
@@ -314,6 +323,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
                     data-command-token={item.command}
                     data-command-branch={item.isBranch ? 'true' : 'false'}
                     data-command-active={item.active ? 'true' : undefined}
+                    data-highlighted={effectiveHighlightedValue === item.value ? '' : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -322,36 +332,14 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
                     className={colonCommandItemBase}
                   >
                     <ListboxItemText className="min-w-0 flex-1 truncate">
-                      <Row className="min-w-0 items-center gap-3">
-                        <span className="shrink-0 font-mono font-semibold text-primary">
-                          :{[...resolution.completedTokens, ''].join(' ')}
+                      <Row className="min-w-0 items-center gap-2">
+                        <span className="truncate font-mono font-medium text-foreground group-data-[highlighted]:text-accent-foreground">
                           {renderFuzzyText(
                             item.command,
                             resolution.partialToken,
                             item.commandMatchPositions,
                           )}
                         </span>
-                        {item.aliases.length > 0 && (
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
-                            ({item.aliases.map((a) => `:${a}`).join(', ')})
-                          </span>
-                        )}
-                        <span className="truncate font-sans text-xs text-muted-foreground">
-                          {renderFuzzyText(
-                            item.label,
-                            resolution.partialToken,
-                            item.matchPositions,
-                          )}
-                        </span>
-                        {item.badge && (
-                          <Badge
-                            variant="outline"
-                            size="sm"
-                            data-testid="colon-command-item-badge"
-                          >
-                            {item.badge}
-                          </Badge>
-                        )}
                         {item.active && (
                           <Check
                             className="size-3.5 shrink-0 text-primary"
@@ -360,15 +348,17 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
                         )}
                       </Row>
                     </ListboxItemText>
-                    <Row className="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                      {item.shortcut && <Kbd size="sm" hotkey={item.shortcut} />}
-                      {item.isBranch && (
-                        <ChevronRight
-                          className="size-3.5 text-muted-foreground"
-                          aria-hidden="true"
-                        />
-                      )}
-                    </Row>
+                    {((showShortcuts && item.shortcut) || item.isBranch) && (
+                      <Row className="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                        {showShortcuts && item.shortcut && <Kbd size="sm" hotkey={item.shortcut} />}
+                        {item.isBranch && (
+                          <ChevronRight
+                            className="size-3.5 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </Row>
+                    )}
                   </ListboxItem>
                 ))
               )}
@@ -382,78 +372,120 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
             >
               :
             </span>
-            {resolution.breadcrumbs.length > 0 && (
-              <Row className="shrink-0 items-center gap-1" data-testid="colon-command-breadcrumbs">
-                {resolution.breadcrumbs.map((crumb, idx) => (
-                  <button
-                    key={crumb.value}
-                    type="button"
-                    data-testid="colon-command-breadcrumb"
-                    data-breadcrumb-value={crumb.value}
-                    onClick={() => {
-                      const prefixTokens = resolution.completedTokens.slice(0, idx + 1);
-                      setInputValue(`:${prefixTokens.join(' ')} `);
-                      getInputElement()?.focus();
-                    }}
-                    className="inline-flex items-center gap-1 rounded bg-primary/15 px-1.5 py-0.5 font-mono text-xs font-medium text-primary hover:bg-primary/25"
-                  >
-                    <span>{crumb.command}</span>
-                    <span>›</span>
-                  </button>
-                ))}
-              </Row>
-            )}
             <ListboxInput
               autoFocus={!inline}
               autoHighlight
               data-testid="colon-command-input"
               placeholder={placeholder}
               value={currentInput}
-              onChange={(e) => setInputValue(e.currentTarget.value)}
-              onKeyDown={(e) => {
+              onChange={(e) => setInputValue(e.currentTarget.value, null)}
+              onKeyDownCapture={(e) => {
                 if (e.key === 'Escape') {
                   if (!inline) {
                     e.preventDefault();
                     e.stopPropagation();
                     handleOpenChange(false);
+                  } else if (currentInput.length > 0) {
+                    setInputValue('', null);
                   } else {
-                    setInputValue('');
+                    e.currentTarget.blur();
                   }
                   return;
                 }
                 if (e.key === 'Tab') {
                   e.preventDefault();
                   e.stopPropagation();
-                  const target =
-                    enabledSuggestions.find(
-                      (item) => item.value === effectiveHighlightedValue,
-                    ) ?? enabledSuggestions[0];
-                  if (target) {
-                    const completed = formatColonCompletionInput(
-                      resolution.completedTokens,
-                      target,
-                    );
-                    setInputValue(completed);
-                    setHighlightedValue(null);
-                  }
-                  return;
-                }
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                   if (enabledSuggestions.length === 0) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const delta = e.key === 'ArrowDown' ? 1 : -1;
                   const currentIdx = enabledSuggestions.findIndex(
                     (item) => item.value === effectiveHighlightedValue,
                   );
-                  const nextIdx =
-                    currentIdx === -1
-                      ? 0
-                      : (currentIdx + delta + enabledSuggestions.length) %
-                        enabledSuggestions.length;
-                  const nextVal = enabledSuggestions[nextIdx]!.value;
-                  setHighlightedValue(nextVal);
-                  scrollItemIntoView(nextVal);
+                  const currentTarget =
+                    (currentIdx !== -1 ? enabledSuggestions[currentIdx] : undefined) ??
+                    enabledSuggestions[0]!;
+
+                  if (
+                    !e.shiftKey &&
+                    tabBaseInput === null &&
+                    currentTarget.isBranch &&
+                    resolution.partialToken.length > 0
+                  ) {
+                    const completed = formatColonCompletionInput(
+                      resolution.completedTokens,
+                      currentTarget,
+                      true,
+                    );
+                    setInputValue(completed, null);
+                    setHighlightedValue(null);
+                    requestAnimationFrame(() => {
+                      getInputElement()?.focus();
+                    });
+                    return;
+                  }
+
+                  const baseForCycle = tabBaseInput ?? currentInput;
+                  let nextTarget = currentTarget;
+                  if (
+                    tabBaseInput !== null ||
+                    e.shiftKey ||
+                    resolution.partialToken === currentTarget.command
+                  ) {
+                    const delta = e.shiftKey ? -1 : 1;
+                    const nextIdx =
+                      currentIdx === -1
+                        ? 0
+                        : (currentIdx + delta + enabledSuggestions.length) %
+                          enabledSuggestions.length;
+                    nextTarget = enabledSuggestions[nextIdx]!;
+                  }
+
+                  const completed = formatColonCompletionInput(
+                    resolution.completedTokens,
+                    nextTarget,
+                    false,
+                  );
+                  setInputValue(
+                    completed,
+                    enabledSuggestions.length > 1 ? baseForCycle : null,
+                  );
+                  setHighlightedValue(nextTarget.value);
+                  scrollItemIntoView(nextTarget.value);
+                  requestAnimationFrame(() => {
+                    getInputElement()?.focus();
+                  });
+                  return;
+                }
+                if (
+                  e.key === 'ArrowDown' ||
+                  e.key === 'ArrowUp' ||
+                  e.key === 'ArrowRight' ||
+                  e.key === 'ArrowLeft'
+                ) {
+                  if (enabledSuggestions.length === 0) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const currentIdx = enabledSuggestions.findIndex(
+                    (item) => item.value === effectiveHighlightedValue,
+                  );
+                  const nextIdx = resolveColonCommandGridNavigation(
+                    columns,
+                    enabledSuggestions.length,
+                    currentIdx,
+                    e.key,
+                  );
+                  const nextTarget = enabledSuggestions[nextIdx]!;
+                  if (tabBaseInput !== null) {
+                    const completed = formatColonCompletionInput(
+                      resolution.completedTokens,
+                      nextTarget,
+                      false,
+                    );
+                    setInputValue(
+                      completed,
+                      enabledSuggestions.length > 1 ? tabBaseInput : null,
+                    );
+                  }
+                  setHighlightedValue(nextTarget.value);
+                  scrollItemIntoView(nextTarget.value);
                   return;
                 }
                 if (e.key === 'Enter') {
@@ -468,14 +500,14 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
                     announceCommandMessage(errText);
                     return;
                   }
-                  if (resolution.exactNode && !resolution.exactNode.disabled) {
-                    executeOrDrillItem(resolution.exactNode);
-                    return;
-                  }
                   const target =
                     enabledSuggestions.find(
                       (item) => item.value === effectiveHighlightedValue,
-                    ) ?? enabledSuggestions[0];
+                    ) ??
+                    (resolution.exactNode && !resolution.exactNode.disabled
+                      ? resolution.exactNode
+                      : undefined) ??
+                    enabledSuggestions[0];
                   if (target) {
                     executeOrDrillItem(target);
                   }
@@ -486,7 +518,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
             <Row className="shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
               <span className="hidden items-center gap-1 sm:inline-flex">
                 <Kbd size="sm">Tab</Kbd>
-                <span>Complete</span>
+                <span>Next</span>
               </span>
               <span className="hidden items-center gap-1 sm:inline-flex">
                 <Kbd size="sm">
@@ -538,11 +570,13 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
         initialFocusEl={() => getInputElement()}
         onOpenChange={(details) => handleOpenChange(details.open)}
       >
-        <DialogBackdrop />
+        <DialogBackdrop className={placement === 'bottom' ? 'bg-black/20' : undefined} />
         <DialogContent
+          positionerClassName={colonCommandPositionerVariants({ placement })}
           data-colon-command="true"
           data-modal="true"
           data-colon-placement={placement}
+          data-colon-columns={String(columns)}
           data-testid="colon-command"
           className={cn(
             colonCommandDialogPositionerVariants({ placement }),

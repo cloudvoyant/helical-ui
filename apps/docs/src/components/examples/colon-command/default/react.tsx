@@ -1,7 +1,13 @@
 // apps/docs/src/components/examples/colon-command/default/react.tsx
 import { useMemo, useState } from 'react';
-import { Badge, Button, ColonCommand, HStack, Kbd, VStack } from '@cloudvoyant/helical-react';
+import { Badge, Button, ColonCommand, HStack, Kbd, Toaster, VStack, createToaster } from '@cloudvoyant/helical-react';
 import { buildDocsCommandTree } from '../../../../lib/commands';
+
+const demoToaster = createToaster({
+  placement: 'bottom-end',
+  overlap: true,
+  max: 3,
+});
 
 export default function ReactColonCommandDefault() {
   const [open, setOpen] = useState(false);
@@ -54,8 +60,14 @@ export default function ReactColonCommandDefault() {
         onOpenChange={setOpen}
         onSelectCommand={(ctx) => {
           setLastSelected(`${ctx.node.label} (${ctx.commandString})`);
+          demoToaster.create({
+            title: `Executed ${ctx.commandString}`,
+            description: ctx.node.label,
+            type: ctx.node.badge === 'Future' ? 'info' : 'success',
+          });
         }}
       />
+      <Toaster toaster={demoToaster} />
     </VStack>
   );
 }

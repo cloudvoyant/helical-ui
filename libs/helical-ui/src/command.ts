@@ -120,6 +120,8 @@ export interface CommandPaletteProps {
   className?: string;
 }
 
+export type ColonCommandColumns = 'auto' | 1 | 2 | 3 | 4;
+
 export interface ColonCommandProps {
   items?: CommandNode[];
   collection?: TreeCollection<CommandNode>;
@@ -135,6 +137,10 @@ export interface ColonCommandProps {
   /** Displayed in the UI when no commands are registered in the tree. @default 'No commands registered.' */
   noCommandsText?: string;
   placement?: 'bottom' | 'center' | 'top';
+  /** Number of completion columns above the colon prompt bar. @default 'auto' */
+  columns?: ColonCommandColumns;
+  /** Whether to display keyboard shortcut badges next to completion items. @default false */
+  showShortcuts?: boolean;
   size?: 'sm' | 'md' | 'lg';
   /** Render inline inside a container instead of a modal Dialog (useful for docs previews). */
   inline?: boolean;
@@ -589,9 +595,13 @@ export function resolveColonCommandState(
   };
 }
 
-export function formatColonCompletionInput(completedTokens: string[], item: CommandFlatItem): string {
+export function formatColonCompletionInput(
+  completedTokens: string[],
+  item: CommandFlatItem,
+  appendBranchSpace = true,
+): string {
   const nextTokens = [...completedTokens, item.command].join(' ');
-  return item.isBranch ? `:${nextTokens} ` : `:${nextTokens}`;
+  return item.isBranch && appendBranchSpace ? `:${nextTokens} ` : `:${nextTokens}`;
 }
 
 export function splitHighlightSegments(text: string, matchPositions?: number[]): CommandHighlightSegment[] {
@@ -671,7 +681,9 @@ export const commandPaletteVariants = cva(
 
 export type CommandPaletteVariants = VariantProps<typeof commandPaletteVariants>;
 
-export const commandPaletteDialogContentBase = 'top-[16%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl';
+export const commandPalettePositionerBase = 'items-center justify-center p-4';
+
+export const commandPaletteDialogContentBase = 'my-auto gap-0 overflow-hidden p-0 sm:max-w-xl';
 
 export const commandPaletteHeaderBase = 'flex items-center gap-2 border-b border-border px-3 py-2.5';
 
@@ -690,13 +702,13 @@ export const commandPaletteFooterBase =
   'flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground';
 
 export const colonCommandVariants = cva(
-  'flex w-full flex-col overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl outline-none font-mono',
+  'flex w-full flex-col overflow-hidden border border-border bg-popover text-popover-foreground shadow-2xl outline-none font-mono',
   {
     variants: {
       placement: {
-        bottom: 'max-w-3xl',
-        center: 'max-w-xl',
-        top: 'max-w-2xl',
+        bottom: 'w-full max-w-none rounded-none border-x-0 border-b-0',
+        center: 'max-w-2xl rounded-lg',
+        top: 'max-w-3xl rounded-lg',
       },
       size: {
         sm: 'text-xs',
@@ -713,12 +725,12 @@ export const colonCommandVariants = cva(
 
 export type ColonCommandVariants = VariantProps<typeof colonCommandVariants>;
 
-export const colonCommandDialogPositionerVariants = cva('', {
+export const colonCommandPositionerVariants = cva('', {
   variants: {
     placement: {
-      bottom: 'top-auto bottom-4 translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-3xl',
-      center: 'top-[22%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl',
-      top: 'top-6 translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-2xl',
+      bottom: 'items-end justify-stretch p-0!',
+      center: 'items-center justify-center p-4',
+      top: 'items-start justify-center p-4 pt-6',
     },
   },
   defaultVariants: {
@@ -726,12 +738,97 @@ export const colonCommandDialogPositionerVariants = cva('', {
   },
 });
 
-export const colonCommandListBase = 'max-h-64 overflow-y-auto border-b border-border bg-popover/95 p-1.5 outline-none';
+export const colonCommandDialogPositionerVariants = cva('gap-0 overflow-hidden p-0', {
+  variants: {
+    placement: {
+      bottom:
+        'fixed inset-x-0 bottom-0 top-auto my-0 w-full max-w-none translate-x-0 translate-y-0 rounded-none border-x-0 border-b-0 border-t border-border p-0 shadow-2xl sm:max-w-none sm:rounded-none',
+      center: 'my-auto w-full max-w-2xl p-0 sm:max-w-2xl',
+      top: 'my-0 w-full max-w-3xl p-0 sm:max-w-3xl',
+    },
+  },
+  defaultVariants: {
+    placement: 'bottom',
+  },
+});
+
+export const colonCommandListVariants = cva(
+  'max-h-60 overflow-y-auto border-b border-border bg-popover/95 p-2 outline-none',
+  {
+    variants: {
+      columns: {
+        auto: 'grid! grid-flow-col! gap-x-3 gap-y-1',
+        1: 'flex flex-col gap-0.5',
+        2: 'grid! grid-flow-col! gap-x-3 gap-y-1',
+        3: 'grid! grid-flow-col! gap-x-3 gap-y-1',
+        4: 'grid! grid-flow-col! gap-x-3 gap-y-1',
+      },
+    },
+    defaultVariants: {
+      columns: 'auto',
+    },
+  },
+);
+
+export function resolveColonCommandGridStyle(
+  columns: ColonCommandColumns = 'auto',
+  itemCount: number,
+):
+  | {
+      display: 'grid';
+      gridAutoFlow: 'column';
+      gridTemplateRows: string;
+      gridTemplateColumns: string;
+    }
+  | undefined {
+  if (columns === 1 || itemCount <= 0) {
+    return undefined;
+  }
+  const maxCols = columns === 'auto' ? (itemCount <= 6 ? 2 : itemCount <= 12 ? 3 : 4) : columns;
+  const colCount = Math.max(1, Math.min(maxCols, itemCount));
+  const rowCount = Math.max(1, Math.ceil(itemCount / colCount));
+  return {
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridTemplateRows: `repeat(${rowCount}, minmax(0, auto))`,
+    gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+  };
+}
+
+export function resolveColonCommandGridNavigation(
+  columns: ColonCommandColumns = 'auto',
+  itemCount: number,
+  currentIdx: number,
+  key: 'ArrowDown' | 'ArrowUp' | 'ArrowRight' | 'ArrowLeft',
+): number {
+  if (itemCount <= 0) return -1;
+  const safeIdx = currentIdx >= 0 && currentIdx < itemCount ? currentIdx : 0;
+  if (key === 'ArrowDown') {
+    return (safeIdx + 1) % itemCount;
+  }
+  if (key === 'ArrowUp') {
+    return (safeIdx - 1 + itemCount) % itemCount;
+  }
+  if (columns === 1) {
+    return safeIdx;
+  }
+  const maxCols = columns === 'auto' ? (itemCount <= 6 ? 2 : itemCount <= 12 ? 3 : 4) : columns;
+  const colCount = Math.max(1, Math.min(maxCols, itemCount));
+  const rowCount = Math.max(1, Math.ceil(itemCount / colCount));
+  const totalCols = Math.max(1, Math.ceil(itemCount / rowCount));
+  const row = safeIdx % rowCount;
+  const col = Math.floor(safeIdx / rowCount);
+  const nextCol = key === 'ArrowRight' ? (col + 1) % totalCols : (col - 1 + totalCols) % totalCols;
+  return Math.min(nextCol * rowCount + row, itemCount - 1);
+}
+
+export const colonCommandListBase = colonCommandListVariants({ columns: 'auto' });
 
 export const colonCommandItemBase =
-  'group relative flex w-full cursor-pointer select-none items-center justify-between gap-3 rounded-md px-2.5 py-1.5 font-mono text-xs outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
+  'group relative flex min-w-0 w-full cursor-pointer select-none items-center justify-between gap-2 rounded-md px-2.5 py-1.5 font-mono text-xs outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
 
-export const colonCommandPromptBarBase = 'flex items-center gap-1.5 bg-muted/40 px-3 py-2 font-mono';
+export const colonCommandPromptBarBase =
+  'flex w-full items-center gap-1.5 border-t border-border/60 bg-muted/50 px-3 py-2 font-mono';
 
 export const colonCommandPrefixBase = 'select-none font-mono font-bold text-primary';
 

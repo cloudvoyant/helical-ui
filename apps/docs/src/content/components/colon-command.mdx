@@ -1,6 +1,6 @@
 ---
-title: ColonCommand
-description: Helix/Vim-inspired :command prompt and fzf completion popup supporting aliases, Tab completion, multi-level nested subcommands, and inline error diagnostics.
+title: Command Menu
+description: A Helix and Kakoune-inspired :command prompt and multi-column completion menu, for React and Svelte.
 order: 13
 group: navigation
 ---
@@ -8,7 +8,7 @@ group: navigation
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`ColonCommand` provides a Helix/Vim-inspired `:` command-line prompt and completion menu built on Ark UI's `Dialog`, `Listbox` (`ListboxInput autoHighlight`, `ListboxContent`, `ListboxItem`, `ListboxEmpty`), `Highlight`, and `@zag-js/collection`'s `TreeCollection<CommandNode>` with `fzf` fuzzy ranking.
+`ColonCommand` provides a Helix and Kakoune-inspired `:` command-line prompt docked at the bottom of the page, with multi-column command completion, `Tab` cycling, nested subcommands, and inline error feedback.
 
 <Demo component="colon-command" example="default" />
 
@@ -23,7 +23,7 @@ import Examples from '../../components/Examples.astro';
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `CommandNode[]` | `[]` | Hierarchical command tree nodes. |
-| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `@zag-js/collection` `TreeCollection` instance. |
+| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `TreeCollection` instance. |
 | `open` | `boolean` | — | Controlled modal open state. |
 | `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled. |
 | `onOpenChange` | `(open: boolean) => void` | — | Callback invoked when the prompt opens or closes. |
@@ -33,6 +33,8 @@ import Examples from '../../components/Examples.astro';
 | `placeholder` | `string` | `'Type a command (e.g. theme, mode, keybind)...'` | Input placeholder text. |
 | `emptyText` | `string` | `'No matching commands.'` | Text rendered when commands are registered but none match the typed filter. |
 | `noCommandsText` | `string` | `'No commands registered.'` | Text rendered in the UI when zero commands are registered in the tree. |
-| `placement` | `'bottom' \| 'center' \| 'top'` | `'bottom'` | Position variant for the command bar and completion popup. |
+| `placement` | `'bottom' \| 'center' \| 'top'` | `'bottom'` | Position variant (`'bottom'` docks edge-to-edge at the bottom of the viewport like Helix and Kakoune). |
+| `columns` | `'auto' \| 1 \| 2 \| 3 \| 4` | `'auto'` | Number of completion columns rendered above the colon prompt bar. |
+| `showShortcuts` | `boolean` | `false` | Whether to display keyboard shortcut badges next to completion items. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Typography and spacing size variant. |
 | `inline` | `boolean` | `false` | Renders the colon command surface inline inside its container instead of a modal `Dialog`. |

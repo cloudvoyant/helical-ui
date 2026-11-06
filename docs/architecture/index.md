@@ -84,14 +84,16 @@ flowchart LR
 
 - **Simple components (`Button`, `Badge`):** Single wrapper forwarding props and `cn(variants(...), className)` to the native element or Ark root.
 - **Composite components (`Select`, `Tabs`, `Combobox`, `Sidebar`):** Per-part exports matching Ark's anatomy (`Root`, `Trigger`, `Content`, `Item`, etc.).
-- **Overlay components (`Popover`, `Dialog`, `Window`, `Tooltip`):** `Content` and `Backdrop` parts encapsulate Ark's `Portal` and `Positioner` internally so consumers compose only semantic parts; `CloseTrigger` is exported as `Dismiss` with a default `aria-label`.
+- **Overlay components (`Popover`, `Dialog`, `Window`, `Tooltip`, `Toast`, `CommandPalette`, `ColonCommand`):** `Content`, `Backdrop`, and `Toaster` parts encapsulate Ark's `Portal` and `Positioner` internally so consumers compose only semantic parts; `CloseTrigger` is exported as `Dismiss` with a default `aria-label`.
 
 ### Architecture Index
 
 - **Docs & Demo Site:** [docs/architecture/docs-site.md](docs-site.md)
+- **Hotkey & Modal Editing System:** [docs/architecture/hotkeys.md](hotkeys.md)
 - **Component Designs (`docs/architecture/components/`):**
   - [docs/architecture/components/sidebar.md](components/sidebar.md) — Sidebar layout, state transitions, and mobile sheet implementation.
   - [docs/architecture/components/commands.md](components/commands.md) — `CommandPalette` (`⌘K`) and `ColonCommand` (`:menu`) shared `TreeCollection` and `fzf` architecture.
+  - [docs/architecture/components/which-key.md](components/which-key.md) — `WhichKey`, `WhichKeyExplorer`, `WhichKeyMode`, and `Kbd` component architecture.
 
 ### Release Pipeline
 

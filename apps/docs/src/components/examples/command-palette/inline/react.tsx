@@ -32,7 +32,7 @@ export default function ReactCommandPaletteInline() {
         inline
         items={items}
         onSelectCommand={(ctx) => {
-          setSelected(`${ctx.node.label} (${ctx.commandString})`);
+          setSelected(ctx.node.label);
         }}
       />
     </VStack>

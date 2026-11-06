@@ -22,27 +22,61 @@ for (const framework of FRAMEWORKS) {
         await selectFramework(page, framework);
       });
 
-      test.describe('When the user presses Space', () => {
-        test('Then mounts the Helix-style bottom-right WhichKey panel via Ark Presence/Portal showing ? (Explore Keybindings), +window, +goto, +view, and command items', async ({
+      test.describe('When the user presses Space or g inside the default workspace surface', () => {
+        test('Then mounts the Helix-style bottom-right WhichKey panel scoped to the demo surface and executes gg / ge goto motions', async ({
           page,
         }) => {
           // Arrange
           const demo = island(page, framework, 'default');
           await demo.getByTestId('wk-default-surface').click();
 
-          // Act
+          // Act: press Space
           await page.keyboard.press('Space');
 
-          // Assert
+          // Assert: local demo scope prefix and panel are active
+          await expect(demo.getByTestId('wk-default-prefix')).toHaveText('Space');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-variant', 'helix');
+          await expect(panel.getByTestId('which-key-close')).toBeVisible();
+          await expect(panel.getByTestId('which-key-footer')).toHaveText('');
           await expect(panel.locator('[data-testid="which-key-item"][data-key="?"]')).toContainText(
             'Explore Keybindings',
           );
-          await expect(panel.locator('[data-testid="which-key-item"][data-key="w"]')).toContainText(
-            '+window',
-          );
+          const windowItem = panel.locator('[data-testid="which-key-item"][data-key="w"]');
+          const gotoItem = panel.locator('[data-testid="which-key-item"][data-key="g"]');
+          await expect(windowItem).toContainText('Window');
+          await expect(windowItem.locator('svg')).toBeVisible();
+          await expect(gotoItem).toContainText('Go to');
+          await expect(gotoItem.locator('svg')).toBeVisible();
+          await page.keyboard.press('Escape');
+
+          // Act: press g inside the clicked surface to open Goto menu, then e for Goto Bottom, then gg for Goto Top
+          await page.keyboard.press('g');
+          await expect(demo.getByTestId('wk-default-prefix')).toHaveText('g');
+          await expect(panel).toBeVisible();
+          await page.keyboard.press('e');
+          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docEnd');
+
+          await page.keyboard.press('g');
+          await page.keyboard.press('g');
+          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docStart');
+
+          // Act & Assert: enable leaderOnly so WhichKey only opens when Space is pressed first
+          await demo.getByTestId('wk-default-toggle-leader-only').click();
+          await expect(demo.getByTestId('wk-default-toggle-leader-only')).toHaveAttribute('aria-pressed', 'true');
+          await demo.getByTestId('wk-default-surface').click();
+          await page.keyboard.press('g');
+          await expect(panel).toBeHidden();
+          await page.keyboard.press('e');
+          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docEnd');
+
+          // Pressing Space while leaderOnly is enabled still opens WhichKey
+          await page.keyboard.press('Space');
+          await expect(panel).toBeVisible();
+          await expect(panel).toHaveAttribute('data-leader-only', 'true');
+          await page.keyboard.press('Escape');
+          await expect(panel).toBeHidden();
         });
       });
 
@@ -574,10 +608,21 @@ test.describe('Docs Shell Keyboard Integration', () => {
       await page.locator('[data-framework-selector][data-ready]').waitFor();
     });
 
-    test.describe('When the user switches keybinding flavor in Settings or clicks the ? explorer button', () => {
-      test('Then updates the active preset in localStorage below Color mode and opens WhichKeyExplorer from TopNav', async ({
+    test.describe('When the user switches keybinding flavor in Settings, presses ?, or uses ge / gg on a component docs page', () => {
+      test('Then updates the active preset in localStorage, opens WhichKeyExplorer via ?, and scrolls the docs page on ge and gg', async ({
         page,
       }) => {
+        // Assert TopNav has no ? keybindings button and Cmd K button has no "Commands" text label
+        await expect(page.locator('[data-keybinding-explorer-trigger]')).toHaveCount(0);
+        await expect(page.locator('[data-command-trigger]')).not.toContainText('Commands');
+
+        // Assert Keyboard Support section and links (Kbd, WhichKey, Hotkeys) are present in the docs sidebar
+        const sidebar = page.locator('[data-pane-id="docs-sidebar"]');
+        await expect(sidebar).toContainText('Keyboard Support');
+        await expect(sidebar.getByRole('link', { name: 'Kbd', exact: true })).toBeVisible();
+        await expect(sidebar.getByRole('link', { name: 'WhichKey', exact: true })).toBeVisible();
+        await expect(sidebar.getByRole('link', { name: 'Hotkeys', exact: true })).toBeVisible();
+
         // Arrange: open Settings modal
         await page.locator('[data-theme-selector]').click();
         const modal = page.locator('[data-theme-modal]');
@@ -592,16 +637,40 @@ test.describe('Docs Shell Keyboard Integration', () => {
         const stored = await page.evaluate(() => window.localStorage.getItem('vortex:keymap-preset'));
         expect(stored).toBe('vim');
 
-        // Close Settings modal
+        // Switch back to Helix for ge / gg verification and test Leader-only setting in Settings modal
+        await modal.locator('[data-keybinding-selector] button[data-preset="helix"]').click();
+        const leaderOnlyBtn = modal.locator('[data-which-key-leader-only-selector] button[data-leader-only="true"]');
+        await leaderOnlyBtn.click();
+        await expect(leaderOnlyBtn).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('html')).toHaveAttribute('data-which-key-leader-only', 'true');
         await page.keyboard.press('Escape');
         await expect(modal).toBeHidden();
 
-        // Act: open explorer from TopNav ? button
-        await page.locator('[data-keybinding-explorer-trigger]').click();
-        const explorer = page.getByTestId('which-key-explorer');
+        // Act: open explorer via ? key in normal mode
+        await page.locator('main h1').first().click();
+        await page.keyboard.press('?');
+        const explorer = page.getByTestId('which-key-explorer').first();
         await expect(explorer).toBeVisible();
         await page.keyboard.press('Escape');
         await expect(explorer).toBeHidden();
+
+        // Act & Assert: with Leader-only enabled, pressing g does not open WhichKey popup, but ge / gg still scroll the page
+        await page.locator('main h1').first().click();
+        await page.keyboard.press('g');
+        await expect(page.getByTestId('which-key-panel')).toBeHidden();
+        await page.keyboard.press('e');
+        const scrollAfterGE = await page.evaluate(() => window.scrollY);
+        expect(scrollAfterGE).toBeGreaterThan(200);
+
+        await page.keyboard.press('g');
+        await page.keyboard.press('g');
+        const scrollAfterGG = await page.evaluate(() => window.scrollY);
+        expect(scrollAfterGG).toBe(0);
+
+        // Pressing Space at page level still opens WhichKey
+        await page.keyboard.press('Space');
+        await expect(page.getByTestId('which-key-panel')).toBeVisible();
+        await page.keyboard.press('Escape');
       });
     });
   });

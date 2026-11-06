@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  colonCommandDialogPositionerVariants,
+  colonCommandListVariants,
+  colonCommandPositionerVariants,
   createCommandTree,
   formatColonCompletionInput,
   matchesCommandHotkey,
+  resolveColonCommandGridNavigation,
+  resolveColonCommandGridStyle,
   resolveColonCommandState,
   resolveCommandLevel,
   splitHighlightSegments,
@@ -273,6 +278,32 @@ describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey s
 
       expect(matchesCommandHotkey(matchingEvent, 'Mod+k')).toBe(true);
       expect(matchesCommandHotkey(nonMatchingEvent, 'Mod+k')).toBe(false);
+    });
+  });
+});
+
+describe('Given ColonCommand bottom-docked positioner and multi-column list variants', () => {
+  describe('When placement is bottom and columns is auto or fixed', () => {
+    it('Then docks flush across the bottom edge of the viewport and computes column-first grid styles', () => {
+      expect(colonCommandPositionerVariants({ placement: 'bottom' })).toContain('items-end');
+      expect(colonCommandDialogPositionerVariants({ placement: 'bottom' })).toContain('fixed inset-x-0 bottom-0');
+      expect(colonCommandListVariants({ columns: 'auto' })).toContain('grid-flow-col');
+      expect(resolveColonCommandGridStyle('auto', 6)).toEqual({
+        display: 'grid',
+        gridAutoFlow: 'column',
+        gridTemplateRows: 'repeat(3, minmax(0, auto))',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      });
+      expect(resolveColonCommandGridStyle(3, 6)).toEqual({
+        display: 'grid',
+        gridAutoFlow: 'column',
+        gridTemplateRows: 'repeat(2, minmax(0, auto))',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+      });
+      expect(resolveColonCommandGridNavigation('auto', 6, 0, 'ArrowDown')).toBe(1);
+      expect(resolveColonCommandGridNavigation('auto', 6, 0, 'ArrowRight')).toBe(3);
+      expect(resolveColonCommandGridNavigation('auto', 6, 3, 'ArrowLeft')).toBe(0);
+      expect(resolveColonCommandGridNavigation('auto', 6, 1, 'ArrowRight')).toBe(4);
     });
   });
 });

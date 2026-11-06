@@ -5,8 +5,10 @@ import { matchesCommandHotkey, type CommandStyle } from '@cloudvoyant/helical-ui
 import {
   ColonCommand,
   CommandPalette,
+  Toaster,
   WhichKey,
   WhichKeyProvider,
+  toast,
   useWhichKey,
   type KeymapHandler,
   type WhichKeyNode,
@@ -120,6 +122,13 @@ function DocsCommandShell({
           setColonOpen(false);
           requestAnimationFrame(() => openExplorer());
         },
+        onSearchDocs: () => {
+          toast.create({
+            title: 'Search Docs is coming soon',
+            description: 'Full-text documentation search will land in an upcoming release.',
+            type: 'info',
+          });
+        },
       }),
     [
       theme,
@@ -138,8 +147,34 @@ function DocsCommandShell({
 
   return (
     <>
-      <CommandPalette items={commandItems} open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <ColonCommand items={commandItems} open={colonOpen} onOpenChange={setColonOpen} />
+      <CommandPalette
+        items={commandItems}
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onSelectCommand={(ctx) => {
+          if (ctx.value !== 'search') {
+            toast.create({
+              title: ctx.node.label,
+              type: 'success',
+            });
+          }
+        }}
+      />
+      <ColonCommand
+        items={commandItems}
+        open={colonOpen}
+        onOpenChange={setColonOpen}
+        onSelectCommand={(ctx) => {
+          if (ctx.value !== 'search') {
+            toast.create({
+              title: `Executed ${ctx.commandString}`,
+              description: ctx.node.label,
+              type: 'success',
+            });
+          }
+        }}
+      />
+      <Toaster />
     </>
   );
 }
@@ -158,7 +193,7 @@ export default function DocsWhichKeyProvider() {
       },
       Space: {
         key: 'Space',
-        label: '+leader',
+        label: 'Leader',
         group: 'Leader',
         children: {
           f: {

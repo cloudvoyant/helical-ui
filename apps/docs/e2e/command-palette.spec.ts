@@ -32,17 +32,26 @@ for (const framework of FRAMEWORKS) {
           await expect(palette).toBeVisible();
           await expect(palette.getByTestId('command-palette-input')).toBeFocused();
 
+          const viewport = page.viewportSize();
+          const box = await palette.boundingBox();
+          expect(viewport).not.toBeNull();
+          expect(box).not.toBeNull();
+          const paletteCenterY = box!.y + box!.height / 2;
+          const viewportCenterY = viewport!.height / 2;
+          expect(Math.abs(paletteCenterY - viewportCenterY)).toBeLessThanOrEqual(40);
+
           const searchItem = palette.locator('[data-testid="command-palette-item"][data-value="search"]');
           await expect(searchItem).toBeVisible();
           await expect(searchItem).toContainText('Search Docs');
           await expect(searchItem).toContainText('Future');
+          await expect(searchItem).not.toContainText(':search');
 
           await expect(palette.locator('[data-testid="command-palette-item"][data-value="github"]')).toContainText(
             'View GitHub',
           );
-          await expect(palette.locator('[data-testid="command-palette-item"][data-value="theme"]')).toContainText(
-            'Change Theme',
-          );
+          const themeItem = palette.locator('[data-testid="command-palette-item"][data-value="theme"]');
+          await expect(themeItem).toContainText('Change Theme');
+          await expect(themeItem).not.toContainText(':theme');
           await expect(palette.locator('[data-testid="command-palette-item"][data-value="mode"]')).toContainText(
             'Change Light/Dark Mode',
           );
@@ -112,9 +121,10 @@ for (const framework of FRAMEWORKS) {
           // Act: press Enter to select the top fuzzy match
           await input.press('Enter');
 
-          // Assert: modal closes and demo records the selected command
+          // Assert: modal closes, demo records the selected command without colon tokens, and a toast notification appears
           await expect(palette).toBeHidden();
-          await expect(demo.getByTestId('cp-default-selected')).toContainText('Catppuccin');
+          await expect(demo.getByTestId('cp-default-selected')).toHaveText('Catppuccin');
+          await expect(page.getByTestId('toast-item').last()).toContainText('Catppuccin');
         });
       });
 

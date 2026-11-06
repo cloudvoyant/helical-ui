@@ -51,7 +51,7 @@ export default function ReactWhichKeyExplorer() {
     () => ({
       Space: {
         key: 'Space',
-        label: '+leader',
+        label: 'Leader',
         group: 'Leader',
         children: {
           p: {

@@ -1,6 +1,6 @@
 ---
-title: CommandPalette
-description: Traditional shadcn-style ⌘K command palette with fzf fuzzy search, grouped commands, shortcut badges, and multi-level nested submenus built on Ark UI Dialog, Listbox, and TreeCollection.
+title: Command Palette
+description: A keyboard-first command palette with fuzzy search, grouped actions, shortcut badges, and nested submenus, for React and Svelte.
 order: 12
 group: navigation
 ---
@@ -8,7 +8,7 @@ group: navigation
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`CommandPalette` provides a keyboard-first `⌘K` / `Ctrl+K` command menu built on Ark UI's `Dialog`, `Listbox` (`ListboxInput autoHighlight`, `ListboxContent`, `ListboxItemGroup`, `ListboxItem`, `ListboxEmpty`), `Highlight`, and `@zag-js/collection`'s `TreeCollection<CommandNode>` with `fzf` subsequence ranking and character highlighting.
+`CommandPalette` provides a searchable `⌘K` / `Ctrl+K` command menu with grouped actions, keyboard shortcuts, and multi-level submenus.
 
 <Demo component="command-palette" example="default" />
 
@@ -23,7 +23,7 @@ import Examples from '../../components/Examples.astro';
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `CommandNode[]` | `[]` | Hierarchical command tree nodes. |
-| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `@zag-js/collection` `TreeCollection` instance. |
+| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `TreeCollection` instance. |
 | `open` | `boolean` | — | Controlled modal open state. |
 | `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled. |
 | `onOpenChange` | `(open: boolean) => void` | — | Callback invoked when the modal opens or closes. |

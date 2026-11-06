@@ -18,10 +18,13 @@ for (const framework of FRAMEWORKS) {
       });
 
       test.describe('When the user opens the Default ColonCommand demo', () => {
-        test('Then renders the ":" prompt and lists top-level command completions (:search, :github, :theme, :mode, :keybind, :framework)', async ({
+        test('Then renders the ":" prompt docked at the bottom of the viewport with a column-first completion grid (search, github, theme, mode, keybind, framework) and "Tab Next" hint', async ({
           page,
         }) => {
           // Arrange
+          const sidebar = page.locator('[data-pane-id="docs-sidebar"]');
+          await expect(sidebar.getByRole('link', { name: 'Command Palette' })).toBeVisible();
+          await expect(sidebar.getByRole('link', { name: 'Command Menu' })).toBeVisible();
           const demo = island(page, framework, 'default');
 
           // Act
@@ -32,26 +35,66 @@ for (const framework of FRAMEWORKS) {
           await expect(colon).toBeVisible();
           await expect(colon.getByTestId('colon-command-prefix')).toHaveText(':');
           await expect(colon.getByTestId('colon-command-input')).toBeFocused();
+          await expect(colon.getByTestId('colon-command-list')).toHaveAttribute('data-columns', 'auto');
+          await expect(colon).toContainText('Next');
 
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="search"]')).toContainText(
-            ':search',
-          );
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="github"]')).toContainText(
-            ':github',
-          );
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="theme"]')).toContainText(':theme');
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="mode"]')).toContainText(':mode');
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="keybind"]')).toContainText(
-            ':keybind',
-          );
-          await expect(colon.locator('[data-testid="colon-command-item"][data-value="framework"]')).toContainText(
-            ':framework',
-          );
+          const viewport = page.viewportSize();
+          const box = await colon.boundingBox();
+          expect(viewport).not.toBeNull();
+          expect(box).not.toBeNull();
+          expect(Math.round(box!.y + box!.height)).toBeGreaterThanOrEqual(viewport!.height - 2);
+          expect(Math.round(box!.width)).toBe(viewport!.width);
+
+          const searchItem = colon.locator('[data-testid="colon-command-item"][data-value="search"]');
+          const githubItem = colon.locator('[data-testid="colon-command-item"][data-value="github"]');
+          const themeItem = colon.locator('[data-testid="colon-command-item"][data-value="theme"]');
+          const modeItem = colon.locator('[data-testid="colon-command-item"][data-value="mode"]');
+          const keybindItem = colon.locator('[data-testid="colon-command-item"][data-value="keybind"]');
+          const frameworkItem = colon.locator('[data-testid="colon-command-item"][data-value="framework"]');
+
+          await expect(searchItem).toHaveText('search');
+          await expect(githubItem).toHaveText('github');
+          await expect(themeItem).toHaveText('theme');
+          await expect(modeItem).toHaveText('mode');
+          await expect(keybindItem).toHaveText('keybind');
+          await expect(frameworkItem).toHaveText('framework');
+
+          // Verify column-first layout (10 items -> 3 columns of 4 rows):
+          // Column 1: search (0), github (1), theme (2), mode (3)
+          // Column 2: keybind (4), framework (5), command-style (6), jump (7)
+          const searchBox = await searchItem.boundingBox();
+          const githubBox = await githubItem.boundingBox();
+          const keybindBox = await keybindItem.boundingBox();
+          expect(searchBox).not.toBeNull();
+          expect(githubBox).not.toBeNull();
+          expect(keybindBox).not.toBeNull();
+          expect(Math.abs(searchBox!.x - githubBox!.x)).toBeLessThanOrEqual(2);
+          expect(githubBox!.y).toBeGreaterThan(searchBox!.y);
+          expect(keybindBox!.x).toBeGreaterThan(searchBox!.x);
+
+          // Verify ArrowDown traverses down column 1 (search -> github -> theme -> mode) and ArrowRight / ArrowLeft traverse across columns
+          await expect(searchItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowRight');
+          await expect(keybindItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowLeft');
+          await expect(searchItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowDown');
+          await expect(githubItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowRight');
+          await expect(frameworkItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowLeft');
+          await expect(githubItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowDown');
+          await expect(themeItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowDown');
+          await expect(modeItem).toHaveAttribute('data-highlighted', '');
+          await page.keyboard.press('ArrowDown');
+          await expect(keybindItem).toHaveAttribute('data-highlighted', '');
         });
       });
 
-      test.describe('When the user types "th" and presses Tab', () => {
-        test('Then autocompletes the branch token to ":theme ", renders the "theme ›" breadcrumb, and lists nested theme subcommand completions', async ({
+      test.describe('When the user types "th", presses Tab to drill into theme selection, presses Tab to cycle themes, and presses Enter', () => {
+        test('Then autocompletes ":theme ", keeps focus on the input while cycling theme completions with Tab, supports Backspace editing, and executes the selected theme on Enter', async ({
           page,
         }) => {
           // Arrange
@@ -60,17 +103,31 @@ for (const framework of FRAMEWORKS) {
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
 
-          // Act
+          // Act: type "th" and press Tab to complete ":theme "
           await input.fill('th');
-          await input.press('Tab');
+          await page.keyboard.press('Tab');
 
-          // Assert: input completed with trailing space and nested completions visible
+          // Assert: input completed with trailing space, remains focused, no duplicate breadcrumb pills, and nested completions visible
           await expect(input).toHaveValue(':theme ');
-          await expect(colon.getByTestId('colon-command-breadcrumbs')).toContainText('theme');
+          await expect(input).toBeFocused();
+          await expect(colon.getByTestId('colon-command-breadcrumbs')).toHaveCount(0);
           await expect(
             colon.locator('[data-testid="colon-command-item"][data-value="theme/catppuccin"]'),
           ).toBeVisible();
           await expect(colon.locator('[data-testid="colon-command-item"][data-value="theme/claude"]')).toBeVisible();
+
+          // Act: press Tab to complete the first theme, then Tab again to cycle to the second theme, then Enter
+          await page.keyboard.press('Tab');
+          await expect(input).toHaveValue(':theme amber-minimal');
+          await expect(input).toBeFocused();
+          await page.keyboard.press('Tab');
+          await expect(input).toHaveValue(':theme amethyst-haze');
+          await expect(input).toBeFocused();
+          await page.keyboard.press('Enter');
+
+          // Assert: modal closes and executes the selected theme
+          await expect(colon).toBeHidden();
+          await expect(demo.getByTestId('cc-default-selected')).toContainText('Amethyst Haze (:theme amethyst-haze)');
         });
       });
 
@@ -91,6 +148,7 @@ for (const framework of FRAMEWORKS) {
           // Assert
           await expect(colon).toBeHidden();
           await expect(demo.getByTestId('cc-default-selected')).toContainText('Dark (:mode dark)');
+          await expect(page.getByTestId('toast-item').last()).toContainText('Dark');
         });
       });
 
@@ -170,5 +228,18 @@ test.describe('ColonCommand · Docs Shell Normal-Mode ":" Integration', () => {
     // Assert: localStorage preset updated to vim
     const storedPreset = await page.evaluate(() => localStorage.getItem('vortex:keymap-preset'));
     expect(storedPreset).toBe('vim');
+
+    // Act & Assert: verify gw and <leader>gw (Space g w) trigger 2D jump mode after using ColonCommand
+    await page.keyboard.press('g');
+    await page.keyboard.press('w');
+    await expect(page.locator('[data-which-key-jump-overlay]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-which-key-jump-overlay]')).toBeHidden();
+
+    await page.keyboard.press(' ');
+    await page.keyboard.press('g');
+    await page.keyboard.press('w');
+    await expect(page.locator('[data-which-key-jump-overlay]')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 });

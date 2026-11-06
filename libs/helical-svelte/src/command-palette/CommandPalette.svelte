@@ -14,6 +14,7 @@
     commandPaletteInputBase,
     commandPaletteItemBase,
     commandPaletteListBase,
+    commandPalettePositionerBase,
     commandPaletteVariants,
     createCommandTree,
     matchesCommandHotkey,
@@ -158,11 +159,6 @@
     if (rootEl) {
       return rootEl.querySelector<HTMLInputElement>('[data-testid="command-palette-input"]');
     }
-    if (typeof document !== 'undefined') {
-      return document.querySelector<HTMLInputElement>(
-        '[data-command-palette] [data-testid="command-palette-input"]',
-      );
-    }
     return null;
   }
 
@@ -269,6 +265,7 @@
           <Row class="shrink-0 items-center gap-1" data-testid="command-palette-breadcrumbs">
             <button
               type="button"
+              tabindex={-1}
               data-testid="command-palette-breadcrumb-root"
               onclick={() => {
                 setActivePath([]);
@@ -282,6 +279,7 @@
             {#each resolution.breadcrumbs as crumb, idx (crumb.value)}
               <button
                 type="button"
+                tabindex={-1}
                 data-testid="command-palette-breadcrumb"
                 data-breadcrumb-value={crumb.value}
                 onclick={() => {
@@ -324,10 +322,30 @@
                 e.preventDefault();
                 e.stopPropagation();
                 handleOpenChange(false);
+              } else if (currentQuery.length > 0) {
+                setQuery('');
+              } else {
+                (e.currentTarget as HTMLElement | null)?.blur?.();
               }
               return;
             }
             if (enabledItems.length === 0) return;
+            if (e.key === 'Tab') {
+              e.preventDefault();
+              e.stopPropagation();
+              const delta = e.shiftKey ? -1 : 1;
+              const currentIdx = enabledItems.findIndex(
+                (item) => item.value === effectiveHighlightedValue,
+              );
+              const nextIdx =
+                currentIdx === -1
+                  ? 0
+                  : (currentIdx + delta + enabledItems.length) % enabledItems.length;
+              const nextVal = enabledItems[nextIdx]!.value;
+              highlightedValue = nextVal;
+              scrollItemIntoView(nextVal);
+              return;
+            }
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
               e.stopPropagation();
@@ -384,6 +402,7 @@
       <Scroll class="max-h-80 min-h-0 flex-1" viewportClass="max-h-80">
         {#snippet children()}
           <ListboxContent
+            tabindex={-1}
             data-testid="command-palette-list"
             class={commandPaletteListBase}
           >
@@ -472,9 +491,6 @@
                         </Row>
                       </ListboxItemText>
                       <Row class="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                        <span class="font-mono text-[11px] opacity-75">
-                          {item.fullCommand}
-                        </span>
                         {#if item.shortcut}
                           <Kbd size="sm" hotkey={item.shortcut} />
                         {/if}
@@ -514,9 +530,9 @@
             </span>
           {/if}
         </Row>
-        <span class="font-mono text-[11px] text-muted-foreground">
+        <span class="text-[11px] text-muted-foreground">
           {resolution.breadcrumbs.length > 0
-            ? `:${resolution.breadcrumbs.map((b) => b.command).join(' ')}`
+            ? resolution.breadcrumbs.map((b) => b.label).join(' › ')
             : '⌘K'}
         </span>
       </div>
@@ -537,6 +553,7 @@
   >
     <DialogBackdrop />
     <DialogContent
+      positionerClass={commandPalettePositionerBase}
       data-command-palette="true"
       data-modal="true"
       data-testid="command-palette"

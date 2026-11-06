@@ -4,8 +4,9 @@
 
 `CommandPalette` (`⌘K` / `Ctrl+K`) and `ColonCommand` (`:menu`) provide two keyboard-first navigation surfaces for `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte`, powered by a shared hierarchical command tree (`TreeCollection<CommandNode>`) and fuzzy subsequence ranker (`fzf`) in `@cloudvoyant/helical-ui`.
 
-- **`CommandPalette`**: A traditional shadcn-style modal (or inline) command palette with fuzzy search, grouped items, keyboard shortcut badges (`<Kbd>`), and multi-level nested submenu drill-down with breadcrumb pills.
-- **`ColonCommand`**: A Helix/Vim-inspired `:` command-line prompt and completion popup supporting `:command <subcommand> <arg>` token parsing, aliases, `Tab` completion, nested subcommand menus, and inline error diagnostics.
+- **`CommandPalette`**: A traditional shadcn-style modal (or inline) command palette with fuzzy search, grouped items, keyboard shortcut badges (`<Kbd>`), and multi-level nested submenu drill-down with breadcrumb pills (without showing `:colon` tokens).
+- **`ColonCommand`**: A Helix/Kakoune-inspired `:` command-line prompt and multi-column completion popup docked across the bottom of the viewport (`placement="bottom"`, `columns="auto"`), supporting `:command <subcommand> <arg>` token parsing, aliases, `Tab` completion, nested subcommand menus, and inline error diagnostics.
+- **`Toast` (`Toaster`, `ToastItem`, `toast`)**: A portaled Ark UI toast notification store and overlay used by command consumers (`CommandPalette`, `ColonCommand`) to announce command execution feedback.
 
 ## Design
 
@@ -17,20 +18,20 @@ CommandPalette (Modal or Inline):
 | [Search Icon]  [Breadcrumb ›]  Type a command or search...     [Esc]  |
 |-----------------------------------------------------------------------|
 | Navigation                                                            |
-|   Search Docs                                       [Future]  :search |
-|   View GitHub                                                 :github |
+|   Search Docs                                       [Future]  [Mod+f] |
+|   View GitHub                                                   [g h] |
 | Appearance                                                            |
-|   Change Theme                                          :theme    [›] |
-|   Change Light/Dark Mode                                :mode     [›] |
+|   Change Theme                                                    [›] |
+|   Change Light/Dark Mode                                          [›] |
 |-----------------------------------------------------------------------|
 | ↑↓ Navigate   ↵ Select / Drill in   ⌫ Back   Esc Close                |
 +-----------------------------------------------------------------------+
 
-ColonCommand (placement="bottom" | "center" | "top"):
+ColonCommand (placement="bottom", columns="auto"):
 +-----------------------------------------------------------------------+
-| :theme catppuccin        Change Theme › Catppuccin           [Active] |
-| :theme dracula           Change Theme › Dracula                       |
-| :theme nord              Change Theme › Nord                          |
+| :search        Search Docs  | :github        View GitHub              |
+| :theme         Change Theme | :mode          Change Light/Dark Mode   |
+| :keybind       Keybind Style| :framework     Change Framework         |
 |-----------------------------------------------------------------------|
 | : [theme ›] cat                                   [Tab Complete] [↵]  |
 +-----------------------------------------------------------------------+
@@ -73,8 +74,8 @@ flowchart TD
 
 ### Public API
 
-- **`@cloudvoyant/helical-ui`**: `createCommandTree`, `resolveCommandLevel`, `resolveColonCommandState`, `splitHighlightSegments`, `commandPaletteVariants`, `colonCommandVariants`, `CommandNode`, `CommandSelectContext`, `CommandBreadcrumb`, `CommandFlatItem`, `CommandLevelResolution`, `ColonCommandResolution`, `CommandPaletteProps`, `ColonCommandProps`, `CommandStyle`.
-- **`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`**: `CommandPalette` and `ColonCommand`.
+- **`@cloudvoyant/helical-ui`**: `createCommandTree`, `resolveCommandLevel`, `resolveColonCommandState`, `splitHighlightSegments`, `commandPaletteVariants`, `colonCommandVariants`, `colonCommandPositionerVariants`, `colonCommandDialogPositionerVariants`, `colonCommandListVariants`, `CommandNode`, `CommandSelectContext`, `CommandBreadcrumb`, `CommandFlatItem`, `CommandLevelResolution`, `ColonCommandResolution`, `CommandPaletteProps`, `ColonCommandProps`, `ColonCommandColumns`, `CommandStyle`, `toastVariants`, `toasterBase`, `ToastType`, `ToastPlacement`, `ToastActionOptions`, `ToastVariants`.
+- **`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`**: `CommandPalette`, `ColonCommand`, `Toaster`, `ToastItem`, `ToastRoot`, `ToastTitle`, `ToastDescription`, `ToastActionTrigger`, `ToastCloseTrigger`, `ToastDismiss`, `ToastContext`, `createToaster`, `toast`, `useToast`, `useToastContext`.
 
 ### State and Data Flow
 

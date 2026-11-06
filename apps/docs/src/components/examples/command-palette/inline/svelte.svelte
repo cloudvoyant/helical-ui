@@ -39,7 +39,7 @@
     inline
     {items}
     onSelectCommand={(ctx) => {
-      selected = `${ctx.node.label} (${ctx.commandString})`;
+      selected = ctx.node.label;
     }}
   />
 </VStack>

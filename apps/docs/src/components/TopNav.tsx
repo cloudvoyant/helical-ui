@@ -14,7 +14,6 @@ import {
   NavbarMenuItem,
   NavbarMenuLink,
   Kbd,
-  useWhichKey,
 } from '@cloudvoyant/helical-react';
 import { COMMAND_STYLE_EVENT, dispatchOpenCommandMenu, getStoredCommandStyle } from '../lib/commands';
 import { HelicalLogo } from './examples/HelicalLogo';
@@ -43,7 +42,6 @@ const links = [
 ];
 
 export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups = [] }: Props) {
-  const { openExplorer } = useWhichKey();
   const [commandStyle, setCommandStyleState] = useState<CommandStyle>(() => getStoredCommandStyle());
 
   useEffect(() => {
@@ -95,23 +93,17 @@ export default function TopNav({ currentPath = import.meta.env.BASE_URL, groups 
             data-command-trigger
             data-command-style={commandStyle}
             onClick={() => dispatchOpenCommandMenu(commandStyle)}
-            className="hidden h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
-          >
-            <span className="hidden lg:inline">Commands</span>
-            <Kbd size="sm" variant="subtle">
-              {commandStyle === 'colon' ? ':' : '⌘K'}
-            </Kbd>
-          </button>
-          <button
-            type="button"
-            aria-label="Explore keybindings"
-            title="Explore keybindings (?)"
-            data-keybinding-explorer-trigger
-            onClick={openExplorer}
             className="hidden h-8 items-center justify-center rounded-md border border-border bg-background/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
           >
-            <Kbd size="sm" variant="subtle">
-              ?
+            <Kbd size="sm" variant="subtle" className="gap-1 px-1.5">
+              {commandStyle === 'colon' ? (
+                ':'
+              ) : (
+                <>
+                  <span>⌘</span>
+                  <span>K</span>
+                </>
+              )}
             </Kbd>
           </button>
           <ThemeSelector />

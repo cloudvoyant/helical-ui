@@ -16,6 +16,7 @@ import {
   commandPaletteInputBase,
   commandPaletteItemBase,
   commandPaletteListBase,
+  commandPalettePositionerBase,
   commandPaletteVariants,
   createCommandTree,
   matchesCommandHotkey,
@@ -123,11 +124,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       if (rootRef.current) {
         return rootRef.current.querySelector<HTMLInputElement>(
           '[data-testid="command-palette-input"]',
-        );
-      }
-      if (typeof document !== 'undefined') {
-        return document.querySelector<HTMLInputElement>(
-          '[data-command-palette] [data-testid="command-palette-input"]',
         );
       }
       return null;
@@ -320,6 +316,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
               <Row className="shrink-0 items-center gap-1" data-testid="command-palette-breadcrumbs">
                 <button
                   type="button"
+                  tabIndex={-1}
                   data-testid="command-palette-breadcrumb-root"
                   onClick={() => {
                     setActivePath([]);
@@ -334,6 +331,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                   <button
                     key={crumb.value}
                     type="button"
+                    tabIndex={-1}
                     data-testid="command-palette-breadcrumb"
                     data-breadcrumb-value={crumb.value}
                     onClick={() => {
@@ -374,10 +372,30 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                     e.preventDefault();
                     e.stopPropagation();
                     handleOpenChange(false);
+                  } else if (currentQuery.length > 0) {
+                    setQuery('');
+                  } else {
+                    e.currentTarget.blur();
                   }
                   return;
                 }
                 if (enabledItems.length === 0) return;
+                if (e.key === 'Tab') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const delta = e.shiftKey ? -1 : 1;
+                  const currentIdx = enabledItems.findIndex(
+                    (item) => item.value === effectiveHighlightedValue,
+                  );
+                  const nextIdx =
+                    currentIdx === -1
+                      ? 0
+                      : (currentIdx + delta + enabledItems.length) % enabledItems.length;
+                  const nextVal = enabledItems[nextIdx]!.value;
+                  setHighlightedValue(nextVal);
+                  scrollItemIntoView(nextVal);
+                  return;
+                }
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                   e.preventDefault();
                   e.stopPropagation();
@@ -433,6 +451,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
 
           <Scroll className="max-h-80 min-h-0 flex-1" viewportClassName="max-h-80">
             <ListboxContent
+              tabIndex={-1}
               data-testid="command-palette-list"
               className={commandPaletteListBase}
             >
@@ -510,9 +529,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                           </Row>
                         </ListboxItemText>
                         <Row className="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="font-mono text-[11px] opacity-75">
-                            {item.fullCommand}
-                          </span>
                           {item.shortcut && <Kbd size="sm" hotkey={item.shortcut} />}
                           {item.isBranch && (
                             <ChevronRight
@@ -549,9 +565,9 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                 </span>
               )}
             </Row>
-            <span className="font-mono text-[11px] text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {resolution.breadcrumbs.length > 0
-                ? `:${resolution.breadcrumbs.map((b) => b.command).join(' ')}`
+                ? resolution.breadcrumbs.map((b) => b.label).join(' › ')
                 : '⌘K'}
             </span>
           </div>
@@ -576,6 +592,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       >
         <DialogBackdrop />
         <DialogContent
+          positionerClassName={commandPalettePositionerBase}
           data-command-palette="true"
           data-modal="true"
           data-testid="command-palette"
