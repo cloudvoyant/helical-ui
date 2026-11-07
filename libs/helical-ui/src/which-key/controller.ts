@@ -2385,14 +2385,6 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         (mode === 'normal' || mode === 'select')
       ) {
         setMode('insert');
-      } else if (
-        mode === 'insert' &&
-        !isTextEntryElement(targetNode) &&
-        !targetNode.closest(
-          '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="dialog"], [data-command-palette], [data-colon-command]',
-        )
-      ) {
-        setMode('normal');
       }
     };
 
