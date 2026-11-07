@@ -1,8 +1,8 @@
-// Source: https://ui.shadcn.com/docs/components/radix/command
-// Closely based on: Ark UI listbox & dialog (https://ark-ui.com/docs/components/listbox, https://ark-ui.com/docs/components/dialog) and Helix command mode (https://docs.helix-editor.com/commands.html).
+// libs/helical-ui/src/command/types.ts
 
 // 1. Imports
 import type { TreeCollection } from '@zag-js/collection';
+import type { KbdHotkey } from '../kbd';
 
 // 2. Module constants & types
 export type CommandStyle = 'palette' | 'colon';
@@ -24,7 +24,7 @@ export interface CommandNode {
   /** Alternative colon tokens (e.g. ['t', 'colorscheme']). */
   aliases?: string[];
   /** Keyboard shortcut chord(s) rendered via <Kbd>. */
-  shortcut?: string | string[];
+  shortcut?: KbdHotkey;
   /** Extra search terms matched during filtering. */
   keywords?: string[];
   /** Optional status badge (e.g. 'Future' for Search Docs). */
@@ -51,7 +51,7 @@ export interface CommandFlatItem {
   command: string;
   fullCommand: string;
   aliases: string[];
-  shortcut?: string | string[];
+  shortcut?: KbdHotkey;
   badge?: string;
   active: boolean;
   disabled: boolean;
@@ -126,18 +126,46 @@ export interface ColonCommandProps {
   inputValue?: string;
   onInputValueChange?: (value: string) => void;
   onSelectCommand?: (ctx: CommandSelectContext) => void;
+  /** Optional input placeholder text (e.g. 'Type a command'). @default '' */
   placeholder?: string;
   /** Displayed when commands are registered but none match the typed filter. @default 'No matching commands.' */
   emptyText?: string;
   /** Displayed in the UI when no commands are registered in the tree. @default 'No commands registered.' */
   noCommandsText?: string;
-  placement?: 'bottom' | 'center' | 'top';
   /** Number of completion columns above the colon prompt bar. @default 'auto' */
   columns?: ColonCommandColumns;
   /** Whether to display keyboard shortcut badges next to completion items. @default false */
   showShortcuts?: boolean;
+  /** Compactness variant for the completion grid and prompt bar. @default 'md' */
   size?: 'sm' | 'md' | 'lg';
   /** Render inline inside a container instead of a modal Dialog (useful for docs previews). */
   inline?: boolean;
   className?: string;
+}
+
+export interface CommandContextProps {
+  items?: CommandNode[];
+  collection?: TreeCollection<CommandNode>;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  style?: CommandStyle;
+  defaultStyle?: CommandStyle;
+  onStyleChange?: (style: CommandStyle) => void;
+  onSelectCommand?: (ctx: CommandSelectContext) => void;
+}
+
+export interface CommandContextValue {
+  items?: CommandNode[];
+  collection?: TreeCollection<CommandNode>;
+  tree: TreeCollection<CommandNode>;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  style: CommandStyle;
+  setStyle: (style: CommandStyle) => void;
+  openPalette: () => void;
+  openColon: () => void;
+  close: () => void;
+  toggle: () => void;
+  onSelectCommand?: (ctx: CommandSelectContext) => void;
 }

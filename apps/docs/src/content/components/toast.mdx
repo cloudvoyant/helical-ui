@@ -8,7 +8,7 @@ group: overlays
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`Toast` displays brief, non-blocking notification overlays. Create a store with `createToaster` (or use the default `toast` singleton), mount `<Toaster />` once, and trigger notifications imperatively with `toaster.create({ title, description, type, action })`.
+`Toast` displays brief, non-blocking notification overlays. Mount `<Toaster />` once in your root layout, and trigger notifications anywhere using the `useToast()` hook or the `toast` service (`toast.create({ title, description, type, action })`).
 
 <Demo component="toast" example="default" />
 
@@ -61,6 +61,7 @@ Accepts all [Ark `ToastCloseTriggerProps`](https://ark-ui.com/docs/components/to
 
 ### Store & Hooks
 
-- `createToaster(props)` — Creates a toast store (`placement`, `overlap`, `max`, `gap`, `offsets`).
-- `toast` — Default preconfigured toaster store (`placement: 'bottom-end'`, `overlap: true`, `max: 5`).
-- `useToast` / `useToastContext` — Reads the current toast item state from context.
+- `useToast(toaster?)` — Returns the active toast service (`toast` by default) for triggering notifications (`toast.create`, `toast.success`, `toast.error`, `toast.info`, `toast.warning`, `toast.dismiss`).
+- `toast` — Shared singleton toast service (`placement: 'bottom-end'`, `overlap: true`, `max: 5`) wired to `<Toaster />`.
+- `createToaster(props)` — Creates a custom isolated toast store (`placement`, `overlap`, `max`, `gap`, `offsets`).
+- `useToastContext()` — Reads the current individual `<ToastRoot>` item state from context.

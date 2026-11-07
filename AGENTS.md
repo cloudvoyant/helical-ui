@@ -52,13 +52,11 @@ flowchart LR
 
 ### File layout
 
-Order every component file from top to bottom:
+Order every component file from top to bottom, and use explicit section headers inside stateful components (`// --- State ---`, `// --- Effects ---`, `// --- Methods ---`, `// --- Helpers ---`, `// --- Render ---`) in that exact order (only include `// Source:` when the file is a near-direct copy of an upstream reference):
 
 ```tsx
-// Source: https://ui.shadcn.com/docs/components/radix/<component>
-
 // 1. Imports
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { cn, widgetVariants, type WidgetVariantProps } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
@@ -68,7 +66,13 @@ export interface WidgetProps extends WidgetVariantProps { ... }
 function resolveState(...) { ... }
 
 // 4. Exported component
-export const Widget = forwardRef<HTMLDivElement, WidgetProps>(...);
+export const Widget = forwardRef<HTMLDivElement, WidgetProps>((props, ref) => {
+  // --- State ---
+  // --- Effects ---
+  // --- Methods ---
+  // --- Helpers ---
+  // --- Render ---
+});
 ```
 
 - Start every script in `mise-tasks/` with `set -euo pipefail` and `source "${MISE_PROJECT_ROOT}/mise-tasks/utils"`.

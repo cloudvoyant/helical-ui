@@ -1,41 +1,38 @@
 // apps/docs/src/components/examples/toast/action/react.tsx
+
+// 1. Imports
 import { useState } from 'react';
-import { Badge, Button, HStack, Toaster, createToaster } from '@cloudvoyant/helical-react';
+import { Badge, Button, HStack, useToast } from '@cloudvoyant/helical-react';
 
-const actionToaster = createToaster({
-  placement: 'bottom-end',
-  overlap: true,
-  max: 5,
-});
-
+// 2. Exported component
 export default function ReactToastAction() {
+  // --- State ---
+  const toast = useToast();
   const [undone, setUndone] = useState(false);
 
+  // --- Methods ---
+  const handleArchive = () => {
+    setUndone(false);
+    toast.create({
+      title: 'File archived',
+      description: 'Moved quarterly-report.mdx to archive.',
+      type: 'info',
+      action: {
+        label: 'Undo',
+        onClick: () => setUndone(true),
+      },
+    });
+  };
+
+  // --- Render ---
   return (
     <HStack className="flex-wrap items-center gap-3">
-      <Button
-        size="sm"
-        variant="outline"
-        data-testid="toast-action-trigger"
-        onClick={() => {
-          setUndone(false);
-          actionToaster.create({
-            title: 'File archived',
-            description: 'Moved quarterly-report.mdx to archive.',
-            type: 'info',
-            action: {
-              label: 'Undo',
-              onClick: () => setUndone(true),
-            },
-          });
-        }}
-      >
+      <Button size="sm" variant="outline" data-testid="toast-action-trigger" onClick={handleArchive}>
         Archive File
       </Button>
       <Badge variant="subtle" color={undone ? 'success' : 'secondary'} data-testid="toast-action-state">
         {undone ? 'Restored' : 'Idle'}
       </Badge>
-      <Toaster toaster={actionToaster} />
     </HStack>
   );
 }

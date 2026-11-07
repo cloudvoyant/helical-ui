@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  colonCommandDialogPositionerVariants,
+  colonCommandDialogContentBase,
+  colonCommandItemVariants,
   colonCommandListVariants,
-  colonCommandPositionerVariants,
+  colonCommandPositionerBase,
+  colonCommandPromptBarVariants,
   createCommandTree,
   formatColonCompletionInput,
   matchesCommandHotkey,
@@ -282,12 +284,17 @@ describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey s
   });
 });
 
-describe('Given ColonCommand bottom-docked positioner and multi-column list variants', () => {
-  describe('When placement is bottom and columns is auto or fixed', () => {
-    it('Then docks flush across the bottom edge of the viewport and computes column-first grid styles', () => {
-      expect(colonCommandPositionerVariants({ placement: 'bottom' })).toContain('items-end');
-      expect(colonCommandDialogPositionerVariants({ placement: 'bottom' })).toContain('fixed inset-x-0 bottom-0');
-      expect(colonCommandListVariants({ columns: 'auto' })).toContain('grid-flow-col');
+describe('Given ColonCommand bottom-docked positioner, compactness variants, and multi-column list variants', () => {
+  describe('When size and columns variants are resolved', () => {
+    it('Then docks flush across the bottom edge of the viewport, scales compactness across sm/md/lg, and computes column-first grid styles', () => {
+      expect(colonCommandPositionerBase).toContain('items-end');
+      expect(colonCommandDialogContentBase).toContain('fixed inset-x-0 bottom-0');
+      expect(colonCommandListVariants({ columns: 'auto', size: 'sm' })).toContain('grid-flow-col');
+      expect(colonCommandListVariants({ columns: 'auto', size: 'sm' })).toContain('py-1');
+      expect(colonCommandItemVariants({ size: 'sm' })).toContain('py-0.5');
+      expect(colonCommandItemVariants({ size: 'lg' })).toContain('py-2');
+      expect(colonCommandPromptBarVariants({ size: 'sm' })).toContain('py-1');
+      expect(colonCommandPromptBarVariants({ size: 'lg' })).toContain('py-2.5');
       expect(resolveColonCommandGridStyle('auto', 6)).toEqual({
         display: 'grid',
         gridAutoFlow: 'column',

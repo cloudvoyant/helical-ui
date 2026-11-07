@@ -14,7 +14,7 @@ import Examples from '../../components/Examples.astro';
 
 ## Examples
 
-<Examples component="colon-command" exclude="default" />
+<Examples component="colon-command" exclude="default" order={['sizes', 'empty']} />
 
 ## API Reference
 
@@ -30,11 +30,15 @@ import Examples from '../../components/Examples.astro';
 | `inputValue` | `string` | — | Controlled command input string. |
 | `onInputValueChange` | `(value: string) => void` | — | Callback invoked when the input value changes. |
 | `onSelectCommand` | `(ctx: CommandSelectContext) => void` | — | Callback invoked when a leaf command is executed. |
-| `placeholder` | `string` | `'Type a command (e.g. theme, mode, keybind)...'` | Input placeholder text. |
+| `placeholder` | `string` | `''` | Optional input placeholder text (e.g. `'Type a command'`). Empty by default. |
 | `emptyText` | `string` | `'No matching commands.'` | Text rendered when commands are registered but none match the typed filter. |
 | `noCommandsText` | `string` | `'No commands registered.'` | Text rendered in the UI when zero commands are registered in the tree. |
-| `placement` | `'bottom' \| 'center' \| 'top'` | `'bottom'` | Position variant (`'bottom'` docks edge-to-edge at the bottom of the viewport like Helix and Kakoune). |
 | `columns` | `'auto' \| 1 \| 2 \| 3 \| 4` | `'auto'` | Number of completion columns rendered above the colon prompt bar. |
 | `showShortcuts` | `boolean` | `false` | Whether to display keyboard shortcut badges next to completion items. |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Typography and spacing size variant. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Compactness variant (`'sm'` compact, `'md'` default, `'lg'` comfortable) for completion items, grid spacing, and the prompt bar. |
 | `inline` | `boolean` | `false` | Renders the colon command surface inline inside its container instead of a modal `Dialog`. |
+
+### Subcomponents & Shared Context
+
+- `ColonCommandList`, `ColonCommandItem`, `ColonCommandPromptBar`, `ColonCommandError`, `useColonCommandContext` / `getColonCommandContext` — modular subcomponents composing `ColonCommand`.
+- `CommandProvider` & `useCommand` / `getCommandContext` — shared command context provider that supplies `items`, `collection`, `open`, `style` (`'palette' | 'colon'`), `openPalette()`, `openColon()`, and `onSelectCommand` to both `CommandPalette` and `ColonCommand`.

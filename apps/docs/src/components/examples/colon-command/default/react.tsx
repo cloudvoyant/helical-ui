@@ -1,73 +1,37 @@
 // apps/docs/src/components/examples/colon-command/default/react.tsx
-import { useMemo, useState } from 'react';
-import { Badge, Button, ColonCommand, HStack, Kbd, Toaster, VStack, createToaster } from '@cloudvoyant/helical-react';
-import { buildDocsCommandTree } from '../../../../lib/commands';
 
-const demoToaster = createToaster({
-  placement: 'bottom-end',
-  overlap: true,
-  max: 3,
-});
+// 1. Imports
+import { useEffect, useMemo, useState } from 'react';
+import { Button, ColonCommand, Kbd, useToast, type CommandSelectContext } from '@cloudvoyant/helical-react';
+import { buildDocsCommandTree, subscribeDocsCommandState } from '../../../../lib/commands';
 
+// 2. Exported component
 export default function ReactColonCommandDefault() {
+  // --- State ---
+  const toast = useToast();
   const [open, setOpen] = useState(false);
-  const [lastSelected, setLastSelected] = useState('None');
-  const [activeTheme, setActiveTheme] = useState('helical-ui');
-  const [activeMode, setActiveMode] = useState<'light' | 'dark' | 'system'>('dark');
-  const [activePreset, setActivePreset] = useState<'helix' | 'vim' | 'kakoune'>('helix');
-  const [activeFramework, setActiveFramework] = useState<'react' | 'svelte'>('react');
+  const [revision, setRevision] = useState(0);
+  const items = useMemo(() => buildDocsCommandTree(), [revision]);
 
-  const items = useMemo(
-    () =>
-      buildDocsCommandTree({
-        currentTheme: activeTheme,
-        currentColorMode: activeMode,
-        currentPreset: activePreset,
-        currentFramework: activeFramework,
-        onThemeSelect: (theme) => setActiveTheme(theme),
-        onColorModeSelect: (mode) => setActiveMode(mode),
-        onPresetSelect: (preset) => setActivePreset(preset),
-        onFrameworkSelect: (fw) => setActiveFramework(fw),
-        onOpenGitHub: () => setLastSelected('View GitHub (:github)'),
-        onSearchDocs: () => setLastSelected('Search Docs (:search)'),
-      }),
-    [activeTheme, activeMode, activePreset, activeFramework],
-  );
+  // --- Effects ---
+  useEffect(() => subscribeDocsCommandState(() => setRevision((r) => r + 1)), []);
 
+  // --- Methods ---
+  const handleSelectCommand = (ctx: CommandSelectContext) => {
+    toast.create({
+      title: `Executed ${ctx.commandString}`,
+      description: ctx.node.label,
+      type: ctx.node.badge === 'Future' ? 'info' : 'success',
+    });
+  };
+
+  // --- Render ---
   return (
-    <VStack className="w-full gap-3 rounded-lg border border-border bg-card p-4">
-      <HStack className="flex-wrap items-center justify-between gap-2">
-        <HStack className="flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Executed:</span>
-          <Badge variant="subtle" color="primary" data-testid="cc-default-selected">
-            {lastSelected}
-          </Badge>
-        </HStack>
-        <Button size="sm" variant="outline" data-testid="cc-default-open" onClick={() => setOpen(true)}>
-          Open Colon Menu <Kbd size="sm">:</Kbd>
-        </Button>
-      </HStack>
-      <p className="text-xs text-muted-foreground">
-        Type <code className="font-mono text-foreground">:theme </code> (or press <Kbd size="sm">Tab</Kbd> on{' '}
-        <code className="font-mono text-foreground">th</code>) to autocomplete branch commands, or run{' '}
-        <code className="font-mono text-foreground">:mode dark</code>,{' '}
-        <code className="font-mono text-foreground">:keybind vim</code>, or{' '}
-        <code className="font-mono text-foreground">:framework svelte</code>.
-      </p>
-      <ColonCommand
-        items={items}
-        open={open}
-        onOpenChange={setOpen}
-        onSelectCommand={(ctx) => {
-          setLastSelected(`${ctx.node.label} (${ctx.commandString})`);
-          demoToaster.create({
-            title: `Executed ${ctx.commandString}`,
-            description: ctx.node.label,
-            type: ctx.node.badge === 'Future' ? 'info' : 'success',
-          });
-        }}
-      />
-      <Toaster toaster={demoToaster} />
-    </VStack>
+    <div className="flex flex-col items-center gap-4">
+      <Button variant="outline" data-testid="cc-default-open" onClick={() => setOpen(true)}>
+        Open Command Menu <Kbd size="sm">:</Kbd>
+      </Button>
+      <ColonCommand items={items} open={open} onOpenChange={setOpen} onSelectCommand={handleSelectCommand} />
+    </div>
   );
 }

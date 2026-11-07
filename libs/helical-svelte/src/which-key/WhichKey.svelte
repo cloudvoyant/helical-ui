@@ -1,5 +1,6 @@
 <!-- libs/helical-svelte/src/which-key/WhichKey.svelte -->
 <script lang="ts">
+  // 1. Imports
   import { Portal } from '@ark-ui/svelte/portal';
   import { Presence } from '@ark-ui/svelte/presence';
   import { ChevronRight } from 'lucide-svelte';
@@ -17,6 +18,7 @@
     whichKeyItemLabelBase,
     whichKeyTitleBase,
     whichKeyVariants,
+    type KbdHotkey,
     type WhichKeyProps as CoreWhichKeyProps,
   } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
@@ -25,11 +27,13 @@
   import { getOptionalWhichKeyContext } from './context.svelte';
   import WhichKeyExplorer from './WhichKeyExplorer.svelte';
 
+  // 2. Module constants & types
   type Props = Omit<CoreWhichKeyProps, 'className'> & {
     class?: string;
     className?: string;
   };
 
+  // --- State ---
   let {
     variant = 'helix',
     leaderOnly: leaderOnlyProp,
@@ -39,6 +43,9 @@
   }: Props = $props();
 
   const ctx = getOptionalWhichKeyContext();
+
+  let panelRef: HTMLDivElement | null = $state(null);
+  let jumpOverlayRef: HTMLDivElement | null = $state(null);
 
   const effectiveLeaderOnly = $derived(leaderOnlyProp ?? Boolean(ctx?.state.leaderOnly));
   const effectiveOpen = $derived(
@@ -51,9 +58,7 @@
       : false,
   );
 
-  let panelRef: HTMLDivElement | null = $state(null);
-  let jumpOverlayRef: HTMLDivElement | null = $state(null);
-
+  // --- Effects ---
   $effect(() => {
     if (!effectiveOpen || !ctx) return;
     return ctx.controller.trackBranchElement(() => panelRef);
@@ -161,7 +166,7 @@
                 <Kbd
                   size="sm"
                   variant={isGroup ? 'subtle' : 'outline'}
-                  hotkey={node.key}
+                  hotkey={node.key as KbdHotkey}
                 />
               </button>
             {/each}

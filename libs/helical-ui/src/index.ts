@@ -357,7 +357,21 @@ export {
   listboxItemGroupLabelBase,
   type ListboxItemData,
 } from './listbox';
-export { kbdVariants, kbdGroupBase, formatKeyChord, formatKeySequence, type KbdProps, type KbdVariants } from './kbd';
+export {
+  kbdVariants,
+  kbdGroupBase,
+  formatKeyChord,
+  formatKeySequence,
+  validateKbdChord,
+  validateKbdHotkey,
+  resolveKbdSteps,
+  isChordCommandString,
+  type KbdChord,
+  type KbdHotkey,
+  type KbdStepResult,
+  type KbdProps,
+  type KbdVariants,
+} from './kbd';
 export {
   toasterBase,
   toastVariants,

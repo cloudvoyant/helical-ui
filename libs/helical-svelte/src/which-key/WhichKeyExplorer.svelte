@@ -1,5 +1,6 @@
 <!-- libs/helical-svelte/src/which-key/WhichKeyExplorer.svelte -->
 <script lang="ts">
+  // 1. Imports
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import {
@@ -12,6 +13,7 @@
     whichKeyExplorerListboxBase,
     whichKeyExplorerListContentBase,
     whichKeyModeBadgeVariants,
+    type KbdHotkey,
     type KeymapExplorerEntry,
     type WhichKeyExplorerProps as CoreWhichKeyExplorerProps,
   } from '@cloudvoyant/helical-ui';
@@ -38,11 +40,13 @@
   import Scroll from '../Scroll.svelte';
   import { getOptionalWhichKeyContext } from './context.svelte';
 
+  // 2. Module constants & types
   type Props = Omit<CoreWhichKeyExplorerProps, 'className'> & {
     class?: string;
     className?: string;
   };
 
+  // --- State ---
   let {
     open: controlledOpen,
     onOpenChange,
@@ -53,12 +57,12 @@
 
   const ctx = getOptionalWhichKeyContext();
 
+  let highlightedId = $state<string | null>(null);
+
   const isOpen = $derived(controlledOpen ?? Boolean(ctx?.state.explorerOpen));
   const explorerEntries = $derived(ctx?.state.explorerEntries ?? []);
   const explorerQuery = $derived(ctx?.state.explorerQuery ?? '');
   const preset = $derived(ctx?.state.preset ?? 'helix');
-
-  let highlightedId = $state<string | null>(null);
 
   const groupedEntries = $derived.by((): Array<[string, KeymapExplorerEntry[]]> => {
     const groups = new Map<string, KeymapExplorerEntry[]>();
@@ -91,6 +95,7 @@
     }),
   );
 
+  // --- Effects ---
   $effect(() => {
     if (!isOpen || typeof document === 'undefined') return;
     const focusInput = () => {
@@ -104,6 +109,18 @@
     return () => cancelAnimationFrame(raf);
   });
 
+  // --- Methods ---
+  function handleOpenChange(details: { open: boolean }) {
+    if (!ctx) return;
+    if (details.open) {
+      ctx.controller.openExplorer();
+    } else {
+      ctx.controller.closeExplorer();
+    }
+    onOpenChange?.(details.open);
+  }
+
+  // --- Helpers ---
   function scrollItemIntoView(id: string) {
     requestAnimationFrame(() => {
       if (typeof document === 'undefined') return;
@@ -120,19 +137,9 @@
       }
     });
   }
-
-  function handleOpenChange(details: { open: boolean }) {
-    if (!ctx) return;
-    if (details.open) {
-      ctx.controller.openExplorer();
-    } else {
-      ctx.controller.closeExplorer();
-    }
-    onOpenChange?.(details.open);
-  }
 </script>
 
-{#if ctx && isOpen}
+{#if ctx}
   <Dialog
     open={isOpen}
     lazyMount
@@ -251,7 +258,7 @@
                         />
                       </ListboxItemText>
                       <Row class="shrink-0 items-center gap-1">
-                        <Kbd size="sm" hotkey={entry.chords} />
+                        <Kbd size="sm" hotkey={entry.chords as KbdHotkey} />
                       </Row>
                     </ListboxItem>
                   {/each}

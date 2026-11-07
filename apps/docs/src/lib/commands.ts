@@ -1,12 +1,14 @@
 // apps/docs/src/lib/commands.ts
 import {
   THEMES,
+  getDocumentWhichKeyController,
+  subscribeDocumentWhichKeyController,
   type CommandNode,
   type CommandStyle,
   type JumpAction,
   type KeybindingPreset,
 } from '@cloudvoyant/helical-ui';
-import { getStoredFramework, setFramework, type Framework } from './framework';
+import { FRAMEWORK_EVENT, getStoredFramework, setFramework, type Framework } from './framework';
 import { applyColorMode, applyTheme, getInitialColorMode, getInitialTheme, type ColorMode } from './theme';
 
 export const COMMAND_STYLE_KEY = 'vortex:command-style' as const;
@@ -68,6 +70,31 @@ export function notifyAppearanceChange(): void {
   window.dispatchEvent(new CustomEvent(APPEARANCE_CHANGE_EVENT));
 }
 
+export function subscribeDocsCommandState(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  let unsubController: (() => void) | null = null;
+  const syncControllerSub = () => {
+    unsubController?.();
+    const ctrl = getDocumentWhichKeyController();
+    unsubController = ctrl ? ctrl.subscribe(() => onChange()) : null;
+  };
+  syncControllerSub();
+  const unsubRoot = subscribeDocumentWhichKeyController(document, () => {
+    syncControllerSub();
+    onChange();
+  });
+  window.addEventListener(APPEARANCE_CHANGE_EVENT, onChange);
+  window.addEventListener(FRAMEWORK_EVENT, onChange);
+  window.addEventListener(COMMAND_STYLE_EVENT, onChange);
+  return () => {
+    unsubController?.();
+    unsubRoot();
+    window.removeEventListener(APPEARANCE_CHANGE_EVENT, onChange);
+    window.removeEventListener(FRAMEWORK_EVENT, onChange);
+    window.removeEventListener(COMMAND_STYLE_EVENT, onChange);
+  };
+}
+
 export interface DocsCommandTreeOptions {
   currentTheme?: string;
   currentColorMode?: ColorMode;
@@ -90,46 +117,56 @@ export interface DocsCommandTreeOptions {
 }
 
 export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): CommandNode[] {
+  const rootController = typeof document !== 'undefined' ? getDocumentWhichKeyController(document) : null;
+  const rootState = rootController?.getState();
   const activeTheme = options.currentTheme ?? getInitialTheme();
   const activeMode = options.currentColorMode ?? getInitialColorMode();
-  const activePreset = options.currentPreset ?? 'helix';
-  const activeJump = options.currentJumpAction ?? 'activate';
-  const activeLeaderOnly = options.currentLeaderOnly ?? false;
+  const activePreset = options.currentPreset ?? rootState?.preset ?? 'helix';
+  const activeJump = options.currentJumpAction ?? rootState?.jumpAction ?? 'activate';
+  const activeLeaderOnly = options.currentLeaderOnly ?? rootState?.leaderOnly ?? false;
   const activeFramework = options.currentFramework ?? getStoredFramework();
   const activeCommandStyle = options.currentCommandStyle ?? getStoredCommandStyle();
 
   const selectTheme = (themeName: string) => {
-    if (options.onThemeSelect) {
-      options.onThemeSelect(themeName);
-    } else {
-      applyTheme(themeName);
-      notifyAppearanceChange();
-    }
+    applyTheme(themeName);
+    notifyAppearanceChange();
+    options.onThemeSelect?.(themeName);
   };
 
   const selectColorMode = (mode: ColorMode) => {
-    if (options.onColorModeSelect) {
-      options.onColorModeSelect(mode);
-    } else {
-      applyColorMode(mode);
-      notifyAppearanceChange();
-    }
+    applyColorMode(mode);
+    notifyAppearanceChange();
+    options.onColorModeSelect?.(mode);
+  };
+
+  const selectPreset = (preset: KeybindingPreset) => {
+    getDocumentWhichKeyController()?.setPreset(preset);
+    notifyAppearanceChange();
+    options.onPresetSelect?.(preset);
+  };
+
+  const selectJumpAction = (action: JumpAction) => {
+    getDocumentWhichKeyController()?.setJumpAction(action);
+    notifyAppearanceChange();
+    options.onJumpActionSelect?.(action);
+  };
+
+  const selectLeaderOnly = (leaderOnly: boolean) => {
+    getDocumentWhichKeyController()?.setLeaderOnly(leaderOnly);
+    notifyAppearanceChange();
+    options.onLeaderOnlySelect?.(leaderOnly);
   };
 
   const selectFramework = (fw: Framework) => {
-    if (options.onFrameworkSelect) {
-      options.onFrameworkSelect(fw);
-    } else {
-      setFramework(fw);
-    }
+    setFramework(fw);
+    notifyAppearanceChange();
+    options.onFrameworkSelect?.(fw);
   };
 
   const selectCommandStyle = (style: CommandStyle) => {
-    if (options.onCommandStyleSelect) {
-      options.onCommandStyleSelect(style);
-    } else {
-      setCommandStyle(style);
-    }
+    setCommandStyle(style);
+    notifyAppearanceChange();
+    options.onCommandStyleSelect?.(style);
   };
 
   return [
@@ -227,7 +264,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           command: 'helix',
           aliases: ['hx'],
           active: activePreset === 'helix',
-          onSelect: () => options.onPresetSelect?.('helix'),
+          onSelect: () => selectPreset('helix'),
         },
         {
           value: 'vim',
@@ -235,7 +272,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           group: 'Keybind Style',
           command: 'vim',
           active: activePreset === 'vim',
-          onSelect: () => options.onPresetSelect?.('vim'),
+          onSelect: () => selectPreset('vim'),
         },
         {
           value: 'kakoune',
@@ -244,7 +281,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           command: 'kakoune',
           aliases: ['kak'],
           active: activePreset === 'kakoune',
-          onSelect: () => options.onPresetSelect?.('kakoune'),
+          onSelect: () => selectPreset('kakoune'),
         },
       ],
     },
@@ -316,7 +353,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           command: 'activate',
           aliases: ['click'],
           active: activeJump === 'activate',
-          onSelect: () => options.onJumpActionSelect?.('activate'),
+          onSelect: () => selectJumpAction('activate'),
         },
         {
           value: 'focus',
@@ -324,7 +361,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           group: 'Jump Behavior',
           command: 'focus',
           active: activeJump === 'focus',
-          onSelect: () => options.onJumpActionSelect?.('focus'),
+          onSelect: () => selectJumpAction('focus'),
         },
       ],
     },
@@ -342,7 +379,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           group: 'WhichKey Popup',
           command: 'all',
           active: !activeLeaderOnly,
-          onSelect: () => options.onLeaderOnlySelect?.(false),
+          onSelect: () => selectLeaderOnly(false),
         },
         {
           value: 'leader',
@@ -350,7 +387,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           group: 'WhichKey Popup',
           command: 'leader',
           active: activeLeaderOnly,
-          onSelect: () => options.onLeaderOnlySelect?.(true),
+          onSelect: () => selectLeaderOnly(true),
         },
       ],
     },
@@ -362,7 +399,13 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
       aliases: ['keys'],
       shortcut: '?',
       keywords: ['which-key', 'shortcuts', 'help'],
-      onSelect: () => options.onOpenExplorer?.(),
+      onSelect: () => {
+        if (options.onOpenExplorer) {
+          options.onOpenExplorer();
+        } else {
+          requestAnimationFrame(() => getDocumentWhichKeyController()?.openExplorer());
+        }
+      },
     },
     {
       value: 'settings',

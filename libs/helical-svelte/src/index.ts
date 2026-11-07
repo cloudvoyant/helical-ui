@@ -62,6 +62,7 @@ export * from './listbox';
 export * from './editor';
 export { default as Kbd } from './Kbd.svelte';
 export * from './toast';
+export * from './command';
 export * from './command-palette';
 export * from './colon-command';
 export * from './which-key';

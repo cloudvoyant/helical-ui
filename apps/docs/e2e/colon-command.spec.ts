@@ -129,7 +129,8 @@ for (const framework of FRAMEWORKS) {
 
           await page.keyboard.press('Enter');
           await expect(colon).toBeHidden();
-          await expect(demo.getByTestId('cc-default-selected')).toContainText('Amethyst Haze (:theme amethyst-haze)');
+          await expect(page.locator('html')).toHaveClass(/theme-amethyst-haze/);
+          await expect(page.getByTestId('toast-item').last()).toContainText('Executed :theme amethyst-haze');
         });
 
         test('Then allows editing the completed input with Backspace', async ({ page }) => {
@@ -149,18 +150,28 @@ for (const framework of FRAMEWORKS) {
       });
 
       test.describe('When submitting input on Enter', () => {
-        test('Then executes a matched leaf command and closes the modal', async ({ page }) => {
+        test('Then executes a matched leaf command, applies the change, and updates the active checkmark', async ({
+          page,
+        }) => {
           const demo = island(page, framework, 'default');
           await demo.getByTestId('cc-default-open').click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
-          await input.fill('mode dark');
+          await input.fill('theme catppuccin');
           await input.press('Enter');
 
           await expect(colon).toBeHidden();
-          await expect(demo.getByTestId('cc-default-selected')).toContainText('Dark (:mode dark)');
-          await expect(page.getByTestId('toast-item').last()).toContainText('Dark');
+          await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
+          await expect(page.getByTestId('toast-item').last()).toContainText('Catppuccin');
+
+          await demo.getByTestId('cc-default-open').click();
+          await input.fill('theme ');
+
+          const catppuccinItem = colon.locator('[data-testid="colon-command-item"][data-value="theme/catppuccin"]');
+          const defaultThemeItem = colon.locator('[data-testid="colon-command-item"][data-value="theme/helical-ui"]');
+          await expect(catppuccinItem).toHaveAttribute('data-command-active', 'true');
+          await expect(defaultThemeItem).not.toHaveAttribute('data-command-active', 'true');
         });
 
         test('Then stays open and displays an inline error for an unrecognized command', async ({ page }) => {
@@ -180,24 +191,43 @@ for (const framework of FRAMEWORKS) {
       });
     });
 
-    test.describe('Given an inline ColonCommand', () => {
-      test.describe('When rendered with commands', () => {
-        test('Then renders the completion grid and prompt inline', async ({ page }) => {
-          const demo = island(page, framework, 'placements');
+    test.describe('Given an inline ColonCommand with compactness and column variants', () => {
+      test.describe('When switching compactness sizes', () => {
+        test('Then updates data-size across sm, md, and lg and scales row height', async ({ page }) => {
+          const demo = island(page, framework, 'sizes');
           const inlineColon = demo.getByTestId('colon-command');
-          await expect(inlineColon).toBeVisible();
-          await expect(inlineColon.getByTestId('colon-command-input')).toBeVisible();
-          await expect(inlineColon.getByTestId('colon-command-item').first()).toBeVisible();
+          const firstItem = inlineColon.getByTestId('colon-command-item').first();
+
+          await expect(inlineColon).toHaveAttribute('data-size', 'md');
+          const mdBox = await firstItem.boundingBox();
+
+          await demo.getByTestId('cc-size-sm').click();
+          await expect(inlineColon).toHaveAttribute('data-size', 'sm');
+          const smBox = await firstItem.boundingBox();
+
+          await demo.getByTestId('cc-size-lg').click();
+          await expect(inlineColon).toHaveAttribute('data-size', 'lg');
+          const lgBox = await firstItem.boundingBox();
+
+          expect(smBox).not.toBeNull();
+          expect(mdBox).not.toBeNull();
+          expect(lgBox).not.toBeNull();
+          expect(smBox!.height).toBeLessThan(mdBox!.height);
+          expect(lgBox!.height).toBeGreaterThan(mdBox!.height);
         });
       });
+    });
 
-      test.describe('When rendered with zero commands', () => {
+    test.describe('Given a modal ColonCommand with zero commands', () => {
+      test.describe('When opened', () => {
         test('Then displays "No commands registered."', async ({ page }) => {
-          const demo = island(page, framework, 'placements');
-          const inlineColon = demo.getByTestId('colon-command');
-          await demo.getByTestId('cc-placements-toggle-empty').click();
+          const demo = island(page, framework, 'empty');
+          await demo.getByTestId('cc-empty-open').click();
 
-          const emptyState = inlineColon.getByTestId('colon-command-empty');
+          const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
+          await expect(colon).toBeVisible();
+
+          const emptyState = colon.getByTestId('colon-command-empty');
           await expect(emptyState).toBeVisible();
           await expect(emptyState).toHaveAttribute('data-empty-kind', 'no-commands');
           await expect(emptyState).toContainText('No commands registered.');

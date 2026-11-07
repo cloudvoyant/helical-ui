@@ -1,11 +1,14 @@
 <!-- apps/docs/src/components/examples/which-key/jump-labels/svelte.svelte -->
 <script lang="ts">
+  // 1. Imports
   import {
     Badge,
     Button,
     HStack,
     Kbd,
     Pane,
+    ToggleGroup,
+    ToggleGroupItem,
     VStack,
     WhichKey,
     WhichKeyProvider,
@@ -13,8 +16,10 @@
     type JumpAction,
   } from '@cloudvoyant/helical-svelte';
 
+  // 2. Module constants & types
   const JUMP_ITEMS = ['Deploy Service', 'Run Migrations', 'Inspect Logs', 'Rotate Keys'];
 
+  // --- State ---
   let jumpAction = $state<JumpAction>('focus');
   let focusedItem = $state('None');
   let activatedItem = $state('None');
@@ -31,36 +36,42 @@
         class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
       >
         <HStack class="flex-wrap items-center justify-between gap-2">
-          <HStack class="items-center gap-1.5">
-            <Button
-              size="sm"
-              variant={jumpAction === 'focus' ? 'solid' : 'outline'}
-              data-testid="wk-jump-mode-focus"
-              onclick={() => {
-                jumpAction = 'focus';
-                wk.setJumpAction('focus');
+          <HStack class="items-center gap-2">
+            <ToggleGroup
+              attached
+              value={[jumpAction]}
+              onValueChange={(d) => {
+                const next = d.value[0] as JumpAction | undefined;
+                if (!next) return;
+                jumpAction = next;
+                wk.setJumpAction(next);
               }}
+              aria-label="Jump action mode"
             >
-              jumpAction: focus
-            </Button>
-            <Button
-              size="sm"
-              variant={jumpAction === 'activate' ? 'solid' : 'outline'}
-              data-testid="wk-jump-mode-activate"
-              onclick={() => {
-                jumpAction = 'activate';
-                wk.setJumpAction('activate');
-              }}
-            >
-              jumpAction: activate
-            </Button>
+              <ToggleGroupItem
+                value="focus"
+                size="sm"
+                variant="outline"
+                data-testid="wk-jump-mode-focus"
+              >
+                jumpAction: focus
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="activate"
+                size="sm"
+                variant="outline"
+                data-testid="wk-jump-mode-activate"
+              >
+                jumpAction: activate
+              </ToggleGroupItem>
+            </ToggleGroup>
             <Button
               size="sm"
               variant="outline"
               data-testid="wk-jump-trigger"
               onclick={() => wk.startJumpMode()}
             >
-              Trigger Jump (<Kbd size="sm" hotkey={['g', 'w']} />)
+              Trigger Jump (<Kbd size="sm" hotkey="g w" />)
             </Button>
           </HStack>
 

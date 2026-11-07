@@ -1,5 +1,4 @@
-// Source: https://ui.shadcn.com/docs/components/radix/command
-// Closely based on: Ark UI listbox & dialog (https://ark-ui.com/docs/components/listbox, https://ark-ui.com/docs/components/dialog) and Helix command mode (https://docs.helix-editor.com/commands.html).
+// libs/helical-ui/src/command/core.ts
 
 // 1. Imports
 import { matchesKeyboardEvent, type HotkeyChord } from '@tanstack/hotkeys';

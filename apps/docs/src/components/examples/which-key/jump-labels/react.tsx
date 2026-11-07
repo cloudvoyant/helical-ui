@@ -1,4 +1,6 @@
 // apps/docs/src/components/examples/which-key/jump-labels/react.tsx
+
+// 1. Imports
 import { useState } from 'react';
 import {
   Badge,
@@ -6,6 +8,8 @@ import {
   HStack,
   Kbd,
   Pane,
+  ToggleGroup,
+  ToggleGroupItem,
   VStack,
   WhichKey,
   WhichKeyProvider,
@@ -13,8 +17,10 @@ import {
   type JumpAction,
 } from '@cloudvoyant/helical-react';
 
+// 2. Module constants & types
 const JUMP_ITEMS = ['Deploy Service', 'Run Migrations', 'Inspect Logs', 'Rotate Keys'];
 
+// 3. Local helpers / inner components
 function JumpLabelsSurface({
   jumpAction,
   onToggleJumpAction,
@@ -22,10 +28,12 @@ function JumpLabelsSurface({
   jumpAction: JumpAction;
   onToggleJumpAction: (next: JumpAction) => void;
 }) {
+  // --- State ---
   const { startJumpMode, setJumpAction } = useWhichKey();
   const [activatedItem, setActivatedItem] = useState('None');
   const [focusedItem, setFocusedItem] = useState('None');
 
+  // --- Render ---
   return (
     <Pane
       paneId="wk-jump-pane"
@@ -34,31 +42,27 @@ function JumpLabelsSurface({
       className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
     >
       <HStack className="flex-wrap items-center justify-between gap-2">
-        <HStack className="items-center gap-1.5">
-          <Button
-            size="sm"
-            variant={jumpAction === 'focus' ? 'solid' : 'outline'}
-            data-testid="wk-jump-mode-focus"
-            onClick={() => {
-              setJumpAction('focus');
-              onToggleJumpAction('focus');
+        <HStack className="items-center gap-2">
+          <ToggleGroup
+            attached
+            value={[jumpAction]}
+            onValueChange={(d) => {
+              const next = d.value[0] as JumpAction | undefined;
+              if (!next) return;
+              setJumpAction(next);
+              onToggleJumpAction(next);
             }}
+            aria-label="Jump action mode"
           >
-            jumpAction: focus
-          </Button>
-          <Button
-            size="sm"
-            variant={jumpAction === 'activate' ? 'solid' : 'outline'}
-            data-testid="wk-jump-mode-activate"
-            onClick={() => {
-              setJumpAction('activate');
-              onToggleJumpAction('activate');
-            }}
-          >
-            jumpAction: activate
-          </Button>
+            <ToggleGroupItem value="focus" size="sm" variant="outline" data-testid="wk-jump-mode-focus">
+              jumpAction: focus
+            </ToggleGroupItem>
+            <ToggleGroupItem value="activate" size="sm" variant="outline" data-testid="wk-jump-mode-activate">
+              jumpAction: activate
+            </ToggleGroupItem>
+          </ToggleGroup>
           <Button size="sm" variant="outline" data-testid="wk-jump-trigger" onClick={() => startJumpMode()}>
-            Trigger Jump (<Kbd size="sm" hotkey={['g', 'w']} />)
+            Trigger Jump (<Kbd size="sm" hotkey="g w" />)
           </Button>
         </HStack>
 
@@ -90,9 +94,12 @@ function JumpLabelsSurface({
   );
 }
 
+// 4. Exported component
 export default function ReactWhichKeyJumpLabels() {
+  // --- State ---
   const [jumpAction, setJumpAction] = useState<JumpAction>('focus');
 
+  // --- Render ---
   return (
     <WhichKeyProvider preset="helix" jumpAction={jumpAction}>
       <VStack className="w-full gap-3">

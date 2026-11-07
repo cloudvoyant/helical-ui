@@ -1,5 +1,4 @@
-// Source: https://ui.shadcn.com/docs/components/radix/command
-// Closely based on: Ark UI dialog, listbox, and highlight (https://ark-ui.com/docs/components/listbox).
+// libs/helical-react/src/command-palette.tsx
 
 // 1. Imports
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
@@ -33,6 +32,7 @@ import {
   DialogContent,
   DialogTitle,
 } from './dialog';
+import { useOptionalCommand } from './command';
 import { Kbd } from './kbd';
 import {
   Listbox,
@@ -93,8 +93,8 @@ function renderHighlightedLabel(
 export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
   (
     {
-      items,
-      collection: externalCollection,
+      items: itemsProp,
+      collection: externalCollectionProp,
       open: controlledOpen,
       defaultOpen = false,
       onOpenChange,
@@ -102,7 +102,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       onActivePathChange,
       query: controlledQuery,
       onQueryChange,
-      onSelectCommand,
+      onSelectCommand: onSelectCommandProp,
       placeholder = 'Type a command or search...',
       emptyText = 'No matching commands.',
       noCommandsText = 'No commands registered.',
@@ -113,63 +113,22 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     },
     ref,
   ) => {
+    // --- State ---
+    const sharedCommand = useOptionalCommand();
+    const items = itemsProp ?? sharedCommand?.items;
+    const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
+
     const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
     const [uncontrolledActivePath, setUncontrolledActivePath] = useState<string[]>([]);
     const [uncontrolledQuery, setUncontrolledQuery] = useState('');
     const [highlightedValue, setHighlightedValue] = useState<string | null>(null);
-
     const rootRef = useRef<HTMLDivElement | null>(null);
 
-    const getInputElement = (): HTMLInputElement | null => {
-      if (rootRef.current) {
-        return rootRef.current.querySelector<HTMLInputElement>(
-          '[data-testid="command-palette-input"]',
-        );
-      }
-      return null;
-    };
-
-    const isOpen = inline ? true : (controlledOpen ?? uncontrolledOpen);
+    const sharedOpen =
+      sharedCommand && sharedCommand.style === 'palette' ? sharedCommand.open : undefined;
+    const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentActivePath = controlledActivePath ?? uncontrolledActivePath;
     const currentQuery = controlledQuery ?? uncontrolledQuery;
-
-    const setActivePath = (nextPath: string[]) => {
-      if (controlledActivePath === undefined) {
-        setUncontrolledActivePath(nextPath);
-      }
-      onActivePathChange?.(nextPath);
-    };
-
-    const setQuery = (nextQuery: string) => {
-      if (controlledQuery === undefined) {
-        setUncontrolledQuery(nextQuery);
-      }
-      onQueryChange?.(nextQuery);
-    };
-
-    const handleOpenChange = (nextOpen: boolean) => {
-      if (controlledOpen === undefined) {
-        setUncontrolledOpen(nextOpen);
-      }
-      if (!nextOpen) {
-        setActivePath([]);
-        setQuery('');
-      }
-      onOpenChange?.(nextOpen);
-    };
-
-    useEffect(() => {
-      if (inline || !hotkey || typeof window === 'undefined') return;
-      const onWindowKeyDown = (event: KeyboardEvent) => {
-        if (matchesCommandHotkey(event, hotkey)) {
-          event.preventDefault();
-          event.stopPropagation();
-          handleOpenChange(!isOpen);
-        }
-      };
-      window.addEventListener('keydown', onWindowKeyDown);
-      return () => window.removeEventListener('keydown', onWindowKeyDown);
-    });
 
     const tree = useMemo(
       () => createCommandTree(externalCollection ?? items ?? []),
@@ -210,6 +169,25 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       [resolution.items],
     );
 
+    const activePlaceholder =
+      resolution.breadcrumbs.length > 0
+        ? `${resolution.breadcrumbs[resolution.breadcrumbs.length - 1]!.label}...`
+        : placeholder;
+
+    // --- Effects ---
+    useEffect(() => {
+      if (inline || !hotkey || typeof window === 'undefined') return;
+      const onWindowKeyDown = (event: KeyboardEvent) => {
+        if (matchesCommandHotkey(event, hotkey)) {
+          event.preventDefault();
+          event.stopPropagation();
+          handleOpenChange(!isOpen);
+        }
+      };
+      window.addEventListener('keydown', onWindowKeyDown);
+      return () => window.removeEventListener('keydown', onWindowKeyDown);
+    });
+
     useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
       const focusInput = () => {
@@ -220,19 +198,33 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       return () => cancelAnimationFrame(raf);
     }, [isOpen, inline, currentActivePath.length]);
 
-    const scrollItemIntoView = (val: string) => {
-      requestAnimationFrame(() => {
-        const container = rootRef.current ?? document;
-        const els = Array.from(
-          container.querySelectorAll<HTMLElement>('[data-part="item"]'),
-        );
-        for (const el of els) {
-          if (el.getAttribute('data-value') === val) {
-            el.scrollIntoView({ block: 'nearest' });
-            break;
-          }
-        }
-      });
+    // --- Methods ---
+    const setActivePath = (nextPath: string[]) => {
+      if (controlledActivePath === undefined) {
+        setUncontrolledActivePath(nextPath);
+      }
+      onActivePathChange?.(nextPath);
+    };
+
+    const setQuery = (nextQuery: string) => {
+      if (controlledQuery === undefined) {
+        setUncontrolledQuery(nextQuery);
+      }
+      onQueryChange?.(nextQuery);
+    };
+
+    const handleOpenChange = (nextOpen: boolean) => {
+      if (controlledOpen === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      if (sharedCommand && sharedCommand.style === 'palette') {
+        sharedCommand.setOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setActivePath([]);
+        setQuery('');
+      }
+      onOpenChange?.(nextOpen);
     };
 
     const selectFlatItem = (item: CommandFlatItem) => {
@@ -255,7 +247,8 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
         node: item.node,
       };
       item.node.onSelect?.(ctx);
-      onSelectCommand?.(ctx);
+      onSelectCommandProp?.(ctx);
+      sharedCommand?.onSelectCommand?.(ctx);
       announceCommandMessage(`Executed ${item.label}`);
 
       if (!inline && item.node.closeOnSelect !== false) {
@@ -275,11 +268,32 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       return true;
     };
 
-    const activePlaceholder =
-      resolution.breadcrumbs.length > 0
-        ? `${resolution.breadcrumbs[resolution.breadcrumbs.length - 1]!.label}...`
-        : placeholder;
+    // --- Helpers ---
+    const getInputElement = (): HTMLInputElement | null => {
+      if (rootRef.current) {
+        return rootRef.current.querySelector<HTMLInputElement>(
+          '[data-testid="command-palette-input"]',
+        );
+      }
+      return null;
+    };
 
+    const scrollItemIntoView = (val: string) => {
+      requestAnimationFrame(() => {
+        const container = rootRef.current ?? document;
+        const els = Array.from(
+          container.querySelectorAll<HTMLElement>('[data-part="item"]'),
+        );
+        for (const el of els) {
+          if (el.getAttribute('data-value') === val) {
+            el.scrollIntoView({ block: 'nearest' });
+            break;
+          }
+        }
+      });
+    };
+
+    // --- Render ---
     const paletteSurface = (
       <div
         ref={(node) => {
@@ -579,8 +593,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     if (inline) {
       return paletteSurface;
     }
-
-    if (!isOpen) return null;
 
     return (
       <Dialog

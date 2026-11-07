@@ -1,5 +1,6 @@
 // libs/helical-react/src/which-key/WhichKeyExplorer.tsx
-// Searchable ? / <leader>? Keybindings Menu built on Dialog + Listbox + Scroll + Highlight.
+
+// 1. Imports
 import { useEffect, useMemo, useState } from 'react';
 import { Highlight } from '@ark-ui/react/highlight';
 import { createListCollection } from '@ark-ui/react/listbox';
@@ -13,6 +14,7 @@ import {
   whichKeyExplorerListboxBase,
   whichKeyExplorerListContentBase,
   whichKeyModeBadgeVariants,
+  type KbdHotkey,
   type KeymapExplorerEntry,
   type WhichKeyExplorerProps as CoreWhichKeyExplorerProps,
 } from '@cloudvoyant/helical-ui';
@@ -39,32 +41,17 @@ import { Row } from '../row';
 import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 
+// 2. Module constants & types
 export type WhichKeyExplorerProps = CoreWhichKeyExplorerProps;
 
-export function WhichKeyExplorer({
-  open: controlledOpen,
-  onOpenChange,
-  placeholder = 'Search keybindings...',
-  className,
-}: WhichKeyExplorerProps) {
-  const controller = useOptionalWhichKeyController();
-  if (!controller) return null;
-  return (
-    <WhichKeyExplorerInner
-      open={controlledOpen}
-      onOpenChange={onOpenChange}
-      placeholder={placeholder}
-      className={className}
-    />
-  );
-}
-
+// 3. Local helpers / inner components
 function WhichKeyExplorerInner({
   open: controlledOpen,
   onOpenChange,
   placeholder,
   className,
 }: WhichKeyExplorerProps) {
+  // --- State ---
   const {
     preset,
     explorerOpen,
@@ -78,15 +65,6 @@ function WhichKeyExplorerInner({
 
   const isOpen = controlledOpen ?? explorerOpen;
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      openExplorer();
-    } else {
-      closeExplorer();
-    }
-    onOpenChange?.(nextOpen);
-  };
 
   const groupedEntries = useMemo(() => {
     const groups = new Map<string, KeymapExplorerEntry[]>();
@@ -124,6 +102,7 @@ function WhichKeyExplorerInner({
     [orderedEntries],
   );
 
+  // --- Effects ---
   useEffect(() => {
     if (!isOpen || typeof document === 'undefined') return;
     const focusInput = () => {
@@ -137,7 +116,18 @@ function WhichKeyExplorerInner({
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
-  const scrollItemIntoView = (id: string) => {
+  // --- Methods ---
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      openExplorer();
+    } else {
+      closeExplorer();
+    }
+    onOpenChange?.(nextOpen);
+  };
+
+  // --- Helpers ---
+  function scrollItemIntoView(id: string) {
     requestAnimationFrame(() => {
       if (typeof document === 'undefined') return;
       const items = Array.from(
@@ -152,10 +142,9 @@ function WhichKeyExplorerInner({
         }
       }
     });
-  };
+  }
 
-  if (!isOpen) return null;
-
+  // --- Render ---
   return (
     <Dialog
       open={isOpen}
@@ -274,7 +263,7 @@ function WhichKeyExplorerInner({
                         />
                       </ListboxItemText>
                       <Row className="shrink-0 items-center gap-1">
-                        <Kbd size="sm" hotkey={entry.chords} />
+                        <Kbd size="sm" hotkey={entry.chords as KbdHotkey} />
                       </Row>
                     </ListboxItem>
                   ))}
@@ -288,5 +277,27 @@ function WhichKeyExplorerInner({
         </Listbox>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// 4. Exported component
+export function WhichKeyExplorer({
+  open: controlledOpen,
+  onOpenChange,
+  placeholder = 'Search keybindings...',
+  className,
+}: WhichKeyExplorerProps) {
+  // --- State ---
+  const controller = useOptionalWhichKeyController();
+
+  // --- Render ---
+  if (!controller) return null;
+  return (
+    <WhichKeyExplorerInner
+      open={controlledOpen}
+      onOpenChange={onOpenChange}
+      placeholder={placeholder}
+      className={className}
+    />
   );
 }

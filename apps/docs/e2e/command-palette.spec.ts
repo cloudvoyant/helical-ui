@@ -63,7 +63,7 @@ for (const framework of FRAMEWORKS) {
 
           await page.keyboard.press('Enter');
           await expect(palette).toBeHidden();
-          await expect(demo.getByTestId('cp-default-selected')).toHaveText('Search Docs');
+          await expect(page.getByTestId('toast-item').last()).toContainText('Search Docs');
         });
 
         test('Then closes the dialog on Escape', async ({ page }) => {
@@ -105,6 +105,30 @@ for (const framework of FRAMEWORKS) {
         });
       });
 
+      test.describe('When a theme command is selected', () => {
+        test('Then applies the theme to the document and updates the active checkmark', async ({ page }) => {
+          const demo = island(page, framework, 'default');
+          await demo.getByTestId('cp-default-open').click();
+
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
+          await palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]').click();
+
+          await expect(palette).toBeHidden();
+          await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
+
+          await demo.getByTestId('cp-default-open').click();
+          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
+
+          const catppuccinItem = palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]');
+          const defaultThemeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="theme/helical-ui"]',
+          );
+          await expect(catppuccinItem).toHaveAttribute('data-command-active', 'true');
+          await expect(defaultThemeItem).not.toHaveAttribute('data-command-active', 'true');
+        });
+      });
+
       test.describe('When filtering with a fuzzy search query', () => {
         test('Then ranks matching nested commands with <mark> highlights and ancestor path', async ({ page }) => {
           const demo = island(page, framework, 'default');
@@ -129,30 +153,22 @@ for (const framework of FRAMEWORKS) {
           await input.press('Enter');
 
           await expect(palette).toBeHidden();
-          await expect(demo.getByTestId('cp-default-selected')).toHaveText('Catppuccin');
+          await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
           await expect(page.getByTestId('toast-item').last()).toContainText('Catppuccin');
         });
       });
     });
 
-    test.describe('Given an inline CommandPalette', () => {
-      test.describe('When rendered with commands', () => {
-        test('Then renders the search input and command list inline', async ({ page }) => {
-          const demo = island(page, framework, 'inline');
-          const inlinePalette = demo.getByTestId('command-palette');
-          await expect(inlinePalette).toBeVisible();
-          await expect(inlinePalette.getByTestId('command-palette-input')).toBeVisible();
-          await expect(inlinePalette.getByTestId('command-palette-item').first()).toBeVisible();
-        });
-      });
-
-      test.describe('When rendered with zero commands', () => {
+    test.describe('Given a modal CommandPalette with zero commands', () => {
+      test.describe('When opened', () => {
         test('Then displays "No commands registered."', async ({ page }) => {
-          const demo = island(page, framework, 'inline');
-          const inlinePalette = demo.getByTestId('command-palette');
-          await demo.getByTestId('cp-inline-toggle-empty').click();
+          const demo = island(page, framework, 'empty');
+          await demo.getByTestId('cp-empty-open').click();
 
-          const emptyState = inlinePalette.getByTestId('command-palette-empty');
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await expect(palette).toBeVisible();
+
+          const emptyState = palette.getByTestId('command-palette-empty');
           await expect(emptyState).toBeVisible();
           await expect(emptyState).toHaveAttribute('data-empty-kind', 'no-commands');
           await expect(emptyState).toContainText('No commands registered.');

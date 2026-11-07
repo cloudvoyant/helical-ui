@@ -1,26 +1,24 @@
 <!-- apps/docs/src/components/examples/toast/default/svelte.svelte -->
 <script lang="ts">
-  import { Button, HStack, Toaster, createToaster } from '@cloudvoyant/helical-svelte';
+  // 1. Imports
+  import { Button, HStack, useToast } from '@cloudvoyant/helical-svelte';
 
-  const toaster = createToaster({
-    placement: 'bottom-end',
-    overlap: true,
-    max: 5,
-  });
+  // --- State ---
+  const toast = useToast();
+
+  // --- Methods ---
+  function handleShowToast() {
+    toast.create({
+      title: 'Scheduled: Catch up',
+      description: 'Friday, February 10, 2026 at 5:57 PM',
+      type: 'info',
+    });
+  }
 </script>
 
+<!-- Render -->
 <HStack class="flex-wrap items-center gap-2">
-  <Button
-    variant="outline"
-    data-testid="toast-default-trigger"
-    onclick={() =>
-      toaster.create({
-        title: 'Scheduled: Catch up',
-        description: 'Friday, February 10, 2026 at 5:57 PM',
-        type: 'info',
-      })}
-  >
+  <Button variant="outline" data-testid="toast-default-trigger" onclick={handleShowToast}>
     Show Toast
   </Button>
-  <Toaster {toaster} />
 </HStack>

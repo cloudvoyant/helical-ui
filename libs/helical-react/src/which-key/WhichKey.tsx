@@ -1,6 +1,6 @@
 // libs/helical-react/src/which-key/WhichKey.tsx
-// Helix-inspired floating command panel + 2D JumpOverlay + Explorer mount.
-// Uses Ark UI <Portal> and <Presence lazyMount unmountOnExit> and @zag-js/dismissable trackDismissableBranch.
+
+// 1. Imports
 import { useEffect, useRef } from 'react';
 import { Portal } from '@ark-ui/react/portal';
 import { Presence } from '@ark-ui/react/presence';
@@ -20,6 +20,7 @@ import {
   whichKeyItemLabelBase,
   whichKeyTitleBase,
   whichKeyVariants,
+  type KbdHotkey,
   type WhichKeyProps as CoreWhichKeyProps,
 } from '@cloudvoyant/helical-ui';
 import { Kbd } from '../kbd';
@@ -28,20 +29,17 @@ import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 import { WhichKeyExplorer } from './WhichKeyExplorer';
 
+// 2. Module constants & types
 export type WhichKeyProps = CoreWhichKeyProps;
 
-export function WhichKey(props: WhichKeyProps) {
-  const controller = useOptionalWhichKeyController();
-  if (!controller) return null;
-  return <WhichKeyInner {...props} />;
-}
-
+// 3. Local helpers / inner components
 function WhichKeyInner({
   variant = 'helix',
   leaderOnly: leaderOnlyProp,
   showExplorer = true,
   className,
 }: WhichKeyProps) {
+  // --- State ---
   const {
     mode,
     leaderKey,
@@ -70,6 +68,7 @@ function WhichKeyInner({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const jumpOverlayRef = useRef<HTMLDivElement | null>(null);
 
+  // --- Effects ---
   useEffect(() => {
     if (!effectiveOpen) return;
     return controller.trackBranchElement(() => panelRef.current);
@@ -80,6 +79,7 @@ function WhichKeyInner({
     return controller.trackBranchElement(() => jumpOverlayRef.current);
   }, [controller, mode]);
 
+  // --- Render ---
   return (
     <>
       <Portal>
@@ -179,7 +179,7 @@ function WhichKeyInner({
                       <Kbd
                         size="sm"
                         variant={isGroup ? 'subtle' : 'outline'}
-                        hotkey={node.key}
+                        hotkey={node.key as KbdHotkey}
                       />
                     </button>
                   );
@@ -235,6 +235,16 @@ function WhichKeyInner({
       {showExplorer && <WhichKeyExplorer />}
     </>
   );
+}
+
+// 4. Exported component
+export function WhichKey(props: WhichKeyProps) {
+  // --- State ---
+  const controller = useOptionalWhichKeyController();
+
+  // --- Render ---
+  if (!controller) return null;
+  return <WhichKeyInner {...props} />;
 }
 
 export { isGroupNode };

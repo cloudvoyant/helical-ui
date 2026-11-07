@@ -48,7 +48,6 @@ import { Col } from './col';
 import { Row } from './row';
 
 // 2. Module constants & types
-export const useToast = useToastContext;
 export { createToaster, useToastContext };
 export type {
   CreateToasterProps,
@@ -62,11 +61,20 @@ export type {
   ToastTitleProps,
 };
 
-export const toast = createToaster({
-  placement: 'bottom-end',
-  overlap: true,
-  max: 5,
-});
+const globalToastState = globalThis as typeof globalThis & {
+  __helicalDefaultToaster__?: CreateToasterReturn;
+};
+
+export const toast: CreateToasterReturn = (globalToastState.__helicalDefaultToaster__ ??=
+  createToaster({
+    placement: 'bottom-end',
+    overlap: true,
+    max: 5,
+  }));
+
+export function useToast(toasterInstance: CreateToasterReturn = toast): CreateToasterReturn {
+  return toasterInstance;
+}
 
 export interface ToasterProps
   extends Omit<ArkToasterProps, 'toaster' | 'children'> {

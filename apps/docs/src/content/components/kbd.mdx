@@ -26,7 +26,7 @@ The `Kbd` component renders a semantic `<kbd>` keycap element or a multi-step se
 | --- | --- | --- | --- |
 | `variant` | `'outline' \| 'subtle' \| 'solid'` | `'outline'` | Visual style of the keycap. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Keycap size. |
-| `hotkey` | `string \| string[]` | — | Optional chord or sequence string/array formatted automatically into platform symbols. |
+| `hotkey` | `KbdHotkey` | — | Type-safe chord or space-separated multi-chord command string/array (`'Mod+K'`, `'Space w v'`, `['Space', '?']`) backed by `@tanstack/hotkeys`. Broken commands emit a console warning and render with `data-invalid="true"` destructive styling. |
 | `platform` | `'mac' \| 'windows' \| 'linux'` | `'mac'` | Target platform for modifier symbol formatting (`⌘`, `⌃`, `⌥`, `⇧`). |
 | `useSymbols` | `boolean` | `true` | Whether to render symbol glyphs or text labels for modifiers. |
 | `className` / `class` | `string` | — | Additional Tailwind classes merged via `cn`. |

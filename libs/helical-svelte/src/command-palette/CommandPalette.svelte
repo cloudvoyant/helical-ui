@@ -1,5 +1,4 @@
-<!-- Source: https://ui.shadcn.com/docs/components/radix/command -->
-<!-- Closely based on: Ark UI dialog, listbox, and highlight (https://ark-ui.com/docs/components/listbox), mirrored from @cloudvoyant/helical-react -->
+<!-- libs/helical-svelte/src/command-palette/CommandPalette.svelte -->
 <script lang="ts">
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { createListCollection } from '@ark-ui/svelte/listbox';
@@ -25,6 +24,7 @@
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
   import Badge from '../Badge.svelte';
+  import { getOptionalCommandContext } from '../command';
   import {
     Dialog,
     DialogBackdrop,
@@ -45,14 +45,19 @@
   import Row from '../Row.svelte';
   import Scroll from '../Scroll.svelte';
 
+  // 2. Module constants & types
   type Props = Omit<CoreCommandPaletteProps, 'className'> & {
     class?: string;
     className?: string;
   };
 
+  const HIGHLIGHT_MARK_CLASS =
+    'rounded-xs bg-primary/20 px-0.5 font-semibold text-foreground';
+
+  // --- State ---
   let {
-    items,
-    collection: externalCollection,
+    items: itemsProp,
+    collection: externalCollectionProp,
     open: controlledOpen = $bindable(undefined),
     defaultOpen = false,
     onOpenChange,
@@ -60,7 +65,7 @@
     onActivePathChange,
     query: controlledQuery = $bindable(undefined),
     onQueryChange,
-    onSelectCommand,
+    onSelectCommand: onSelectCommandProp,
     placeholder = 'Type a command or search...',
     emptyText = 'No matching commands.',
     noCommandsText = 'No commands registered.',
@@ -71,8 +76,7 @@
     className: reactClassName = '',
   }: Props = $props();
 
-  const HIGHLIGHT_MARK_CLASS =
-    'rounded-xs bg-primary/20 px-0.5 font-semibold text-foreground';
+  const sharedCommand = getOptionalCommandContext();
 
   // svelte-ignore state_referenced_locally
   let uncontrolledOpen = $state(Boolean(defaultOpen));
@@ -81,53 +85,14 @@
   let highlightedValue = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
 
-  const isOpen = $derived(inline ? true : (controlledOpen ?? uncontrolledOpen));
+  const items = $derived(itemsProp ?? sharedCommand?.items);
+  const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
+  const sharedOpen = $derived(
+    sharedCommand && sharedCommand.style === 'palette' ? sharedCommand.open : undefined,
+  );
+  const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
   const currentActivePath = $derived(controlledActivePath ?? uncontrolledActivePath);
   const currentQuery = $derived(controlledQuery ?? uncontrolledQuery);
-
-  function setActivePath(nextPath: string[]) {
-    if (controlledActivePath !== undefined) {
-      controlledActivePath = nextPath;
-    } else {
-      uncontrolledActivePath = nextPath;
-    }
-    onActivePathChange?.(nextPath);
-  }
-
-  function setQuery(nextQuery: string) {
-    if (controlledQuery !== undefined) {
-      controlledQuery = nextQuery;
-    } else {
-      uncontrolledQuery = nextQuery;
-    }
-    onQueryChange?.(nextQuery);
-  }
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (controlledOpen !== undefined) {
-      controlledOpen = nextOpen;
-    } else {
-      uncontrolledOpen = nextOpen;
-    }
-    if (!nextOpen) {
-      setActivePath([]);
-      setQuery('');
-    }
-    onOpenChange?.(nextOpen);
-  }
-
-  $effect(() => {
-    if (inline || !hotkey || typeof window === 'undefined') return;
-    const onWindowKeyDown = (event: KeyboardEvent) => {
-      if (matchesCommandHotkey(event, hotkey)) {
-        event.preventDefault();
-        event.stopPropagation();
-        handleOpenChange(!isOpen);
-      }
-    };
-    window.addEventListener('keydown', onWindowKeyDown);
-    return () => window.removeEventListener('keydown', onWindowKeyDown);
-  });
 
   const tree = $derived(createCommandTree(externalCollection ?? items ?? []));
   const resolution = $derived(resolveCommandLevel(tree, currentActivePath, currentQuery));
@@ -155,12 +120,25 @@
     }),
   );
 
-  function getInputElement(): HTMLInputElement | null {
-    if (rootEl) {
-      return rootEl.querySelector<HTMLInputElement>('[data-testid="command-palette-input"]');
-    }
-    return null;
-  }
+  const activePlaceholder = $derived(
+    resolution.breadcrumbs.length > 0
+      ? `${resolution.breadcrumbs[resolution.breadcrumbs.length - 1]!.label}...`
+      : placeholder,
+  );
+
+  // --- Effects ---
+  $effect(() => {
+    if (inline || !hotkey || typeof window === 'undefined') return;
+    const onWindowKeyDown = (event: KeyboardEvent) => {
+      if (matchesCommandHotkey(event, hotkey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        handleOpenChange(!isOpen);
+      }
+    };
+    window.addEventListener('keydown', onWindowKeyDown);
+    return () => window.removeEventListener('keydown', onWindowKeyDown);
+  });
 
   $effect(() => {
     const _depth = currentActivePath.length;
@@ -174,20 +152,39 @@
     return () => cancelAnimationFrame(raf);
   });
 
-  function scrollItemIntoView(val: string) {
-    requestAnimationFrame(() => {
-      const container = rootEl ?? (typeof document !== 'undefined' ? document : null);
-      if (!container) return;
-      const els = Array.from(
-        container.querySelectorAll<HTMLElement>('[data-part="item"]'),
-      );
-      for (const el of els) {
-        if (el.getAttribute('data-value') === val) {
-          el.scrollIntoView({ block: 'nearest' });
-          break;
-        }
-      }
-    });
+  // --- Methods ---
+  function setActivePath(nextPath: string[]) {
+    if (controlledActivePath !== undefined) {
+      controlledActivePath = nextPath;
+    } else {
+      uncontrolledActivePath = nextPath;
+    }
+    onActivePathChange?.(nextPath);
+  }
+
+  function setQuery(nextQuery: string) {
+    if (controlledQuery !== undefined) {
+      controlledQuery = nextQuery;
+    } else {
+      uncontrolledQuery = nextQuery;
+    }
+    onQueryChange?.(nextQuery);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (controlledOpen !== undefined) {
+      controlledOpen = nextOpen;
+    } else {
+      uncontrolledOpen = nextOpen;
+    }
+    if (sharedCommand && sharedCommand.style === 'palette') {
+      sharedCommand.setOpen(nextOpen);
+    }
+    if (!nextOpen) {
+      setActivePath([]);
+      setQuery('');
+    }
+    onOpenChange?.(nextOpen);
   }
 
   function selectFlatItem(item: CommandFlatItem) {
@@ -210,7 +207,8 @@
       node: item.node,
     };
     item.node.onSelect?.(ctx);
-    onSelectCommand?.(ctx);
+    onSelectCommandProp?.(ctx);
+    sharedCommand?.onSelectCommand?.(ctx);
     announceCommandMessage(`Executed ${item.label}`);
 
     if (!inline && item.node.closeOnSelect !== false) {
@@ -229,11 +227,29 @@
     return true;
   }
 
-  const activePlaceholder = $derived(
-    resolution.breadcrumbs.length > 0
-      ? `${resolution.breadcrumbs[resolution.breadcrumbs.length - 1]!.label}...`
-      : placeholder,
-  );
+  // --- Helpers ---
+  function getInputElement(): HTMLInputElement | null {
+    if (rootEl) {
+      return rootEl.querySelector<HTMLInputElement>('[data-testid="command-palette-input"]');
+    }
+    return null;
+  }
+
+  function scrollItemIntoView(val: string) {
+    requestAnimationFrame(() => {
+      const container = rootEl ?? (typeof document !== 'undefined' ? document : null);
+      if (!container) return;
+      const els = Array.from(
+        container.querySelectorAll<HTMLElement>('[data-part="item"]'),
+      );
+      for (const el of els) {
+        if (el.getAttribute('data-value') === val) {
+          el.scrollIntoView({ block: 'nearest' });
+          break;
+        }
+      }
+    });
+  }
 </script>
 
 {#snippet paletteSurface()}
@@ -543,7 +559,7 @@
 
 {#if inline}
   {@render paletteSurface()}
-{:else if isOpen}
+{:else}
   <Dialog
     open={isOpen}
     lazyMount

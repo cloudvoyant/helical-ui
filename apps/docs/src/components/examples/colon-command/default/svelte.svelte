@@ -1,95 +1,47 @@
 <!-- apps/docs/src/components/examples/colon-command/default/svelte.svelte -->
 <script lang="ts">
-  import {
-    Badge,
-    Button,
-    ColonCommand,
-    HStack,
-    Kbd,
-    Toaster,
-    VStack,
-    createToaster,
-  } from '@cloudvoyant/helical-svelte';
-  import { buildDocsCommandTree } from '../../../../lib/commands';
+  // 1. Imports
+  import { onMount } from 'svelte';
+  import type { CommandSelectContext } from '@cloudvoyant/helical-ui';
+  import { Button, ColonCommand, Kbd, useToast } from '@cloudvoyant/helical-svelte';
+  import { buildDocsCommandTree, subscribeDocsCommandState } from '../../../../lib/commands';
 
-  const demoToaster = createToaster({
-    placement: 'bottom-end',
-    overlap: true,
-    max: 3,
+  // --- State ---
+  const toast = useToast();
+  let open = $state(false);
+  let revision = $state(0);
+  const items = $derived.by(() => {
+    void revision;
+    return buildDocsCommandTree();
   });
 
-  let open = $state(false);
-  let lastSelected = $state('None');
-  let activeTheme = $state('helical-ui');
-  let activeMode = $state<'light' | 'dark' | 'system'>('dark');
-  let activePreset = $state<'helix' | 'vim' | 'kakoune'>('helix');
-  let activeFramework = $state<'react' | 'svelte'>('svelte');
-
-  const items = $derived(
-    buildDocsCommandTree({
-      currentTheme: activeTheme,
-      currentColorMode: activeMode,
-      currentPreset: activePreset,
-      currentFramework: activeFramework,
-      onThemeSelect: (theme) => {
-        activeTheme = theme;
-      },
-      onColorModeSelect: (mode) => {
-        activeMode = mode;
-      },
-      onPresetSelect: (preset) => {
-        activePreset = preset;
-      },
-      onFrameworkSelect: (fw) => {
-        activeFramework = fw;
-      },
-      onOpenGitHub: () => {
-        lastSelected = 'View GitHub (:github)';
-      },
-      onSearchDocs: () => {
-        lastSelected = 'Search Docs (:search)';
-      },
+  // --- Effects ---
+  onMount(() =>
+    subscribeDocsCommandState(() => {
+      revision += 1;
     }),
   );
+
+  // --- Methods ---
+  function handleSelectCommand(ctx: CommandSelectContext) {
+    toast.create({
+      title: `Executed ${ctx.commandString}`,
+      description: ctx.node.label,
+      type: ctx.node.badge === 'Future' ? 'info' : 'success',
+    });
+  }
 </script>
 
-<VStack class="w-full gap-3 rounded-lg border border-border bg-card p-4">
-  <HStack class="flex-wrap items-center justify-between gap-2">
-    <HStack class="flex-wrap items-center gap-2">
-      <span class="text-xs font-medium text-muted-foreground">Executed:</span>
-      <Badge variant="subtle" color="primary" data-testid="cc-default-selected">
-        {lastSelected}
-      </Badge>
-    </HStack>
-    <Button
-      size="sm"
-      variant="outline"
-      data-testid="cc-default-open"
-      onclick={() => {
-        open = true;
-      }}
-    >
-      Open Colon Menu <Kbd size="sm">:</Kbd>
-    </Button>
-  </HStack>
-  <p class="text-xs text-muted-foreground">
-    Type <code class="font-mono text-foreground">:theme </code> (or press
-    <Kbd size="sm">Tab</Kbd> on <code class="font-mono text-foreground">th</code>) to
-    autocomplete branch commands, or run <code class="font-mono text-foreground">:mode dark</code>,
-    <code class="font-mono text-foreground">:keybind vim</code>, or
-    <code class="font-mono text-foreground">:framework svelte</code>.
-  </p>
-  <ColonCommand
-    {items}
-    bind:open
-    onSelectCommand={(ctx) => {
-      lastSelected = `${ctx.node.label} (${ctx.commandString})`;
-      demoToaster.create({
-        title: `Executed ${ctx.commandString}`,
-        description: ctx.node.label,
-        type: ctx.node.badge === 'Future' ? 'info' : 'success',
-      });
+<!-- Render -->
+<div class="flex flex-col items-center gap-4">
+  <Button
+    variant="outline"
+    data-testid="cc-default-open"
+    onclick={() => {
+      open = true;
     }}
-  />
-  <Toaster toaster={demoToaster} />
-</VStack>
+  >
+    Open Command Menu <Kbd size="sm">:</Kbd>
+  </Button>
+  <ColonCommand {items} bind:open onSelectCommand={handleSelectCommand} />
+</div>

@@ -350,6 +350,29 @@ export {
   type ToastOptions,
 } from './toast';
 export { CommandPalette, type CommandPaletteProps } from './command-palette';
-export { ColonCommand, type ColonCommandProps } from './colon-command';
+export {
+  ColonCommand,
+  ColonCommandError,
+  ColonCommandItem,
+  ColonCommandList,
+  ColonCommandPromptBar,
+  ColonCommandContext,
+  useColonCommandContext,
+  type ColonCommandProps,
+  type ColonCommandErrorProps,
+  type ColonCommandItemProps,
+  type ColonCommandListProps,
+  type ColonCommandPromptBarProps,
+  type ColonCommandContextValue,
+} from './colon-command';
+export { CommandProvider, useCommand, useOptionalCommand, type CommandProviderProps } from './command';
+export type {
+  CommandContextProps,
+  CommandContextValue,
+  CommandFlatItem,
+  CommandNode,
+  CommandSelectContext,
+  CommandStyle,
+} from '@cloudvoyant/helical-ui';
 export * from './which-key';
 export * from './editor';
