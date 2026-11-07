@@ -106,5 +106,5 @@ stateDiagram-v2
 
 ### Maintainer Notes
 
-- **Dependency inversion:** `fzf`, `@zag-js/collection`, `@zag-js/i18n-utils`, `@zag-js/live-region`, and `@tanstack/hotkeys` are inverted inside `@cloudvoyant/helical-ui/src/command.ts`. Third-party types from `fzf` are never re-exported from public entry points.
+- **Dependency inversion:** `fzf`, `@zag-js/collection`, `@zag-js/i18n-utils`, `@zag-js/live-region`, and `@tanstack/hotkeys` are inverted inside `@cloudvoyant/helical-ui/src/command/` (`types.ts`, `core.ts`, `styles.ts`). Third-party types from `fzf` are never re-exported from public entry points.
 - **Interaction with `WhichKeyController`:** Both `CommandPalette` and `ColonCommand` render inside an open Ark `Dialog` (or focus a text `<input>`), which `WhichKeyController` automatically bypasses so typing inside command prompts never triggers single-key normal-mode bindings.

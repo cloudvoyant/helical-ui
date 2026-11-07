@@ -73,12 +73,14 @@ export interface DocsCommandTreeOptions {
   currentColorMode?: ColorMode;
   currentPreset?: KeybindingPreset;
   currentJumpAction?: JumpAction;
+  currentLeaderOnly?: boolean;
   currentFramework?: Framework;
   currentCommandStyle?: CommandStyle;
   onThemeSelect?: (theme: string) => void;
   onColorModeSelect?: (mode: ColorMode) => void;
   onPresetSelect?: (preset: KeybindingPreset) => void;
   onJumpActionSelect?: (action: JumpAction) => void;
+  onLeaderOnlySelect?: (leaderOnly: boolean) => void;
   onFrameworkSelect?: (framework: Framework) => void;
   onCommandStyleSelect?: (style: CommandStyle) => void;
   onOpenExplorer?: () => void;
@@ -92,6 +94,7 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
   const activeMode = options.currentColorMode ?? getInitialColorMode();
   const activePreset = options.currentPreset ?? 'helix';
   const activeJump = options.currentJumpAction ?? 'activate';
+  const activeLeaderOnly = options.currentLeaderOnly ?? false;
   const activeFramework = options.currentFramework ?? getStoredFramework();
   const activeCommandStyle = options.currentCommandStyle ?? getStoredCommandStyle();
 
@@ -322,6 +325,32 @@ export function buildDocsCommandTree(options: DocsCommandTreeOptions = {}): Comm
           command: 'focus',
           active: activeJump === 'focus',
           onSelect: () => options.onJumpActionSelect?.('focus'),
+        },
+      ],
+    },
+    {
+      value: 'which-key',
+      label: 'Change WhichKey Popup',
+      group: 'Preferences',
+      command: 'which-key',
+      aliases: ['wk'],
+      keywords: ['leader', 'prefixes', 'popup', 'chords'],
+      children: [
+        {
+          value: 'all',
+          label: 'All Prefixes',
+          group: 'WhichKey Popup',
+          command: 'all',
+          active: !activeLeaderOnly,
+          onSelect: () => options.onLeaderOnlySelect?.(false),
+        },
+        {
+          value: 'leader',
+          label: 'Leader Only',
+          group: 'WhichKey Popup',
+          command: 'leader',
+          active: activeLeaderOnly,
+          onSelect: () => options.onLeaderOnlySelect?.(true),
         },
       ],
     },

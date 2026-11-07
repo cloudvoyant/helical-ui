@@ -354,7 +354,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
               placeholder={activePlaceholder}
               value={currentQuery}
               onChange={(e) => setQuery(e.currentTarget.value)}
-              onKeyDown={(e) => {
+              onKeyDownCapture={(e) => {
                 if (e.key === 'Backspace' && currentQuery === '' && currentActivePath.length > 0) {
                   e.preventDefault();
                   e.stopPropagation();
@@ -485,6 +485,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                         data-command-value={item.node.value}
                         data-command-branch={item.isBranch ? 'true' : 'false'}
                         data-command-active={item.active ? 'true' : undefined}
+                        data-highlighted={effectiveHighlightedValue === item.value ? '' : undefined}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();

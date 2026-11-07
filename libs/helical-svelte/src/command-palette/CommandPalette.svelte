@@ -435,6 +435,7 @@
                       data-command-value={item.node.value}
                       data-command-branch={item.isBranch ? 'true' : 'false'}
                       data-command-active={item.active ? 'true' : undefined}
+                      data-highlighted={effectiveHighlightedValue === item.value ? '' : undefined}
                       onclick={(e: MouseEvent) => {
                         e.preventDefault();
                         e.stopPropagation();

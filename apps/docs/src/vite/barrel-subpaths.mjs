@@ -154,14 +154,14 @@ export function helicalBarrelSubpathPlugin() {
     transform(code, id) {
       if (id.includes('?raw') || id.includes('node_modules')) return null;
       const cleanId = id.split('?')[0];
-      if (!/\.(ts|tsx|svelte|astro|mdx|js|mjs)$/.test(cleanId)) return null;
+      if (!/\.(ts|tsx|svelte|astro|js|mjs)$/.test(cleanId)) return null;
       if (!code.includes('@cloudvoyant/helical-') && !code.includes('lucide-svelte')) return null;
 
       const maps = ensureMaps();
       let changed = false;
 
       const transformed = code.replace(
-        /(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui|react|svelte)|lucide-svelte)['"]\s*;?/g,
+        /^[ \t]*(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui|react|svelte)|lucide-svelte)['"]\s*;?/gm,
         (fullMatch, keyword, typeKw, specList, pkg) => {
           if (typeKw) return fullMatch;
           const pkgMap = maps[pkg];

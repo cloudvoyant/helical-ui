@@ -35,7 +35,7 @@ function DocsCommandShell({
   colonOpen: boolean;
   setColonOpen: (open: boolean) => void;
 }) {
-  const { preset, setPreset, jumpAction, setJumpAction, openExplorer } = useWhichKey();
+  const { preset, setPreset, jumpAction, setJumpAction, leaderOnly, setLeaderOnly, openExplorer } = useWhichKey();
   const [theme, setThemeState] = useState<string>(() => getInitialTheme());
   const [colorMode, setColorModeState] = useState<ColorMode>(() => getInitialColorMode());
   const [framework, setFrameworkState] = useState<Framework>(() => getStoredFramework());
@@ -109,6 +109,7 @@ function DocsCommandShell({
         currentColorMode: colorMode,
         currentPreset: preset,
         currentJumpAction: jumpAction,
+        currentLeaderOnly: leaderOnly,
         currentFramework: framework,
         currentCommandStyle: commandStyle,
         onPresetSelect: (nextPreset) => {
@@ -116,6 +117,9 @@ function DocsCommandShell({
         },
         onJumpActionSelect: (nextJump) => {
           setJumpAction(nextJump);
+        },
+        onLeaderOnlySelect: (nextLeaderOnly) => {
+          setLeaderOnly(nextLeaderOnly);
         },
         onOpenExplorer: () => {
           setPaletteOpen(false);
@@ -135,10 +139,12 @@ function DocsCommandShell({
       colorMode,
       preset,
       jumpAction,
+      leaderOnly,
       framework,
       commandStyle,
       setPreset,
       setJumpAction,
+      setLeaderOnly,
       openExplorer,
       setPaletteOpen,
       setColonOpen,
