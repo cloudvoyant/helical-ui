@@ -19,7 +19,7 @@
   const customKeymap: Record<string, WhichKeyNode> = {
     Space: {
       key: 'Space',
-      label: '+leader',
+      label: 'Leader',
       group: 'Leader',
       children: {
         p: {

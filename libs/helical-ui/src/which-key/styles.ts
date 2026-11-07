@@ -45,10 +45,9 @@ export const whichKeyItemBase =
   'group flex w-full cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1 text-left text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:outline-none';
 
 export const whichKeyItemLabelBase =
-  'truncate text-foreground group-hover:text-accent-foreground data-[group=true]:font-medium data-[group=true]:text-primary';
+  'inline-flex min-w-0 items-center gap-1 truncate text-foreground group-hover:text-accent-foreground data-[group=true]:font-medium data-[group=true]:text-primary';
 
-export const whichKeyFooterBase =
-  'flex items-center justify-between gap-2 px-3 pt-1 pb-2 text-[10px] text-muted-foreground';
+export const whichKeyFooterBase = 'pointer-events-none h-2 shrink-0';
 
 export const whichKeyModeBadgeVariants = cva(
   'inline-flex items-center gap-1 rounded font-mono font-semibold tracking-wider uppercase select-none',

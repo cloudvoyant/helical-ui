@@ -20,9 +20,10 @@
   } from '@cloudvoyant/helical-svelte';
 
   let dialogOpen = $state(false);
+  let lastAction = $state('None');
 </script>
 
-<WhichKeyProvider preset="helix">
+<WhichKeyProvider preset="helix" onCommand={(id) => (lastAction = id)}>
   {#snippet children()}
     {@const wk = useWhichKey()}
     {@render DefaultSurface({ wk })}
@@ -49,6 +50,9 @@
             </span>
           {/if}
         </HStack>
+        <span class="text-xs text-muted-foreground" data-testid="wk-default-last-action">
+          Last command: <strong class="text-foreground">{lastAction}</strong>
+        </span>
       </HStack>
 
       <p class="text-xs text-muted-foreground">
@@ -73,6 +77,16 @@
           onclick={() => wk.openExplorer()}
         >
           Explore <Kbd size="sm" hotkey={['Space', '?']} />
+        </Button>
+
+        <Button
+          size="sm"
+          variant={wk.leaderOnly ? 'solid' : 'outline'}
+          aria-pressed={wk.leaderOnly}
+          data-testid="wk-default-toggle-leader-only"
+          onclick={() => wk.setLeaderOnly(!wk.leaderOnly)}
+        >
+          {wk.leaderOnly ? 'Popup: Leader only' : 'Popup: All prefixes'}
         </Button>
 
         <Button

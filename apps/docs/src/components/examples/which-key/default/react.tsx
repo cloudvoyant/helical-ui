@@ -20,9 +20,14 @@ import {
   useWhichKey,
 } from '@cloudvoyant/helical-react';
 
-function DefaultDemoSurface() {
-  const { preset, activePath, openPrefix, openExplorer } = useWhichKey();
-  const [lastAction, setLastAction] = useState('None');
+function DefaultDemoSurface({
+  lastAction,
+  setLastAction,
+}: {
+  lastAction: string;
+  setLastAction: (action: string) => void;
+}) {
+  const { preset, leaderOnly, setLeaderOnly, activePath, openPrefix, openExplorer } = useWhichKey();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -78,6 +83,16 @@ function DefaultDemoSurface() {
           Explore <Kbd size="sm" hotkey={['Space', '?']} />
         </Button>
 
+        <Button
+          size="sm"
+          variant={leaderOnly ? 'solid' : 'outline'}
+          aria-pressed={leaderOnly}
+          data-testid="wk-default-toggle-leader-only"
+          onClick={() => setLeaderOnly(!leaderOnly)}
+        >
+          {leaderOnly ? 'Popup: Leader only' : 'Popup: All prefixes'}
+        </Button>
+
         <Dialog open={dialogOpen} lazyMount unmountOnExit onOpenChange={(d) => setDialogOpen(d.open)}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" data-testid="wk-default-open-dialog">
@@ -110,10 +125,12 @@ function DefaultDemoSurface() {
 }
 
 export default function ReactWhichKeyDefault() {
+  const [lastAction, setLastAction] = useState('None');
+
   return (
-    <WhichKeyProvider preset="helix">
+    <WhichKeyProvider preset="helix" onCommand={(id) => setLastAction(id)}>
       <VStack className="w-full gap-3">
-        <DefaultDemoSurface />
+        <DefaultDemoSurface lastAction={lastAction} setLastAction={setLastAction} />
         <WhichKey />
       </VStack>
     </WhichKeyProvider>

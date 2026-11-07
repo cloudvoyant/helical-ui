@@ -146,6 +146,11 @@ export function helicalBarrelSubpathPlugin() {
       exportMaps = null;
       ensureMaps();
     },
+    handleHotUpdate({ file }) {
+      if (file.endsWith('/index.ts')) {
+        exportMaps = null;
+      }
+    },
     transform(code, id) {
       if (id.includes('?raw') || id.includes('node_modules')) return null;
       const cleanId = id.split('?')[0];

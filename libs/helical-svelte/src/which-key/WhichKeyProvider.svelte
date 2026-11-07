@@ -19,6 +19,7 @@
     preset,
     defaultMode = 'normal',
     leaderKey = 'Space',
+    leaderOnly,
     jumpAction,
     jumpAlphabet,
     storageKey,
@@ -29,6 +30,7 @@
     scoped = true,
     onPresetChange,
     onModeChange,
+    onLeaderOnlyChange,
     onJumpActionChange,
     onCommand,
     onYank,
@@ -43,6 +45,7 @@
       preset,
       defaultMode,
       leaderKey,
+      leaderOnly,
       jumpAction,
       jumpAlphabet,
       storageKey,
@@ -60,6 +63,7 @@
       getScopeElement: () => (scoped ? scopeEl : null),
       onPresetChange: (next) => onPresetChange?.(next),
       onModeChange: (next) => onModeChange?.(next),
+      onLeaderOnlyChange: (next) => onLeaderOnlyChange?.(next),
       onJumpActionChange: (next) => onJumpActionChange?.(next),
       onCommand: (id, ctx) => onCommand?.(id, ctx),
       onYank: (text, ctx) => onYank?.(text, ctx),
@@ -87,6 +91,12 @@
   $effect(() => {
     if (preset !== undefined) {
       controller.setPreset(preset);
+    }
+  });
+
+  $effect(() => {
+    if (leaderOnly !== undefined) {
+      controller.setLeaderOnly(leaderOnly);
     }
   });
 

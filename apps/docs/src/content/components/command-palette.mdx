@@ -1,0 +1,40 @@
+---
+title: Command Palette
+description: A keyboard-first command palette with fuzzy search, grouped actions, shortcut badges, and nested submenus, for React and Svelte.
+order: 12
+group: navigation
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`CommandPalette` provides a searchable `⌘K` / `Ctrl+K` command menu with grouped actions, keyboard shortcuts, and multi-level submenus.
+
+<Demo component="command-palette" example="default" />
+
+## Examples
+
+<Examples component="command-palette" exclude="default" />
+
+## API Reference
+
+### CommandPalette
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `items` | `CommandNode[]` | `[]` | Hierarchical command tree nodes. |
+| `collection` | `TreeCollection<CommandNode>` | — | Prebuilt `TreeCollection` instance. |
+| `open` | `boolean` | — | Controlled modal open state. |
+| `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled. |
+| `onOpenChange` | `(open: boolean) => void` | — | Callback invoked when the modal opens or closes. |
+| `activePath` | `string[]` | — | Controlled submenu branch value path. |
+| `onActivePathChange` | `(path: string[]) => void` | — | Callback invoked when drilling into or popping out of a nested submenu. |
+| `query` | `string` | — | Controlled search query string. |
+| `onQueryChange` | `(query: string) => void` | — | Callback invoked when the search query changes. |
+| `onSelectCommand` | `(ctx: CommandSelectContext) => void` | — | Callback invoked when a leaf command is executed. |
+| `placeholder` | `string` | `'Type a command or search...'` | Search input placeholder text. |
+| `emptyText` | `string` | `'No matching commands.'` | Text rendered when commands are registered but none match the query. |
+| `noCommandsText` | `string` | `'No commands registered.'` | Text rendered in the UI when zero commands are registered in the tree. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Width variant for the palette surface. |
+| `inline` | `boolean` | `false` | Renders the command palette inline inside its container instead of a modal `Dialog`. |
+| `hotkey` | `string \| false` | `false` | Optional global shortcut chord (e.g. `'Mod+k'`) to toggle the palette. |

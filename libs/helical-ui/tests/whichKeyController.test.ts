@@ -236,6 +236,48 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(calls).toEqual(['helix:end', 'helix:start', 'vim:end', 'vim:start', 'kakoune:end', 'kakoune:start']);
     });
   });
+
+  describe('When leaderOnly is enabled on WhichKeyController', () => {
+    it('Then keeps isOpen false on non-leader prefixes like "g" while still executing "g g", and sets isOpen true on "Space"', () => {
+      // Arrange
+      const calls: string[] = [];
+      const controller = createWhichKeyController({
+        leaderOnly: true,
+        commands: {
+          'motion.docStart': () => {
+            calls.push('docStart');
+            return true;
+          },
+        },
+      });
+
+      // Act: press g (non-leader prefix)
+      controller.handleKeyDown(createKeyEvent('g'));
+      const afterG = controller.getState();
+
+      // Act: complete gg chord
+      controller.handleKeyDown(createKeyEvent('g'));
+      const afterGG = controller.getState();
+
+      // Act: press Space (leader prefix)
+      controller.handleKeyDown(createKeyEvent(' ', { code: 'Space' }));
+      const afterSpace = controller.getState();
+
+      // Act: press g inside Space » g
+      controller.handleKeyDown(createKeyEvent('g'));
+      const afterSpaceG = controller.getState();
+
+      // Assert
+      expect(afterG.activePath).toEqual(['g']);
+      expect(afterG.isOpen).toBe(false);
+      expect(calls).toEqual(['docStart']);
+      expect(afterGG.activePath).toEqual([]);
+      expect(afterSpace.activePath).toEqual(['Space']);
+      expect(afterSpace.isOpen).toBe(true);
+      expect(afterSpaceG.activePath).toEqual(['Space', 'g']);
+      expect(afterSpaceG.isOpen).toBe(true);
+    });
+  });
 });
 
 describe('Given a controller switching between insert and normal modes', () => {

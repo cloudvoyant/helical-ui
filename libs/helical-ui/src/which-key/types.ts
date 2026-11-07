@@ -135,6 +135,7 @@ export interface WhichKeyState {
   preset: KeybindingPreset;
   mode: KeymapMode;
   leaderKey: string;
+  leaderOnly: boolean;
   activePath: string[];
   breadcrumb: string[];
   title: string;
@@ -157,6 +158,13 @@ export interface WhichKeyControllerOptions {
   preset?: KeybindingPreset;
   defaultMode?: KeymapMode;
   leaderKey?: string;
+  /**
+   * When `true`, the WhichKey popup only opens when the active chord starts with `leaderKey`
+   * (e.g. `Space`), while non-leader multi-key chords (`gg`, `ge`, `gw`, `zt`, `zz`) continue
+   * to execute without opening the popup.
+   * @default false
+   */
+  leaderOnly?: boolean;
   jumpAction?: JumpAction;
   jumpAlphabet?: string;
   storageKey?: string;
@@ -172,6 +180,7 @@ export interface WhichKeyControllerOptions {
   getScopeElement?: () => HTMLElement | null;
   onPresetChange?: (preset: KeybindingPreset) => void;
   onModeChange?: (mode: KeymapMode) => void;
+  onLeaderOnlyChange?: (leaderOnly: boolean) => void;
   onJumpActionChange?: (action: JumpAction) => void;
   onCommand?: (commandId: string, ctx: KeymapCommandContext) => void;
   onYank?: (text: string, ctx: KeymapCommandContext) => void;
@@ -185,6 +194,7 @@ export interface WhichKeyController {
   handleKeyDown(event: KeyboardEvent): boolean;
   setPreset(preset: KeybindingPreset): void;
   setMode(mode: KeymapMode): void;
+  setLeaderOnly(leaderOnly: boolean): void;
   setJumpAction(action: JumpAction): void;
   openPrefix(path: string[], options?: { sticky?: boolean }): void;
   closePrefix(): void;
@@ -223,6 +233,7 @@ export interface WhichKeyController {
 
 export interface WhichKeyProps {
   variant?: WhichKeyVariant;
+  leaderOnly?: boolean;
   showModeBadge?: boolean;
   showExplorer?: boolean;
   className?: string;

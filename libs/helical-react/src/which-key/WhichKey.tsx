@@ -4,8 +4,10 @@
 import { useEffect, useRef } from 'react';
 import { Portal } from '@ark-ui/react/portal';
 import { Presence } from '@ark-ui/react/presence';
+import { ChevronRight } from 'lucide-react';
 import {
   cn,
+  formatWhichKeyLabel,
   isGroupNode,
   jumpBadgeMatchedPrefixBase,
   jumpBadgeVariants,
@@ -25,7 +27,6 @@ import { Row } from '../row';
 import { Scroll } from '../scroll';
 import { useOptionalWhichKeyController, useWhichKey } from './context';
 import { WhichKeyExplorer } from './WhichKeyExplorer';
-import { WhichKeyMode } from './WhichKeyMode';
 
 export type WhichKeyProps = CoreWhichKeyProps;
 
@@ -37,13 +38,15 @@ export function WhichKey(props: WhichKeyProps) {
 
 function WhichKeyInner({
   variant = 'helix',
-  showModeBadge = true,
+  leaderOnly: leaderOnlyProp,
   showExplorer = true,
   className,
 }: WhichKeyProps) {
   const {
-    preset,
     mode,
+    leaderKey,
+    leaderOnly: controllerLeaderOnly,
+    activePath,
     breadcrumb,
     title,
     items,
@@ -58,13 +61,19 @@ function WhichKeyInner({
     controller,
   } = useWhichKey();
 
+  const effectiveLeaderOnly = leaderOnlyProp ?? controllerLeaderOnly;
+  const effectiveOpen =
+    leaderOnlyProp !== undefined
+      ? activePath.length > 0 && items.length > 0 && (!leaderOnlyProp || activePath[0] === leaderKey)
+      : isOpen;
+
   const panelRef = useRef<HTMLDivElement | null>(null);
   const jumpOverlayRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!effectiveOpen) return;
     return controller.trackBranchElement(() => panelRef.current);
-  }, [controller, isOpen]);
+  }, [controller, effectiveOpen]);
 
   useEffect(() => {
     if (mode !== 'jump') return;
@@ -74,7 +83,7 @@ function WhichKeyInner({
   return (
     <>
       <Portal>
-        <Presence present={isOpen} lazyMount unmountOnExit>
+        <Presence present={effectiveOpen} lazyMount unmountOnExit>
           <div
             ref={panelRef}
             role="region"
@@ -82,17 +91,21 @@ function WhichKeyInner({
             data-which-key-root="true"
             data-testid="which-key-panel"
             data-variant={variant}
-            data-preset={preset}
-            data-mode={mode}
+            data-leader-only={effectiveLeaderOnly ? 'true' : 'false'}
             data-sticky={sticky ? 'true' : 'false'}
             className={cn(whichKeyVariants({ variant }), className)}
           >
             <div className={whichKeyHeaderBase}>
               <div className={whichKeyTitleBase}>
-                {showModeBadge && <WhichKeyMode mode={mode} sticky={sticky} />}
                 <span data-testid="which-key-title">
-                  {title === 'Space' ? 'Leader' : title}
+                  {title === 'Space' ? 'Leader' : formatWhichKeyLabel(title)}
                 </span>
+                <div
+                  data-testid="which-key-breadcrumb"
+                  className={whichKeyBreadcrumbBase}
+                >
+                  <span>{breadcrumb.join(' » ')}</span>
+                </div>
                 {countBuffer && (
                   <span
                     data-testid="which-key-count"
@@ -102,15 +115,33 @@ function WhichKeyInner({
                   </span>
                 )}
               </div>
-              <div
-                data-testid="which-key-breadcrumb"
-                className={whichKeyBreadcrumbBase}
-              >
-                <span>{ breadcrumb.join(' » ') }</span>
-              </div>
+              <Row className="shrink-0 items-center gap-1.5 text-muted-foreground">
+                {breadcrumb.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label="Back"
+                    onClick={() => stepBackPrefix()}
+                    className="inline-flex items-center gap-1 hover:text-foreground"
+                  >
+                    <Kbd size="sm">⌫</Kbd>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="Close"
+                  data-testid="which-key-close"
+                  onClick={() => closePrefix()}
+                  className="inline-flex items-center gap-1 hover:text-foreground"
+                >
+                  <Kbd size="sm">Esc</Kbd>
+                </button>
+              </Row>
             </div>
 
-            <Scroll className="max-h-72" viewportClassName="max-h-72">
+            <Scroll
+              className="max-h-72"
+              viewportClassName="scroll-fade scroll-fade-12 no-scrollbar max-h-72"
+            >
               <div
                 data-testid="which-key-items"
                 className={whichKeyBodyVariants({ variant })}
@@ -137,7 +168,13 @@ function WhichKeyInner({
                         data-group={isGroup ? 'true' : 'false'}
                         className={whichKeyItemLabelBase}
                       >
-                        {node.label}
+                        <span className="truncate">{formatWhichKeyLabel(node.label)}</span>
+                        {isGroup && (
+                          <ChevronRight
+                            className="size-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                        )}
                       </span>
                       <Kbd
                         size="sm"
@@ -150,31 +187,11 @@ function WhichKeyInner({
               </div>
             </Scroll>
 
-            <div className={whichKeyFooterBase}>
-              <Row className="items-center gap-2">
-                {breadcrumb.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => stepBackPrefix()}
-                    className="inline-flex items-center gap-1 hover:text-foreground"
-                  >
-                    <Kbd size="sm">⌫</Kbd>
-                    <span>Back</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => closePrefix()}
-                  className="inline-flex items-center gap-1 hover:text-foreground"
-                >
-                  <Kbd size="sm">Esc</Kbd>
-                  <span>Close</span>
-                </button>
-              </Row>
-              <span className="font-mono uppercase opacity-75">
-                {preset}
-              </span>
-            </div>
+            <div
+              data-testid="which-key-footer"
+              className={whichKeyFooterBase}
+              aria-hidden="true"
+            />
           </div>
         </Presence>
       </Portal>

@@ -1,0 +1,131 @@
+---
+title: Hotkeys
+description: Hotkey controller service, hooks, pane primitives, chord matchers, and modal editing for React and Svelte.
+order: 10
+group: keyboard
+---
+
+`helical-ui` provides a complete keyboard navigation and modal editing layer shared across React and Svelte. The hotkey system separates **keyboard state and chord execution** (`WhichKeyProvider`, `useWhichKey`, `useKeymap`, `useKeymapCommand`, `Pane`, `WhichKeyMode`, `matchesCommandHotkey`) from the visual `WhichKey` chord popup.
+
+## Primitives & Hooks
+
+### WhichKeyProvider & useWhichKey
+
+Wrap your application or workspace in `WhichKeyProvider` to activate modal keyboard navigation (`normal`, `select`, `insert`, `jump`), keybinding presets (`helix`, `vim`, `kakoune`), and custom prefix chords. Use `useWhichKey()` to read or update the active state from any child component:
+
+```tsx
+import { WhichKeyProvider, WhichKey, WhichKeyMode, useWhichKey } from '@cloudvoyant/helical-react';
+
+function StatusToolbar() {
+  const { preset, setPreset, leaderOnly, setLeaderOnly, openExplorer } = useWhichKey();
+  return (
+    <div className="flex items-center gap-2">
+      <WhichKeyMode showPreset />
+      <button onClick={() => setPreset(preset === 'helix' ? 'vim' : 'helix')}>
+        Switch Preset
+      </button>
+      <button onClick={() => setLeaderOnly(!leaderOnly)}>
+        {leaderOnly ? 'Leader Only' : 'All Prefixes'}
+      </button>
+      <button onClick={() => openExplorer()}>Explore Keybindings</button>
+    </div>
+  );
+}
+```
+
+### Registering Custom Chords (`useKeymap` & `useKeymapCommand`)
+
+Register custom single-key or multi-step prefix chords and command handlers from any component inside a `WhichKeyProvider`:
+
+```tsx
+import { useKeymap, useKeymapCommand } from '@cloudvoyant/helical-react';
+
+function ProjectShortcuts({ onSave }: { onSave: () => void }) {
+  useKeymap({
+    Space: {
+      key: 'Space',
+      label: 'Leader',
+      children: {
+        w: {
+          key: 'w',
+          label: 'Save Workspace',
+          group: 'Workspace',
+          commandId: 'workspace.save',
+        },
+      },
+    },
+  });
+
+  useKeymapCommand('workspace.save', () => {
+    onSave();
+    return true;
+  });
+
+  return null;
+}
+```
+
+### Spatial Panes (`Pane` & `useRegisterPane`)
+
+Wrap distinct layout regions in `<Pane>` (or attach `useRegisterPane`) so users can move focus between regions spatially (`Ctrl-w h/j/k/l` or `Space w h/j/k/l`), jump directly by index (`Space 1..9`), and traverse focus history via the Jumplist (`Ctrl-o` / `Ctrl-i`):
+
+```tsx
+import { Pane } from '@cloudvoyant/helical-react';
+
+export function WorkspaceLayout() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <Pane paneId="nav" paneTitle="Navigation" paneOrder={1}>
+        {/* Focusable controls */}
+      </Pane>
+      <Pane paneId="editor" paneTitle="Editor" paneOrder={2}>
+        {/* Focusable controls */}
+      </Pane>
+    </div>
+  );
+}
+```
+
+### Single-Chord Matching & Keycap Formatting
+
+For standalone shortcuts outside a modal trie (such as `Mod+k` or `Shift+?`), use `matchesCommandHotkey`, `formatKeycap`, and `formatHotkeySequence` from `@cloudvoyant/helical-ui`:
+
+```ts
+import {
+  matchesCommandHotkey,
+  formatKeycap,
+  formatHotkeySequence,
+} from '@cloudvoyant/helical-ui';
+
+window.addEventListener('keydown', (event) => {
+  if (matchesCommandHotkey(event, 'Mod+k')) {
+    event.preventDefault();
+    // Open command palette
+  }
+});
+
+const symbols = formatHotkeySequence('Mod+Shift+P', { platform: 'mac' });
+// -> [['⌘', '⇧', 'P']]
+```
+
+## API Reference
+
+### Hooks & Services (`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`)
+
+| Export | Description |
+| --- | --- |
+| `WhichKeyProvider` | Context provider that owns and attaches a `WhichKeyController` instance to the document or scoped subtree. |
+| `useWhichKey()` | Returns reactive controller state (`preset`, `mode`, `leaderOnly`, `activePath`, `breadcrumb`, `panes`, `jumpAction`) and actions (`setPreset`, `setMode`, `setLeaderOnly`, `setJumpAction`, `openPrefix`, `closePrefix`, `openExplorer`, `focusPane`, `startJumpMode`, `executeCommand`). |
+| `useKeymap(nodes, options?)` | Merges a keymap trie layer into the active controller for the lifetime of the component. |
+| `useKeymapCommand(commandId, handler)` | Registers a handler for `commandId` for the lifetime of the component. |
+| `Pane` / `useRegisterPane` | Registers a focusable layout region for 2D spatial (`Ctrl-w h/j/k/l`), indexed (`Space 1..9`), and Jumplist (`Ctrl-o` / `Ctrl-i`) navigation. |
+| `WhichKeyMode` | Status badge displaying the active keyboard mode (`normal`, `select`, `insert`, `jump`, or `·lock`). |
+
+### Core Utilities (`@cloudvoyant/helical-ui`)
+
+| Export | Signature | Description |
+| --- | --- | --- |
+| `createWhichKeyController` | `(options?: WhichKeyControllerOptions) => WhichKeyController` | Creates a standalone, framework-agnostic modal keybinding and pane controller. |
+| `matchesCommandHotkey` | `(event: KeyboardEvent, hotkey: string) => boolean` | Matches a `KeyboardEvent` against a hotkey string such as `'Mod+k'` or `'Escape'`. |
+| `formatKeycap` | `(chord: string, options?: KbdFormatOptions) => string[]` | Splits and formats a single chord into platform modifier glyphs and key labels. |
+| `formatHotkeySequence` | `(hotkey: string \| string[], options?: KbdFormatOptions) => string[][]` | Formats a space-separated or array chord sequence into per-step keycap arrays. |
