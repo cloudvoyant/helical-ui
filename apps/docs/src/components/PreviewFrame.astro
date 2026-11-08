@@ -1,9 +1,4 @@
 ---
-// apps/docs/src/components/PreviewFrame.astro
-// Browser-chrome iframe demo for layout components. A fake address bar shows
-// the preview URL (click to open in a new tab), and desktop/mobile width
-// toggles sit in the chrome bar. The framework and theme sync with the docs
-// shell via postMessage.
 interface Props {
   component: string;
   example: string;
@@ -13,7 +8,6 @@ interface Props {
 
 const { component, example, title = 'helical-ui preview', desktopWidth } = Astro.props;
 const uid = `pf-${Math.random().toString(36).slice(2)}`;
-const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`;
 ---
 
 <div
@@ -135,8 +129,8 @@ const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`
     >
       <iframe
         data-preview
-        src={previewSrc}
         title={title}
+        loading="lazy"
         class="block h-full w-full border-0 bg-background opacity-0 transition-opacity duration-150"
       ></iframe>
     </div>
@@ -157,9 +151,6 @@ const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`
 </style>
 
 <script is:inline define:vars={{ uid, base: import.meta.env.BASE_URL }}>
-  // Mirrors FRAMEWORK_EVENT in lib/framework.ts. A define:vars script is inlined
-  // as a non-module script, so it can't use imports or import.meta — base comes
-  // in via define:vars and the event name is duplicated here on purpose.
   const FRAMEWORK_EVENT = 'vortex:framework';
 
   const root = document.getElementById(uid);
@@ -210,7 +201,6 @@ const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`
     };
 
     updateUrl();
-    setSrc();
     const revealFrame = () => {
       sendState();
       frame?.classList.remove('opacity-0');
@@ -222,6 +212,20 @@ const previewSrc = `${import.meta.env.BASE_URL}preview/${component}/${example}/`
       }
     } catch {}
     window.addEventListener(FRAMEWORK_EVENT, sendState);
+
+    if ('IntersectionObserver' in window) {
+      const loadObserver = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          loadObserver.disconnect();
+          setSrc();
+        },
+        { rootMargin: '600px 0px' },
+      );
+      loadObserver.observe(root);
+    } else {
+      setSrc();
+    }
     new MutationObserver(sendState).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],

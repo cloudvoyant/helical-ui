@@ -29,6 +29,8 @@ const groups = NAV_GROUPS;
               <li>
                 <a
                   href={href}
+                  data-sidebar-link
+                  aria-current={active ? 'page' : undefined}
                   class:list={[
                     'block rounded-md px-3 py-1.5 font-medium outline-none transition-colors',
                     active

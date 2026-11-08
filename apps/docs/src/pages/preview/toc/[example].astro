@@ -1,0 +1,176 @@
+---
+// apps/docs/src/pages/preview/toc/[example].astro
+// Full-bleed preview route rendered inside an iframe by PreviewFrame.astro.
+// Owns its own viewport, so 100svh / dvh resolve against the frame (like
+// production) instead of the docs page. The example is a path segment (static
+// hosting — query params are empty at build time); the active framework and
+// theme are pushed from the docs page via postMessage, and the non-active
+// framework's island is hidden with the same `html[data-framework]` CSS the docs
+// shell uses.
+//
+// Both islands mount at once, and the table-of-contents machine resolves each heading with
+// `document.getElementById`. Heading ids are therefore namespaced per framework
+// in the examples (`react-…` / `svelte-…`) so the hidden island's headings can
+// never shadow the active one's.
+import '../../../styles/global.css';
+import TocBasicReact from '../../../components/examples/toc/basic/react.tsx';
+import TocBasicSvelte from '../../../components/examples/toc/basic/svelte.svelte';
+import TocNestedHeadingsReact from '../../../components/examples/toc/nested-headings/react.tsx';
+import TocNestedHeadingsSvelte from '../../../components/examples/toc/nested-headings/svelte.svelte';
+import TocRootProviderReact from '../../../components/examples/toc/root-provider/react.tsx';
+import TocRootProviderSvelte from '../../../components/examples/toc/root-provider/svelte.svelte';
+import TocCollapsibleReact from '../../../components/examples/toc/collapsible/react.tsx';
+import TocCollapsibleSvelte from '../../../components/examples/toc/collapsible/svelte.svelte';
+import TocHoverReact from '../../../components/examples/toc/hover/react.tsx';
+import TocHoverSvelte from '../../../components/examples/toc/hover/svelte.svelte';
+import TocIndicatorReact from '../../../components/examples/toc/indicator/react.tsx';
+import TocIndicatorSvelte from '../../../components/examples/toc/indicator/svelte.svelte';
+import TocRailReact from '../../../components/examples/toc/rail/react.tsx';
+import TocRailSvelte from '../../../components/examples/toc/rail/svelte.svelte';
+import TocTreeViewReact from '../../../components/examples/toc/tree-view/react.tsx';
+import TocTreeViewSvelte from '../../../components/examples/toc/tree-view/svelte.svelte';
+import TocProseReact from '../../../components/examples/toc/prose/react.tsx';
+import TocProseSvelte from '../../../components/examples/toc/prose/svelte.svelte';
+
+export function getStaticPaths() {
+  const EXAMPLES = [
+    'basic',
+    'nested-headings',
+    'root-provider',
+    'collapsible',
+    'hover',
+    'indicator',
+    'rail',
+    'tree-view',
+    'prose',
+  ] as const;
+  return EXAMPLES.map((example) => ({ params: { example } }));
+}
+
+const { example } = Astro.params;
+const title = `Table of Contents preview — ${example}`;
+---
+
+<html lang="en" data-framework="react" class="theme-helical-ui">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-dvh bg-background text-foreground antialiased">
+    <div data-demo>
+      {example === 'basic' && (
+        <div data-fw="react">
+          <TocBasicReact client:load />
+        </div>
+      )}
+      {example === 'basic' && (
+        <div data-fw="svelte">
+          <TocBasicSvelte client:load />
+        </div>
+      )}
+      {example === 'nested-headings' && (
+        <div data-fw="react">
+          <TocNestedHeadingsReact client:load />
+        </div>
+      )}
+      {example === 'nested-headings' && (
+        <div data-fw="svelte">
+          <TocNestedHeadingsSvelte client:load />
+        </div>
+      )}
+      {example === 'root-provider' && (
+        <div data-fw="react">
+          <TocRootProviderReact client:load />
+        </div>
+      )}
+      {example === 'root-provider' && (
+        <div data-fw="svelte">
+          <TocRootProviderSvelte client:load />
+        </div>
+      )}
+      {example === 'collapsible' && (
+        <div data-fw="react">
+          <TocCollapsibleReact client:load />
+        </div>
+      )}
+      {example === 'collapsible' && (
+        <div data-fw="svelte">
+          <TocCollapsibleSvelte client:load />
+        </div>
+      )}
+      {example === 'hover' && (
+        <div data-fw="react">
+          <TocHoverReact client:load />
+        </div>
+      )}
+      {example === 'hover' && (
+        <div data-fw="svelte">
+          <TocHoverSvelte client:load />
+        </div>
+      )}
+      {example === 'indicator' && (
+        <div data-fw="react">
+          <TocIndicatorReact client:load />
+        </div>
+      )}
+      {example === 'indicator' && (
+        <div data-fw="svelte">
+          <TocIndicatorSvelte client:load />
+        </div>
+      )}
+      {example === 'rail' && (
+        <div data-fw="react">
+          <TocRailReact client:load />
+        </div>
+      )}
+      {example === 'rail' && (
+        <div data-fw="svelte">
+          <TocRailSvelte client:load />
+        </div>
+      )}
+      {example === 'tree-view' && (
+        <div data-fw="react">
+          <TocTreeViewReact client:load />
+        </div>
+      )}
+      {example === 'tree-view' && (
+        <div data-fw="svelte">
+          <TocTreeViewSvelte client:load />
+        </div>
+      )}
+      {example === 'prose' && (
+        <div data-fw="react">
+          <TocProseReact client:load />
+        </div>
+      )}
+      {example === 'prose' && (
+        <div data-fw="svelte">
+          <TocProseSvelte client:load />
+        </div>
+      )}
+    </div>
+  </body>
+</html>
+
+<script is:inline>
+  // The docs page (PreviewFrame.astro) pushes the active framework, theme name,
+  // and dark/light into the frame via postMessage; the non-active island is
+  // hidden by the same `html[data-framework]` CSS the docs shell uses.
+  window.addEventListener('message', (event) => {
+    if (event.origin !== location.origin) return;
+    const data = event.data ?? {};
+    if (data.framework === 'react' || data.framework === 'svelte') {
+      document.documentElement.dataset.framework = data.framework;
+    }
+    const root = document.documentElement;
+    if (typeof data.theme === 'string' && data.theme) {
+      root.classList.forEach((cls) => {
+        if (cls.startsWith('theme-')) root.classList.remove(cls);
+      });
+      root.classList.add(`theme-${data.theme}`);
+    }
+    if (data.dark === true) root.classList.add('dark');
+    else if (data.dark === false) root.classList.remove('dark');
+  });
+</script>

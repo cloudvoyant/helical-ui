@@ -138,3 +138,5 @@ Validate before committing (see [docs/development-guide.md](docs/development-gui
 ```sh
 mise run build && mise run test && mise run lint && mise run format:check && mise run e2e
 ```
+
+Keep reusable framework-neutral utilities in `libs/utils` and shared Playwright helpers in `libs/testing`. Expose narrow APIs through each package's `src/index.ts`. Keep `.test.ts` unit tests and `.spec.ts` integration or end-to-end tests behavior-oriented; assert visible state, navigation, accessibility, and interaction rather than implementation details. Organize test files with setup, tests, cleanup, and helpers sections where applicable, using Arrange, Act, Assert steps. Run `mise tasks` before selecting checks. Do not commit unless requested.

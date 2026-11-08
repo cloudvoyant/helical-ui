@@ -391,3 +391,4 @@ export type {
 } from '@cloudvoyant/helical-ui';
 export * from './which-key';
 export * from './editor';
+export * from './toc';
