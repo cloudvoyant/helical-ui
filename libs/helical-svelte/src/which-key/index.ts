@@ -13,6 +13,7 @@ export {
   useWhichKey,
   useKeymap,
   useKeymapScope,
+  useKeymapCommand,
   useOptionalPaneRegistration,
   type ReactiveWhichKeyContext,
   type UseWhichKeyReturn,
@@ -27,9 +28,12 @@ export type {
   KeymapExplorerEntry,
   KeymapHandler,
   KeymapMode,
+  KeymapNodesInput,
+  KeymapPriority,
   ModalEditorTarget,
   PaneProps,
   PaneRegistration,
+  RegisterKeymapOptions,
   WhichKeyController,
   WhichKeyControllerOptions,
   WhichKeyExplorerProps,
@@ -39,3 +43,4 @@ export type {
   WhichKeyState,
   WhichKeyVariant,
 } from '@cloudvoyant/helical-ui';
+export * from '@tanstack/svelte-hotkeys';

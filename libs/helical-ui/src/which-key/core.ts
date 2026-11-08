@@ -23,6 +23,7 @@ export interface WhichKeyNode {
   group?: string;
   icon?: string;
   mode?: KeymapMode | KeymapMode[];
+  when?: (ctx: KeymapCommandContext) => boolean;
   sticky?: boolean;
   loop?: boolean;
   proxy?: string[];
@@ -82,6 +83,14 @@ export function nodeMatchesMode(node: WhichKeyNode, mode?: KeymapMode): boolean 
   return node.mode === mode;
 }
 
+export function nodeExplicitlyIncludesMode(node: WhichKeyNode, mode: KeymapMode): boolean {
+  if (!node.mode) return false;
+  if (Array.isArray(node.mode)) {
+    return node.mode.includes(mode);
+  }
+  return node.mode === mode;
+}
+
 export function normalizeNodeModes(node: WhichKeyNode): KeymapMode[] {
   if (!node.mode) return ['normal'];
   return Array.isArray(node.mode) ? node.mode : [node.mode];
@@ -98,7 +107,7 @@ export function getNodeChildren(
     if (!visitedProxies.has(proxyKey)) {
       const nextVisited = new Set(visitedProxies);
       nextVisited.add(proxyKey);
-      const target = resolveNodeInternal(rootTrie, node.proxy, undefined, nextVisited);
+      const target = resolveNodeInternal(rootTrie, node.proxy, undefined, nextVisited, rootTrie);
       if (target) {
         proxyChildren = getNodeChildren(target, rootTrie, nextVisited);
       }
@@ -117,6 +126,7 @@ function resolveNodeInternal(
   path: string[],
   mode: KeymapMode | undefined,
   visitedProxies: Set<string>,
+  proxyRootTrie: Record<string, WhichKeyNode> = rootTrie,
 ): WhichKeyNode | null {
   if (path.length === 0) return null;
   let currentMap: Record<string, WhichKeyNode> = rootTrie;
@@ -130,7 +140,7 @@ function resolveNodeInternal(
     if (mode && !nodeMatchesMode(candidate, mode)) return null;
     currentNode = candidate;
     if (i < path.length - 1) {
-      currentMap = getNodeChildren(candidate, rootTrie, visitedProxies);
+      currentMap = getNodeChildren(candidate, proxyRootTrie, visitedProxies);
     }
   }
 
@@ -141,8 +151,9 @@ export function resolveNode(
   rootTrie: Record<string, WhichKeyNode>,
   path: string[],
   mode?: KeymapMode,
+  proxyRootTrie: Record<string, WhichKeyNode> = rootTrie,
 ): WhichKeyNode | null {
-  return resolveNodeInternal(rootTrie, path, mode, new Set());
+  return resolveNodeInternal(rootTrie, path, mode, new Set(), proxyRootTrie);
 }
 
 export function isGroupNode(node: WhichKeyNode, rootTrie: Record<string, WhichKeyNode>): boolean {

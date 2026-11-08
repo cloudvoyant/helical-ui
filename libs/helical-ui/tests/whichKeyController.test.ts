@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createWhichKeyController, registerModalEditor, type ModalEditorTarget } from '@cloudvoyant/helical-ui';
+import {
+  createWhichKeyController,
+  getDocumentWhichKeyController,
+  registerModalEditor,
+  type ModalEditorTarget,
+  type WhichKeyNode,
+} from '@cloudvoyant/helical-ui';
 
 // =============================================================================
 // Helpers
@@ -15,7 +21,7 @@ function createKeyEvent(
     metaKey: boolean;
     target: unknown;
   }> = {},
-): KeyboardEvent {
+): KeyboardEvent & { readonly propagationStopped: boolean } {
   let defaultPrevented = false;
   let propagationStopped = false;
   return {
@@ -41,7 +47,7 @@ function createKeyEvent(
     stopImmediatePropagation() {
       propagationStopped = true;
     },
-  } as unknown as KeyboardEvent;
+  } as unknown as KeyboardEvent & { readonly propagationStopped: boolean };
 }
 
 // =============================================================================
@@ -69,6 +75,7 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(stateAfterDirectQuestion.explorerOpen).toBe(true);
       expect(stateAfterSpace.isOpen).toBe(true);
       expect(stateAfterSpace.activePath).toEqual(['Space']);
+      expect(stateAfterSpace.items.some((item) => item.commandId?.startsWith('pane.focus.'))).toBe(false);
       expect(stateAfterQuestion.explorerOpen).toBe(true);
       expect(stateAfterQuestion.activePath).toEqual([]);
       expect(stateAfterQuestion.explorerEntries.length).toBeGreaterThan(15);
@@ -427,6 +434,525 @@ describe('Given a DOM element registered via registerModalEditor(dom, target)', 
       expect(mobileController.getState().isOpen).toBe(false);
       expect(handledWhenForced).toBe(true);
       expect(forcedController.getState().isOpen).toBe(true);
+    });
+  });
+});
+
+function createFakeElement(parent: HTMLElement | null = null): HTMLElement {
+  const el = {
+    parentElement: parent,
+    contains(candidate: Node | null): boolean {
+      let cur: HTMLElement | null = candidate as HTMLElement | null;
+      while (cur) {
+        if (cur === el) return true;
+        cur = cur.parentElement ?? null;
+      }
+      return false;
+    },
+  };
+  return el as unknown as HTMLElement;
+}
+
+describe('Given scoped priority keymap layers registered on WhichKeyController', () => {
+  describe('When multiple layers bind the same key across priority tiers and registration recency', () => {
+    it('Then evaluates overlay > widget > extension > editor > pane > global, and breaks ties by most recent registration', () => {
+      // Arrange
+      const calls: string[] = [];
+      const controller = createWhichKeyController();
+
+      controller.registerKeymap(
+        'global-layer',
+        {
+          k: {
+            key: 'k',
+            label: 'Global K',
+            action: () => {
+              calls.push('global');
+              return true;
+            },
+          },
+        },
+        { priority: 'global' },
+      );
+
+      controller.registerKeymap(
+        'pane-layer',
+        {
+          k: {
+            key: 'k',
+            label: 'Pane K',
+            action: () => {
+              calls.push('pane');
+              return true;
+            },
+          },
+        },
+        { priority: 'pane' },
+      );
+
+      controller.registerKeymap(
+        'editor-layer',
+        {
+          k: {
+            key: 'k',
+            label: 'Editor K',
+            action: () => {
+              calls.push('editor');
+              return true;
+            },
+          },
+        },
+        { priority: 'editor' },
+      );
+
+      controller.registerKeymap(
+        'extension-layer',
+        {
+          k: {
+            key: 'k',
+            label: 'Extension K',
+            action: () => {
+              calls.push('extension');
+              return true;
+            },
+          },
+        },
+        { priority: 'extension' },
+      );
+
+      const unregisterWidget1 = controller.registerKeymap(
+        'widget-layer-1',
+        {
+          k: {
+            key: 'k',
+            label: 'Widget 1 K',
+            action: () => {
+              calls.push('widget-1');
+              return true;
+            },
+          },
+        },
+        { priority: 'widget' },
+      );
+
+      const unregisterWidget2 = controller.registerKeymap(
+        'widget-layer-2',
+        {
+          k: {
+            key: 'k',
+            label: 'Widget 2 K',
+            action: () => {
+              calls.push('widget-2');
+              return true;
+            },
+          },
+        },
+        { priority: 'widget' },
+      );
+
+      const unregisterOverlay = controller.registerKeymap(
+        'overlay-layer',
+        {
+          k: {
+            key: 'k',
+            label: 'Overlay K',
+            action: () => {
+              calls.push('overlay');
+              return true;
+            },
+          },
+        },
+        { priority: 'overlay' },
+      );
+
+      // Act & Assert
+      controller.handleKeyDown(createKeyEvent('k'));
+      expect(calls).toEqual(['overlay']);
+
+      unregisterOverlay();
+      controller.handleKeyDown(createKeyEvent('k'));
+      expect(calls).toEqual(['overlay', 'widget-2']);
+
+      unregisterWidget2();
+      controller.handleKeyDown(createKeyEvent('k'));
+      expect(calls).toEqual(['overlay', 'widget-2', 'widget-1']);
+
+      unregisterWidget1();
+      controller.handleKeyDown(createKeyEvent('k'));
+      expect(calls).toEqual(['overlay', 'widget-2', 'widget-1', 'extension']);
+    });
+  });
+
+  describe('When layers specify DOM element containment and overlay priority', () => {
+    it('Then resolves portaled overlay layers first, followed by the deepest containing DOM element, and skips non-containing element layers', () => {
+      // Arrange
+      const calls: string[] = [];
+      const outerPane = createFakeElement(null);
+      const innerEditor = createFakeElement(outerPane);
+      const deepWidget = createFakeElement(innerEditor);
+      const unrelatedBranch = createFakeElement(outerPane);
+
+      let activeElement: HTMLElement | null = deepWidget;
+      const fakeDoc = {
+        get activeElement() {
+          return activeElement;
+        },
+      } as unknown as Document;
+
+      const controller = createWhichKeyController({ getDocument: () => fakeDoc });
+
+      controller.registerKeymap(
+        'outer-pane',
+        {
+          Enter: {
+            key: 'Enter',
+            label: 'Outer enter',
+            action: () => {
+              calls.push('outer');
+              return true;
+            },
+          },
+        },
+        { priority: 'pane', element: outerPane },
+      );
+
+      controller.registerKeymap(
+        'inner-editor',
+        {
+          Enter: {
+            key: 'Enter',
+            label: 'Inner enter',
+            action: () => {
+              calls.push('inner');
+              return true;
+            },
+          },
+        },
+        { priority: 'editor', element: () => innerEditor },
+      );
+
+      controller.registerKeymap(
+        'unrelated-widget',
+        {
+          Enter: {
+            key: 'Enter',
+            label: 'Unrelated enter',
+            action: () => {
+              calls.push('unrelated');
+              return true;
+            },
+          },
+        },
+        { priority: 'widget', element: unrelatedBranch },
+      );
+
+      let overlayOpen = true;
+      controller.registerKeymap(
+        'portaled-overlay',
+        {
+          Enter: {
+            key: 'Enter',
+            label: 'Overlay enter',
+            action: () => {
+              calls.push('overlay');
+              return true;
+            },
+          },
+        },
+        { priority: 'overlay', enabled: () => overlayOpen },
+      );
+
+      // Act 1: overlay is open -> portaled overlay wins over element-scoped layers
+      controller.handleKeyDown(createKeyEvent('Enter', { code: 'Enter', target: deepWidget }));
+
+      // Act 2: overlay closes -> deepest containing element (innerEditor) wins over outerPane, while unrelatedBranch is skipped
+      overlayOpen = false;
+      controller.handleKeyDown(createKeyEvent('Enter', { code: 'Enter', target: deepWidget }));
+
+      // Act 3: event.target is null, falls back to document.activeElement (outerPane)
+      activeElement = outerPane;
+      controller.handleKeyDown(createKeyEvent('Enter', { code: 'Enter', target: null }));
+
+      // Assert
+      expect(calls).toEqual(['overlay', 'inner', 'outer']);
+    });
+  });
+
+  describe('When a higher-priority layer has a failing when(ctx) predicate or returns false from action(ctx)', () => {
+    it('Then falls through to the next matching layer without clobbering lower layers, and only calls preventDefault/stopPropagation when a layer returns !== false', () => {
+      // Arrange
+      const calls: string[] = [];
+      let overlayHasSelection = false;
+      let editorCanHandleTab = false;
+
+      const controller = createWhichKeyController();
+
+      controller.registerKeymap(
+        'pane-fallback',
+        {
+          Tab: {
+            key: 'Tab',
+            label: 'Pane Tab',
+            action: () => {
+              calls.push('pane');
+              return false;
+            },
+          },
+        },
+        { priority: 'pane' },
+      );
+
+      controller.registerKeymap(
+        'editor-indent',
+        {
+          Tab: {
+            key: 'Tab',
+            label: 'Editor Indent',
+            action: () => {
+              calls.push('editor');
+              return editorCanHandleTab;
+            },
+          },
+        },
+        { priority: 'editor' },
+      );
+
+      controller.registerKeymap(
+        'overlay-completion',
+        {
+          Tab: {
+            key: 'Tab',
+            label: 'Accept Completion',
+            when: () => overlayHasSelection,
+            action: () => {
+              calls.push('overlay');
+              return true;
+            },
+          },
+        },
+        { priority: 'overlay' },
+      );
+
+      // Act 1: overlay when() is false, editor action returns false, pane action returns false -> event is NOT prevented
+      const unhandledTab = createKeyEvent('Tab', { code: 'Tab' });
+      const handled1 = controller.handleKeyDown(unhandledTab);
+
+      // Act 2: editor action returns true -> editor handles it and prevents default
+      editorCanHandleTab = true;
+      const editorTab = createKeyEvent('Tab', { code: 'Tab' });
+      const handled2 = controller.handleKeyDown(editorTab);
+
+      // Act 3: overlay when() is true -> overlay handles it first and prevents default
+      overlayHasSelection = true;
+      const overlayTab = createKeyEvent('Tab', { code: 'Tab' });
+      const handled3 = controller.handleKeyDown(overlayTab);
+
+      // Assert
+      expect(handled1).toBe(false);
+      expect(unhandledTab.defaultPrevented).toBe(false);
+      expect(unhandledTab.propagationStopped).toBe(false);
+
+      expect(handled2).toBe(true);
+      expect(editorTab.defaultPrevented).toBe(true);
+      expect(editorTab.propagationStopped).toBe(true);
+
+      expect(handled3).toBe(true);
+      expect(overlayTab.defaultPrevented).toBe(true);
+      expect(overlayTab.propagationStopped).toBe(true);
+
+      expect(calls).toEqual(['editor', 'pane', 'editor', 'overlay']);
+    });
+  });
+
+  describe('When in insert mode with active overlay and editor extension keymap layers', () => {
+    it('Then evaluates layers whose node mode explicitly includes "insert" before default Escape handling, and falls through to normal mode Escape once overlays decline', () => {
+      // Arrange
+      const calls: string[] = [];
+      let slashMenuOpen = true;
+      let inCodeBlock = true;
+
+      const controller = createWhichKeyController({ defaultMode: 'insert' });
+
+      // Normal-mode-only binding should NOT fire in insert mode
+      controller.registerKeymap(
+        'normal-only',
+        {
+          Enter: {
+            key: 'Enter',
+            label: 'Normal Enter',
+            mode: 'normal',
+            action: () => {
+              calls.push('normal-enter');
+              return true;
+            },
+          },
+        },
+        { priority: 'global' },
+      );
+
+      // Editor extension layer handling Tab and Shift-Tab (hyphen-separated chord) in insert mode conditionally
+      controller.registerKeymap(
+        'editor-extension',
+        () =>
+          ({
+            Tab: {
+              key: 'Tab',
+              label: 'Indent Code Block',
+              mode: ['insert'],
+              when: () => inCodeBlock,
+              action: () => {
+                calls.push('editor:tab');
+                return true;
+              },
+            },
+            'Shift-Tab': {
+              key: 'Shift-Tab',
+              label: 'Outdent Code Block',
+              mode: ['insert'],
+              when: () => inCodeBlock,
+              action: () => {
+                calls.push('editor:shift-tab');
+                return true;
+              },
+            },
+            'Mod-Enter': {
+              key: 'Mod-Enter',
+              label: 'Exit Code Block',
+              mode: ['insert'],
+              when: () => inCodeBlock,
+              action: () => {
+                calls.push('editor:mod-enter');
+                return true;
+              },
+            },
+          }) satisfies Record<string, WhichKeyNode>,
+        { priority: 'extension' },
+      );
+
+      // SlashMenu overlay handling ArrowDown, Enter, and Escape in insert mode (even when mode is omitted on overlay nodes)
+      controller.registerKeymap(
+        'slash-menu-overlay',
+        {
+          ArrowDown: {
+            key: 'ArrowDown',
+            label: 'Next Item',
+            when: () => slashMenuOpen,
+            action: () => {
+              calls.push('slash:down');
+              return true;
+            },
+          },
+          ArrowUp: {
+            key: 'ArrowUp',
+            label: 'Prev Item',
+            when: () => slashMenuOpen,
+            action: () => {
+              calls.push('slash:up');
+              return true;
+            },
+          },
+          Enter: {
+            key: 'Enter',
+            label: 'Select Item',
+            when: () => slashMenuOpen,
+            action: () => {
+              calls.push('slash:enter');
+              return true;
+            },
+          },
+          Escape: {
+            key: 'Escape',
+            label: 'Close Slash Menu',
+            when: () => slashMenuOpen,
+            action: () => {
+              calls.push('slash:escape');
+              slashMenuOpen = false;
+              return true;
+            },
+          },
+        },
+        { priority: 'overlay' },
+      );
+
+      // Act & Assert: ArrowDown, ArrowUp, Enter, Tab, Shift-Tab, and Mod-Enter are handled in insert mode
+      const downEv = createKeyEvent('ArrowDown', { code: 'ArrowDown' });
+      expect(controller.handleKeyDown(downEv)).toBe(true);
+      expect(downEv.defaultPrevented).toBe(true);
+
+      const upEv = createKeyEvent('ArrowUp', { code: 'ArrowUp' });
+      expect(controller.handleKeyDown(upEv)).toBe(true);
+
+      const enterEv = createKeyEvent('Enter', { code: 'Enter' });
+      expect(controller.handleKeyDown(enterEv)).toBe(true);
+
+      const tabEv = createKeyEvent('Tab', { code: 'Tab' });
+      expect(controller.handleKeyDown(tabEv)).toBe(true);
+
+      const shiftTabEv = createKeyEvent('Tab', { code: 'Tab', shiftKey: true });
+      expect(controller.handleKeyDown(shiftTabEv)).toBe(true);
+
+      const modEnterEv = createKeyEvent('Enter', { code: 'Enter', metaKey: true });
+      expect(controller.handleKeyDown(modEnterEv)).toBe(true);
+
+      // First Escape closes the slash menu AND keeps controller in insert mode
+      const firstEsc = createKeyEvent('Escape', { code: 'Escape' });
+      expect(controller.handleKeyDown(firstEsc)).toBe(true);
+      expect(firstEsc.defaultPrevented).toBe(true);
+      expect(controller.getState().mode).toBe('insert');
+
+      // Once slashMenuOpen is false, Enter is not handled by normal-only layer and falls through to browser/editor
+      const unhandledEnter = createKeyEvent('Enter', { code: 'Enter' });
+      expect(controller.handleKeyDown(unhandledEnter)).toBe(false);
+      expect(unhandledEnter.defaultPrevented).toBe(false);
+
+      // When inCodeBlock is false, Tab in insert mode falls through without preventDefault
+      inCodeBlock = false;
+      const unhandledTab = createKeyEvent('Tab', { code: 'Tab' });
+      expect(controller.handleKeyDown(unhandledTab)).toBe(false);
+      expect(unhandledTab.defaultPrevented).toBe(false);
+
+      // Second Escape falls through to default insert-mode Escape -> switches to normal mode
+      const secondEsc = createKeyEvent('Escape', { code: 'Escape' });
+      expect(controller.handleKeyDown(secondEsc)).toBe(true);
+      expect(secondEsc.defaultPrevented).toBe(true);
+      expect(controller.getState().mode).toBe('normal');
+
+      expect(calls).toEqual([
+        'slash:down',
+        'slash:up',
+        'slash:enter',
+        'editor:tab',
+        'editor:shift-tab',
+        'editor:mod-enter',
+        'slash:escape',
+      ]);
+    });
+  });
+
+  describe('When a scoped controller is attached to a document', () => {
+    it('Then exposes the controller via getDocumentWhichKeyController(doc) for portaled overlays outside component context', () => {
+      // Arrange
+      const scopeEl = createFakeElement(null);
+      const fakeDoc = {
+        activeElement: scopeEl,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as unknown as Document;
+
+      const controller = createWhichKeyController({
+        getDocument: () => fakeDoc,
+        getScopeElement: () => scopeEl,
+      });
+
+      // Act
+      const detach = controller.attach(fakeDoc);
+      const resolvedWhileAttached = getDocumentWhichKeyController(fakeDoc);
+      detach();
+      const resolvedAfterDetach = getDocumentWhichKeyController(fakeDoc);
+
+      // Assert
+      expect(resolvedWhileAttached).toBe(controller);
+      expect(resolvedAfterDetach).toBeNull();
     });
   });
 });

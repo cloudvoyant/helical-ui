@@ -216,3 +216,10 @@
   pointer-events: none;
   user-select: none;
 }
+
+.ProseMirror [data-pm-modal-node-selection] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-md, 0.375rem);
+  background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}

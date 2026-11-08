@@ -6,6 +6,7 @@ export {
   useOptionalWhichKeyController,
   useKeymap,
   useKeymapScope,
+  useKeymapCommand,
   useOptionalPaneRegistration,
   type WhichKeyProviderProps,
   type UseWhichKeyReturn,
@@ -24,11 +25,15 @@ export type {
   KeymapExplorerEntry,
   KeymapHandler,
   KeymapMode,
+  KeymapNodesInput,
+  KeymapPriority,
   ModalEditorTarget,
   PaneRegistration,
+  RegisterKeymapOptions,
   WhichKeyController,
   WhichKeyControllerOptions,
   WhichKeyNode,
   WhichKeyState,
   WhichKeyVariant,
 } from '@cloudvoyant/helical-ui';
+export * from '@tanstack/react-hotkeys';

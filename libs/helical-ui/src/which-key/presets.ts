@@ -191,18 +191,6 @@ function createWindowMenu(): WhichKeyNode {
 }
 
 function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
-  const paneSlots: Record<string, WhichKeyNode> = {};
-  for (let i = 1; i <= 9; i += 1) {
-    paneSlots[String(i)] = {
-      key: String(i),
-      label: `Focus Pane ${i}`,
-      description: `Switch focus directly to pane #${i}`,
-      category: 'Window / Pane',
-      commandId: `pane.focus.${i}`,
-      hidden: i > 4,
-    };
-  }
-
   return {
     key: leaderKey,
     label: 'Leader',
@@ -278,7 +266,6 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
           },
         },
       },
-      ...paneSlots,
     },
   };
 }

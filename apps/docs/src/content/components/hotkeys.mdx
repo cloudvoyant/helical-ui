@@ -5,7 +5,7 @@ order: 10
 group: keyboard
 ---
 
-`helical-ui` provides a complete keyboard navigation and modal editing layer shared across React and Svelte. The hotkey system separates **keyboard state and chord execution** (`WhichKeyProvider`, `useWhichKey`, `useKeymap`, `useKeymapCommand`, `Pane`, `WhichKeyMode`, `matchesCommandHotkey`) from the visual `WhichKey` chord popup.
+`helical-ui` provides a complete keyboard navigation, scoped priority keymap, and modal editing layer shared across React and Svelte. The hotkey system separates **keyboard state and chord execution** (`WhichKeyProvider`, `useWhichKey`, `useKeymap`, `useKeymapScope`, `useKeymapCommand`, `Pane`, `WhichKeyMode`, `matchesCommandHotkey`) from the visual `WhichKey` chord popup, and re-exports `@tanstack/hotkeys`, `@tanstack/react-hotkeys`, and `@tanstack/svelte-hotkeys` so consumers never need a separate hotkey dispatcher.
 
 ## Primitives & Hooks
 
@@ -65,6 +65,80 @@ function ProjectShortcuts({ onSave }: { onSave: () => void }) {
 }
 ```
 
+### Scoped Priority Keymaps, Conditional Fallthrough & Insert-Mode Overlays
+
+`useKeymap`, `useKeymapScope`, and `controller.registerKeymap` support scoped priority tiers (`'overlay' | 'widget' | 'extension' | 'editor' | 'pane' | 'global'`), DOM element containment (`element`), `when(ctx)` predicates on `WhichKeyNode`, and conditional `return false` fallthrough:
+
+- **Priority & Containment Ordering:** Active layers are evaluated in order: `overlay` priority first → innermost containing DOM `element` (`event.target` / `document.activeElement`) → priority tier (`overlay > widget > extension > editor > pane > global`) → most recent registration.
+- **Conditional Fallthrough:** `event.preventDefault()` and `event.stopPropagation()` are only called **after** `node.when?.(ctx)` passes and `node.action(ctx)` (or `executeCommand`) returns `true` (or `!== false`). Returning `false` from `when` or `action` falls through to the next matching layer and finally to the editor or browser.
+- **Insert-Mode Layer Evaluation:** While in `insert` mode, layers whose node `mode` explicitly includes `'insert'` (`mode: 'insert'` or `mode: ['normal', 'insert']`) are evaluated before the default `Escape → setMode('normal')` transition so editor overlays (`SlashMenu`, `MentionList`, popovers) and extensions can handle `Enter`, `Tab`, `ArrowUp`, `ArrowDown`, and `Escape`.
+- **Zero Prop-Drilling in Portals:** When `useKeymap` is called outside component context (such as a portaled overlay), it automatically falls back to `getDocumentWhichKeyController(document)`.
+
+```tsx
+import { useKeymap } from '@cloudvoyant/helical-react';
+
+function SlashMenuOverlay({
+  isOpen,
+  onMove,
+  onSelect,
+  onClose,
+}: {
+  isOpen: boolean;
+  onMove: (delta: 1 | -1) => void;
+  onSelect: () => boolean;
+  onClose: () => void;
+}) {
+  useKeymap(
+    {
+      ArrowDown: {
+        key: 'ArrowDown',
+        label: 'Next Item',
+        mode: 'insert',
+        when: () => isOpen,
+        action: () => {
+          onMove(1);
+          return true;
+        },
+      },
+      ArrowUp: {
+        key: 'ArrowUp',
+        label: 'Previous Item',
+        mode: 'insert',
+        when: () => isOpen,
+        action: () => {
+          onMove(-1);
+          return true;
+        },
+      },
+      Enter: {
+        key: 'Enter',
+        label: 'Select Item',
+        mode: 'insert',
+        when: () => isOpen,
+        // Returning false falls through to lower-priority layers / editor
+        action: () => onSelect(),
+      },
+      Escape: {
+        key: 'Escape',
+        label: 'Close Menu',
+        mode: 'insert',
+        when: () => isOpen,
+        action: () => {
+          onClose();
+          return true; // Consumes Escape without exiting insert mode
+        },
+      },
+    },
+    {
+      priority: 'overlay',
+      enabled: () => isOpen,
+    },
+  );
+
+  return null;
+}
+```
+
 ### Spatial Panes (`Pane` & `useRegisterPane`)
 
 Wrap distinct layout regions in `<Pane>` (or attach `useRegisterPane`) so users can move focus between regions spatially (`Ctrl-w h/j/k/l` or `Space w h/j/k/l`), jump directly by index (`Space 1..9`), and traverse focus history via the Jumplist (`Ctrl-o` / `Ctrl-i`):
@@ -108,6 +182,10 @@ const steps = formatKeySequence('Space w v');
 // -> ['Space', 'w', 'v']
 ```
 
+### TanStack Hotkeys Re-exports
+
+`@cloudvoyant/helical-ui` re-exports `@tanstack/hotkeys`, `@cloudvoyant/helical-react` re-exports `@tanstack/react-hotkeys`, and `@cloudvoyant/helical-svelte` re-exports `@tanstack/svelte-hotkeys` directly from the top-level package and `which-key` subpath barrels.
+
 ## API Reference
 
 ### Hooks & Services (`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`)
@@ -116,16 +194,32 @@ const steps = formatKeySequence('Space w v');
 | --- | --- |
 | `WhichKeyProvider` | Context provider that owns and attaches a `WhichKeyController` instance to the document or scoped subtree. |
 | `useWhichKey()` | Returns reactive controller state (`preset`, `mode`, `leaderOnly`, `activePath`, `breadcrumb`, `panes`, `jumpAction`) and actions (`setPreset`, `setMode`, `setLeaderOnly`, `setJumpAction`, `openPrefix`, `closePrefix`, `openExplorer`, `focusPane`, `startJumpMode`, `executeCommand`). |
-| `useKeymap(nodes, options?)` | Merges a keymap trie layer into the active controller for the lifetime of the component. |
-| `useKeymapCommand(commandId, handler)` | Registers a handler for `commandId` for the lifetime of the component. |
+| `useKeymap(nodes, options?)` | Registers a scoped, priority-ordered keymap layer (`nodes` object or `() => Record<string, WhichKeyNode>`) on the active context controller or `getDocumentWhichKeyController(document)`. |
+| `useKeymapScope(scopeId, nodes, enabledOrOptions?)` | Convenience wrapper around `useKeymap` that binds `scope: scopeId` with reactive `enabled` or `RegisterKeymapOptions`. |
+| `useKeymapCommand(commandId, handler, options?)` | Registers a handler for `commandId` for the lifetime of the component (falling back to the document controller when outside context). |
 | `Pane` / `useRegisterPane` | Registers a focusable layout region for 2D spatial (`Ctrl-w h/j/k/l`), indexed (`Space 1..9`), and Jumplist (`Ctrl-o` / `Ctrl-i`) navigation. |
 | `WhichKeyMode` | Status badge displaying the active keyboard mode (`normal`, `select`, `insert`, `jump`, or `·lock`). |
+
+### `RegisterKeymapOptions` & `WhichKeyNode`
+
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `options.priority` | `'overlay' \| 'widget' \| 'extension' \| 'editor' \| 'pane' \| 'global'` | `'pane'` (when `scope` set) or `'global'` | Priority tier used when ordering active keymap layers. |
+| `options.element` | `HTMLElement \| null \| (() => HTMLElement \| null)` | — | Optional DOM element scope; requires `event.target` or `document.activeElement` to be inside the element (deepest element wins). |
+| `options.matchesTarget` | `(target: EventTarget \| null, event: KeyboardEvent) => boolean` | — | Custom target predicate evaluated against `event.target ?? document.activeElement`. |
+| `options.enabled` | `boolean \| (() => boolean)` | `true` | Static boolean or reactive getter controlling whether the layer is active. |
+| `options.scope` | `string` | — | Optional `activePaneId` scope restriction. |
+| `node.when` | `(ctx: KeymapCommandContext) => boolean` | — | Optional guard predicate on a `WhichKeyNode`; returning `false` skips the node and falls through to lower-priority layers. |
+| `node.mode` | `KeymapMode \| KeymapMode[]` | `'normal'` | Modes in which the node is active. Explicitly include `'insert'` (`mode: 'insert'` or `mode: ['normal', 'insert']`) to evaluate the binding while in `insert` mode. |
+| `node.action` | `(ctx: KeymapCommandContext) => void \| boolean` | — | Leaf handler; returning `false` declines the event without `preventDefault()` and falls through to the next matching layer. |
 
 ### Core Utilities (`@cloudvoyant/helical-ui`)
 
 | Export | Signature | Description |
 | --- | --- | --- |
 | `createWhichKeyController` | `(options?: WhichKeyControllerOptions) => WhichKeyController` | Creates a standalone, framework-agnostic modal keybinding and pane controller. |
+| `getDocumentWhichKeyController` | `(doc?: Document) => WhichKeyController \| null` | Returns the active root or scoped `WhichKeyController` attached to `doc`. |
+| `subscribeDocumentWhichKeyController` | `(doc: Document \| undefined, listener: () => void) => () => void` | Subscribes to controller attach/detach changes on `doc`. |
 | `matchesCommandHotkey` | `(event: KeyboardEvent, hotkey: string) => boolean` | Matches a `KeyboardEvent` against a hotkey string such as `'Mod+k'` or `'Escape'`. |
 | `formatKeyChord` | `(chord: string, options?: { useSymbols?: boolean }) => string` | Formats a single chord with automatically inferred platform modifier symbols. |
 | `formatKeySequence` | `(hotkey: string \| readonly string[], options?: { useSymbols?: boolean }) => string[]` | Formats a space-separated or array chord sequence into per-step keycap labels. |

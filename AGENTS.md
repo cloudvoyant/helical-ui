@@ -95,6 +95,7 @@ export const badgeVariants = cva('inline-flex items-center', {
 
 - [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/architecture/components/<component>.md`.
 - [Proposed] Document complex UI components with `difflab templates scaffold ui-component-architecture`, using Mermaid diagrams for state transitions and data flow.
+- [Proposed] Keep `Behavior` and `Public API` sections in `docs/architecture/components/<component>.md` terse and in plain English; explain component wiring and runtime mechanics with Mermaid diagrams under `Design` and `Implementation` rather than prose paragraphs.
 - [Proposed] Prefer Tailwind utilities and `cva` variants in `libs/helical-ui/src/<component>.ts` over raw rules in [components.css](libs/helical-ui/src/components.css), reserving `components.css` for `@keyframes` or third-party selector overrides.
 
 ### React and Svelte

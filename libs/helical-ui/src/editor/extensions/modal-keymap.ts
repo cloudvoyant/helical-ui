@@ -45,6 +45,24 @@ export interface ModalKeymapStorage {
 
 export const modalKeymapPluginKey = new PluginKey<ModalKeymapPluginState>('modalKeymap');
 
+const NON_TEXT_MODAL_NODE_TYPES = new Set([
+  'notice',
+  'blockquote',
+  'codeBlock',
+  'imageNode',
+  'image',
+  'linkPreview',
+  'horizontalRule',
+  'urlMention',
+  'internalMention',
+  'unparsedBlock',
+  'unparsedInline',
+  'mathInline',
+  'mathBlock',
+  'mermaidBlock',
+  'manimBlock',
+]);
+
 interface BlockDescriptor {
   node: PMNode;
   pos: number;
@@ -165,10 +183,17 @@ function getCharEnd(doc: PMNode, pos: number): number {
     }
     return pos + 1;
   }
+  if (!$pos.parent.isTextblock) {
+    const after = $pos.nodeAfter;
+    if (after && after.isAtom) {
+      return pos + after.nodeSize;
+    }
+  }
   return pos;
 }
 
 function getCursorCharPos(doc: PMNode, sel: Selection): number {
+  if (sel instanceof NodeSelection) return sel.from;
   if (sel.empty) return sel.head;
   if (sel.head > sel.anchor) {
     const $head = doc.resolve(sel.head);
@@ -180,6 +205,7 @@ function getCursorCharPos(doc: PMNode, sel: Selection): number {
 }
 
 function getAnchorCharPos(doc: PMNode, sel: Selection): number {
+  if (sel instanceof NodeSelection) return sel.from;
   if (sel.empty) return sel.anchor;
   if (sel.head < sel.anchor) {
     const $anchor = doc.resolve(sel.anchor);
@@ -190,12 +216,197 @@ function getAnchorCharPos(doc: PMNode, sel: Selection): number {
   return sel.anchor;
 }
 
-function createExtendedSelection(doc: PMNode, sel: Selection, nextCursorChar: number): TextSelection {
-  const anchorChar = getAnchorCharPos(doc, sel);
-  if (nextCursorChar >= anchorChar) {
-    return TextSelection.create(doc, anchorChar, getCharEnd(doc, nextCursorChar));
+function getContainerInnerTextBounds(node: PMNode, nodePos: number): { firstTextStart: number; lastTextEnd: number } {
+  let firstTextStart = -1;
+  let lastTextEnd = -1;
+  if (node.isTextblock) {
+    return {
+      firstTextStart: nodePos + 1,
+      lastTextEnd: nodePos + 1 + node.content.size,
+    };
   }
-  return TextSelection.create(doc, getCharEnd(doc, anchorChar), nextCursorChar);
+  node.descendants((child, relPos) => {
+    if (child.isTextblock) {
+      const absStart = nodePos + 1 + relPos + 1;
+      const absEnd = absStart + child.content.size;
+      if (firstTextStart === -1) firstTextStart = absStart;
+      lastTextEnd = absEnd;
+      return false;
+    }
+    return true;
+  });
+  return { firstTextStart, lastTextEnd };
+}
+
+function expandWholeContainerRange(
+  doc: PMNode,
+  from: number,
+  to: number,
+  expandNotices = true,
+): { from: number; to: number } {
+  if (!expandNotices || from >= to) return { from, to };
+  let nextFrom = from;
+  let nextTo = to;
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (node.type.name === 'notice' || node.type.name === 'blockquote') {
+      const { firstTextStart, lastTextEnd } = getContainerInnerTextBounds(node, pos);
+      if (firstTextStart !== -1 && lastTextEnd !== -1 && nextFrom <= firstTextStart && nextTo >= lastTextEnd) {
+        nextFrom = Math.min(nextFrom, pos);
+        nextTo = Math.max(nextTo, pos + node.nodeSize);
+      }
+      return false;
+    }
+    if (node.isAtom && !node.isText) {
+      if (nextFrom <= pos && nextTo >= pos + node.nodeSize) {
+        nextFrom = Math.min(nextFrom, pos);
+        nextTo = Math.max(nextTo, pos + node.nodeSize);
+      }
+      return false;
+    }
+    return true;
+  });
+  return { from: nextFrom, to: nextTo };
+}
+
+function createSafeModalSelection(doc: PMNode, anchorPos: number, headPos: number): Selection {
+  const from = Math.min(anchorPos, headPos);
+  const to = Math.max(anchorPos, headPos);
+  if (from < to) {
+    const directNode = doc.nodeAt(from);
+    if (directNode && from + directNode.nodeSize === to && NodeSelection.isSelectable(directNode)) {
+      return NodeSelection.create(doc, from);
+    }
+  }
+
+  const resolveInlinePos = (pos: number, preferDir: 1 | -1): number => {
+    const clamped = Math.max(0, Math.min(doc.content.size, pos));
+    const $pos = doc.resolve(clamped);
+    if ($pos.parent.inlineContent) return clamped;
+    const found = Selection.findFrom($pos, preferDir, true) ?? Selection.findFrom($pos, -preferDir as 1 | -1, true);
+    return found ? (preferDir > 0 ? found.from : found.to) : clamped;
+  };
+
+  const forward = headPos >= anchorPos;
+  const safeAnchor = resolveInlinePos(anchorPos, forward ? 1 : -1);
+  const safeHead = resolveInlinePos(headPos, forward ? -1 : 1);
+  if (doc.resolve(safeAnchor).parent.inlineContent && doc.resolve(safeHead).parent.inlineContent) {
+    return TextSelection.create(doc, safeAnchor, safeHead);
+  }
+  return Selection.near(doc.resolve(headPos));
+}
+
+function createExtendedSelection(
+  doc: PMNode,
+  sel: Selection,
+  nextCursorChar: number,
+  targetAtomBlock?: BlockDescriptor,
+): Selection {
+  const anchorStart = sel instanceof NodeSelection ? sel.from : getAnchorCharPos(doc, sel);
+  const anchorEnd = sel instanceof NodeSelection ? sel.to : getCharEnd(doc, anchorStart);
+  const targetStart = targetAtomBlock ? targetAtomBlock.start : nextCursorChar;
+  const targetEnd = targetAtomBlock ? targetAtomBlock.end : getCharEnd(doc, nextCursorChar);
+
+  if (targetStart >= anchorStart) {
+    const rawFrom = anchorStart;
+    const rawTo = Math.max(anchorEnd, targetEnd);
+    return createSafeModalSelection(doc, rawFrom, rawTo);
+  }
+
+  const rawFrom = targetStart;
+  const rawTo = anchorEnd;
+  return createSafeModalSelection(doc, rawTo, rawFrom);
+}
+
+function findCurrentBlockIndex(blocks: BlockDescriptor[], doc: PMNode, sel: Selection): number {
+  if (blocks.length === 0) return -1;
+  if (sel instanceof NodeSelection) {
+    const nodeIdx = blocks.findIndex((b) => b.pos === sel.from);
+    if (nodeIdx !== -1) return nodeIdx;
+  }
+
+  const cursorPos = getCursorCharPos(doc, sel);
+  const textIdx = blocks.findIndex((b) => b.isTextblock && cursorPos >= b.start && cursorPos <= b.end);
+  if (textIdx !== -1) return textIdx;
+
+  if (!sel.empty) {
+    if (sel.head > sel.anchor) {
+      const forwardAtomIdx = blocks.findIndex((b) => b.isAtom && sel.head === b.end);
+      if (forwardAtomIdx !== -1) return forwardAtomIdx;
+    } else if (sel.head < sel.anchor) {
+      const backwardAtomIdx = blocks.findIndex((b) => b.isAtom && sel.head === b.start);
+      if (backwardAtomIdx !== -1) return backwardAtomIdx;
+    }
+  }
+
+  const atomIdx = blocks.findIndex((b) => b.isAtom && cursorPos >= b.start && cursorPos <= b.end);
+  return atomIdx !== -1 ? atomIdx : 0;
+}
+
+export function serializeModalSliceText(doc: PMNode, from: number, to: number): string {
+  if (from >= to) return '';
+  let hasRichNode = false;
+  const parts: string[] = [];
+
+  doc.nodesBetween(from, to, (node, pos) => {
+    const fullyCovered = pos >= from && pos + node.nodeSize <= to;
+    if (fullyCovered) {
+      if (node.type.name === 'imageNode' || node.type.name === 'image') {
+        hasRichNode = true;
+        parts.push(`![${String(node.attrs.alt ?? '')}](${String(node.attrs.src ?? '')})`);
+        return false;
+      }
+      if (node.type.name === 'linkPreview') {
+        hasRichNode = true;
+        const label = String(node.attrs.title || node.attrs.url || 'link');
+        parts.push(`[${label}](${String(node.attrs.url ?? '')})`);
+        return false;
+      }
+      if (node.type.name === 'urlMention') {
+        hasRichNode = true;
+        const label = String(node.attrs.title || node.attrs.url || 'mention');
+        parts.push(`[${label}](${String(node.attrs.url ?? '')})`);
+        return false;
+      }
+      if (node.type.name === 'internalMention') {
+        hasRichNode = true;
+        parts.push(`@${String(node.attrs.label || node.attrs.id || 'mention')}`);
+        return false;
+      }
+      if (node.type.name === 'horizontalRule') {
+        hasRichNode = true;
+        parts.push('---');
+        return false;
+      }
+      if (node.type.name === 'unparsedBlock' || node.type.name === 'unparsedInline') {
+        hasRichNode = true;
+        parts.push(String(node.attrs.raw ?? node.textContent ?? ''));
+        return false;
+      }
+      if (node.type.name === 'notice') {
+        hasRichNode = true;
+        const variant = String(node.attrs.variant ?? 'info');
+        const title = node.attrs.title ? `${String(node.attrs.title)}: ` : '';
+        parts.push(`::: ${variant}\n${title}${node.textContent}\n:::`);
+        return false;
+      }
+    }
+    if (node.isTextblock) {
+      const start = Math.max(from, pos + 1);
+      const end = Math.min(to, pos + 1 + node.content.size);
+      if (end > start) {
+        parts.push(doc.textBetween(start, end, '\n'));
+      }
+      return false;
+    }
+    return true;
+  });
+
+  if (hasRichNode && parts.length > 0) {
+    return parts.join('\n');
+  }
+  const plain = doc.textBetween(from, to, '\n');
+  if (plain) return plain;
+  return parts.join('\n');
 }
 
 function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions): ModalEditorTarget {
@@ -287,31 +498,57 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       }
 
       if (motion === 'lineSelect') {
-        const blocks = collectLeafBlocks(doc).filter((b) => b.isTextblock);
+        const blocks = collectLeafBlocks(doc);
         if (blocks.length === 0) return false;
 
-        const currentBlockIdx = blocks.findIndex((b) => sel.from >= b.start && sel.from <= b.end);
-        const startIdx = currentBlockIdx === -1 ? 0 : currentBlockIdx;
+        const currentBlockIdx = blocks.findIndex((b) =>
+          b.isTextblock ? sel.from >= b.start && sel.from <= b.end : sel.from >= b.start && sel.from < b.end,
+        );
+        const startIdx = currentBlockIdx === -1 ? findCurrentBlockIndex(blocks, doc, sel) : currentBlockIdx;
         const startBlock = blocks[startIdx]!;
 
-        const alreadyCoversCurrent = sel.from <= startBlock.start && sel.to >= startBlock.end && !sel.empty;
+        const alreadyCoversCurrent =
+          !sel.empty &&
+          sel.from <= startBlock.start &&
+          (startBlock.isAtom ? sel.to >= startBlock.end : sel.to >= startBlock.end);
 
         let endBlockIdx = startIdx + (steps - 1);
         if (alreadyCoversCurrent) {
-          const currentEndIdx = blocks.findIndex((b) => sel.to >= b.start && sel.to <= b.end);
-          endBlockIdx = (currentEndIdx === -1 ? startIdx : currentEndIdx) + steps;
+          let currentEndIdx = startIdx;
+          for (let i = startIdx; i < blocks.length; i += 1) {
+            const b = blocks[i]!;
+            if (sel.to >= b.start && sel.to <= b.end) {
+              currentEndIdx = i;
+            }
+          }
+          endBlockIdx = currentEndIdx + steps;
         }
         const endBlock = blocks[Math.min(blocks.length - 1, endBlockIdx)]!;
 
-        tr = tr.setSelection(TextSelection.create(doc, startBlock.start, endBlock.end));
-        tr = updateMeta(tr, { goalColumn: null });
+        if (startBlock === endBlock && startBlock.isAtom && NodeSelection.isSelectable(startBlock.node)) {
+          tr = tr.setSelection(NodeSelection.create(doc, startBlock.pos));
+        } else {
+          tr = tr.setSelection(createSafeModalSelection(doc, startBlock.start, endBlock.end));
+        }
+        if (mode === 'normal') {
+          getStorage().mode = 'select';
+          tr = updateMeta(tr, { mode: 'select', goalColumn: null });
+        } else {
+          tr = updateMeta(tr, { goalColumn: null });
+        }
         dispatchTransaction(editor, tr.scrollIntoView());
         return true;
       }
 
       if (motion === 'lineStart' || motion === 'lineEnd') {
+        if (sel instanceof NodeSelection && !isExtend) {
+          return true;
+        }
         const cursorPos = getCursorCharPos(doc, sel);
         const $head = doc.resolve(cursorPos);
+        if (!$head.parent.isTextblock) {
+          return false;
+        }
         if (isExtend) {
           const dest = motion === 'lineStart' ? $head.start() : Math.max($head.start(), $head.end() - 1);
           tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
@@ -342,21 +579,19 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const blocks = collectLeafBlocks(doc);
         if (blocks.length === 0) return false;
 
-        const cursorPos = getCursorCharPos(doc, sel);
-        let currentIdx = blocks.findIndex((b) =>
-          b.isTextblock ? cursorPos >= b.start && cursorPos <= b.end : sel.from === b.pos,
-        );
-        if (currentIdx === -1) {
-          currentIdx = 0;
-        }
+        const currentIdx = findCurrentBlockIndex(blocks, doc, sel);
         const targetIdx = Math.max(0, Math.min(blocks.length - 1, currentIdx + dir * steps));
         const targetBlock = blocks[targetIdx]!;
 
-        if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
+        if (isExtend) {
+          if (targetBlock.isAtom) {
+            tr = tr.setSelection(createExtendedSelection(doc, sel, targetBlock.start, targetBlock));
+          } else {
+            const dest = dir > 0 ? Math.max(targetBlock.start, targetBlock.end - 1) : targetBlock.start;
+            tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
+          }
+        } else if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
           tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
-        } else if (isExtend) {
-          const dest = dir > 0 ? Math.max(targetBlock.start, targetBlock.end - 1) : targetBlock.start;
-          tr = tr.setSelection(createExtendedSelection(doc, sel, dest));
         } else if (isSelectionFirst) {
           tr = tr.setSelection(TextSelection.create(doc, targetBlock.start, targetBlock.end));
         } else {
@@ -381,6 +616,10 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
             const childNode = dir > 0 ? $pos.nodeAfter : $pos.nodeBefore;
             if (childNode && childNode.isAtom && !childNode.isText && NodeSelection.isSelectable(childNode)) {
               const atomPos = dir > 0 ? targetPos : targetPos - childNode.nodeSize;
+              if (isExtend) {
+                targetPos = atomPos;
+                continue;
+              }
               tr = tr.setSelection(NodeSelection.create(doc, atomPos));
               tr = updateMeta(tr, { goalColumn: null });
               dispatchTransaction(editor, tr.scrollIntoView());
@@ -413,27 +652,27 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         if (blocks.length === 0) return false;
 
         const cursorPos = getCursorCharPos(doc, sel);
-        let currentIdx = blocks.findIndex((b) =>
-          b.isTextblock ? cursorPos >= b.start && cursorPos <= b.end : sel.from === b.pos,
-        );
-        if (currentIdx === -1) {
-          currentIdx = 0;
-        }
+        const currentIdx = findCurrentBlockIndex(blocks, doc, sel);
         const currentBlock = blocks[currentIdx]!;
-        const currentColumn = currentBlock.isTextblock ? cursorPos - currentBlock.start : 0;
+        const currentColumn = currentBlock.isTextblock ? Math.max(0, cursorPos - currentBlock.start) : 0;
         const goalCol = pluginState?.goalColumn ?? currentColumn;
 
         const targetIdx = Math.max(0, Math.min(blocks.length - 1, currentIdx + dir * steps));
         const targetBlock = blocks[targetIdx]!;
 
-        if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
+        if (isExtend) {
+          if (targetBlock.isAtom) {
+            tr = tr.setSelection(createExtendedSelection(doc, sel, targetBlock.start, targetBlock));
+          } else {
+            const maxTargetPos = targetBlock.end > targetBlock.start ? targetBlock.end - 1 : targetBlock.start;
+            const nextHead = dir > 0 ? maxTargetPos : Math.min(targetBlock.start + goalCol, maxTargetPos);
+            tr = tr.setSelection(createExtendedSelection(doc, sel, nextHead));
+          }
+        } else if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
           tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
         } else {
-          const maxTargetPos = targetBlock.end > targetBlock.start ? targetBlock.end - 1 : targetBlock.start;
-          const nextHead = Math.min(targetBlock.start + goalCol, isExtend ? maxTargetPos : targetBlock.end);
-          tr = tr.setSelection(
-            isExtend ? createExtendedSelection(doc, sel, nextHead) : TextSelection.create(doc, nextHead),
-          );
+          const nextHead = Math.min(targetBlock.start + goalCol, targetBlock.end);
+          tr = tr.setSelection(TextSelection.create(doc, nextHead));
         }
 
         tr = updateMeta(tr, { goalColumn: goalCol });
@@ -552,25 +791,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       if (!targetNode || targetPos < 0) return false;
 
       const foundNode: PMNode = targetNode;
-      let firstTextStart = -1;
-      let lastTextEnd = -1;
-
-      foundNode.descendants((child, relPos) => {
-        if (child.isTextblock) {
-          const absStart = targetPos + 1 + relPos + 1;
-          const absEnd = absStart + child.content.size;
-          if (firstTextStart === -1) firstTextStart = absStart;
-          lastTextEnd = absEnd;
-          return false;
-        }
-        return true;
-      });
-
-      if (foundNode.isTextblock) {
-        firstTextStart = targetPos + 1;
-        lastTextEnd = targetPos + 1 + foundNode.content.size;
-      }
-
+      const { firstTextStart, lastTextEnd } = getContainerInnerTextBounds(foundNode, targetPos);
       if (firstTextStart === -1 || lastTextEnd === -1) return false;
 
       if (isInner) {
@@ -579,12 +800,9 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         return true;
       }
 
-      // Around ('a*'): include full node range or surrounding block boundaries
-      const nodeStart = Selection.findFrom(doc.resolve(targetPos), 1, true)?.from ?? firstTextStart;
-      const nodeEnd = Selection.findFrom(doc.resolve(targetPos + foundNode.nodeSize), -1, true)?.to ?? lastTextEnd;
-      const tr = state.tr.setSelection(
-        TextSelection.create(doc, Math.min(nodeStart, firstTextStart), Math.max(nodeEnd, lastTextEnd)),
-      );
+      // Around ('a*'): select the full outer block node [targetPos, targetPos + foundNode.nodeSize]
+      // so yanking or deleting 'an' / 'ac' / 'ap' / 'al' operates on the entire node including its wrapper.
+      const tr = state.tr.setSelection(createSafeModalSelection(doc, targetPos, targetPos + foundNode.nodeSize));
       dispatchTransaction(editor, tr.scrollIntoView());
       return true;
     },
@@ -597,14 +815,16 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       const currentSecondary = pluginState?.secondaryRanges ?? [];
 
       if (action === 'collapse') {
-        let tr = state.tr.setSelection(TextSelection.create(doc, getCursorCharPos(doc, sel)));
+        const nextSelection =
+          sel instanceof NodeSelection ? sel : TextSelection.create(doc, getCursorCharPos(doc, sel));
+        let tr = state.tr.setSelection(nextSelection);
         tr = updateMeta(tr, { secondaryRanges: [] });
         dispatchTransaction(editor, tr);
         return true;
       }
 
       if (action === 'flip') {
-        if (sel.empty) return false;
+        if (sel.empty || sel instanceof NodeSelection) return false;
         const tr = state.tr.setSelection(TextSelection.create(doc, sel.head, sel.anchor));
         dispatchTransaction(editor, tr);
         return true;
@@ -651,7 +871,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       return false;
     },
 
-    execOperator(op: ModalOperator, { count }): { enterInsert?: boolean; yankedText?: string } | boolean {
+    execOperator(op: ModalOperator, { mode, count }): { enterInsert?: boolean; yankedText?: string } | boolean {
       const state = editor.state;
       const doc = state.doc;
       const sel = state.selection;
@@ -676,7 +896,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       }
 
       if (op === 'insertStart') {
-        let tr = state.tr.setSelection(TextSelection.create(doc, sel.from));
+        let tr = state.tr.setSelection(sel instanceof NodeSelection ? sel : TextSelection.create(doc, sel.from));
         tr = updateMeta(tr, { mode: 'insert', secondaryRanges: [] });
         storage.mode = 'insert';
         dispatchTransaction(editor, tr);
@@ -684,7 +904,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       }
 
       if (op === 'appendEnd') {
-        const dest = sel.empty ? Math.min(sel.$head.end(), sel.to + 1) : sel.to;
+        const dest = sel instanceof NodeSelection ? sel.to : sel.empty ? Math.min(sel.$head.end(), sel.to + 1) : sel.to;
         let tr = state.tr.setSelection(TextSelection.create(doc, dest));
         tr = updateMeta(tr, { mode: 'insert', secondaryRanges: [] });
         storage.mode = 'insert';
@@ -693,10 +913,21 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       }
 
       if (op === 'openBelow' || op === 'openAbove') {
-        const $pos = sel.$head;
-        const blockDepth = Math.max(1, $pos.depth);
-        const beforeBlock = $pos.before(blockDepth);
-        const afterBlock = $pos.after(blockDepth);
+        let beforeBlock: number;
+        let afterBlock: number;
+        if (sel instanceof NodeSelection && sel.node.isBlock) {
+          beforeBlock = sel.from;
+          afterBlock = sel.to;
+        } else {
+          const $pos = sel.$head;
+          if ($pos.depth >= 1) {
+            beforeBlock = $pos.before(1);
+            afterBlock = $pos.after(1);
+          } else {
+            beforeBlock = sel.from;
+            afterBlock = sel.to;
+          }
+        }
 
         const enforceH1 = options.enforceTitle !== false;
         const isFirstTitle =
@@ -728,17 +959,29 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
             primaryTo = Math.min($head.end(), primaryFrom + Math.max(1, count));
           }
         }
+      } else if (mode === 'select') {
+        const expanded = expandWholeContainerRange(doc, primaryFrom, primaryTo, true);
+        primaryFrom = expanded.from;
+        primaryTo = expanded.to;
       }
 
       if (op === 'yank') {
         const slice = doc.slice(primaryFrom, primaryTo);
         storage.registerSlice = slice;
         sharedRegisterSlice = slice;
-        const yankedText = doc.textBetween(primaryFrom, primaryTo, '\n');
+        const yankedText = serializeModalSliceText(doc, primaryFrom, primaryTo);
         if (yankedText && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
           void navigator.clipboard.writeText(yankedText).catch(() => {});
         }
-        const tr = state.tr.setSelection(TextSelection.create(doc, primaryFrom));
+        const collapsedSelection =
+          sel instanceof NodeSelection
+            ? NodeSelection.create(doc, sel.from)
+            : Selection.near(doc.resolve(primaryFrom), 1);
+        let tr = state.tr.setSelection(collapsedSelection);
+        if (mode === 'select') {
+          storage.mode = 'normal';
+          tr = updateMeta(tr, { mode: 'normal', secondaryRanges: [] });
+        }
         dispatchTransaction(editor, tr);
         return { enterInsert: false, yankedText };
       }
@@ -777,10 +1020,14 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
           }
         }
 
+        if (tr.doc.childCount === 0 && state.schema.nodes.paragraph) {
+          tr = tr.insert(0, state.schema.nodes.paragraph.create());
+        }
+
         const nextPos = Math.min(tr.doc.content.size, primaryClamped.from);
         const resolved = Selection.near(tr.doc.resolve(nextPos));
         tr = tr.setSelection(resolved);
-        const nextMode: KeymapMode = op === 'change' ? 'insert' : storage.mode;
+        const nextMode: KeymapMode = op === 'change' ? 'insert' : 'normal';
         storage.mode = nextMode;
         tr = updateMeta(tr, { mode: nextMode, secondaryRanges: [] });
         dispatchTransaction(editor, tr.scrollIntoView());
@@ -791,8 +1038,54 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         const slice = storage.registerSlice ?? sharedRegisterSlice;
         if (!slice || slice.size === 0) return false;
 
+        const isClosedBlockSlice =
+          slice.openStart === 0 && slice.openEnd === 0 && Boolean(slice.content.firstChild?.isBlock);
+
+        if (isClosedBlockSlice) {
+          let insertPos: number;
+          if (sel instanceof NodeSelection && sel.node.isBlock) {
+            insertPos = op === 'pasteAfter' ? sel.to : sel.from;
+          } else {
+            const $ref = op === 'pasteAfter' ? sel.$to : sel.$from;
+            if ($ref.depth >= 1) {
+              insertPos = op === 'pasteAfter' ? $ref.after(1) : $ref.before(1);
+            } else {
+              insertPos = op === 'pasteAfter' ? sel.to : sel.from;
+            }
+          }
+
+          const enforceH1 = options.enforceTitle !== false;
+          if (
+            enforceH1 &&
+            insertPos === 0 &&
+            doc.firstChild?.type.name === 'heading' &&
+            doc.firstChild.attrs.level === 1
+          ) {
+            insertPos = doc.firstChild.nodeSize;
+          }
+
+          let tr = state.tr;
+          let currentInsertPos = insertPos;
+          for (let i = 0; i < Math.max(1, count); i += 1) {
+            tr = tr.insert(currentInsertPos, slice.content);
+            currentInsertPos += slice.content.size;
+          }
+
+          const firstInserted = slice.content.firstChild;
+          if (firstInserted && firstInserted.isAtom && NodeSelection.isSelectable(firstInserted)) {
+            tr = tr.setSelection(NodeSelection.create(tr.doc, insertPos));
+          } else {
+            tr = tr.setSelection(Selection.near(tr.doc.resolve(Math.min(tr.doc.content.size, insertPos + 1)), 1));
+          }
+          if (mode === 'select') {
+            storage.mode = 'normal';
+            tr = updateMeta(tr, { mode: 'normal', secondaryRanges: [] });
+          }
+          dispatchTransaction(editor, tr.scrollIntoView());
+          return true;
+        }
+
         let insertPos = op === 'pasteAfter' ? sel.to : sel.from;
-        // If pasting a block slice or pasting after a collapsed cursor in normal mode
         if (op === 'pasteAfter' && sel.empty && sel.$head.parent.isTextblock && insertPos < sel.$head.end()) {
           insertPos += 1;
         }
@@ -800,6 +1093,10 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
         let tr = state.tr;
         for (let i = 0; i < Math.max(1, count); i += 1) {
           tr = tr.replaceRange(insertPos, insertPos, slice);
+        }
+        if (mode === 'select') {
+          storage.mode = 'normal';
+          tr = updateMeta(tr, { mode: 'normal', secondaryRanges: [] });
         }
         dispatchTransaction(editor, tr.scrollIntoView());
         return true;
@@ -840,7 +1137,7 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
       const doc = typeof document !== 'undefined' ? document : null;
       if (!doc) return false;
       const activePopup = doc.querySelector(
-        '[data-slash-menu-surface], [data-mention-menu-surface], [data-editor-slash-menu], [data-editor-mention-menu], .tippy-box[data-state="visible"]',
+        '[data-slash-menu-surface], [data-mention-menu-surface], [data-editor-slash-menu], [data-editor-mention-menu], [data-editor-overlay], .tippy-box[data-state="visible"]',
       );
       if (activePopup) return true;
 
@@ -962,7 +1259,20 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
         },
         props: {
           handleDOMEvents: {
-            mousedown(view) {
+            mousedown(view, event) {
+              const targetNode = event?.target instanceof Element ? event.target : null;
+              if (targetNode) {
+                if (targetNode.closest('[data-modal-ignore-pointer]')) {
+                  return false;
+                }
+                const nonEditable = targetNode.closest('[contenteditable="false"]');
+                if (nonEditable && view.dom.contains(nonEditable)) {
+                  const tag = targetNode.tagName.toLowerCase();
+                  if (tag !== 'input' && tag !== 'textarea' && !targetNode.closest('input, textarea')) {
+                    return false;
+                  }
+                }
+              }
               if (storage.mode !== 'insert') {
                 storage.mode = 'insert';
                 try {
@@ -1002,6 +1312,43 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
             const { doc, selection } = state;
             const head = selection.head;
 
+            const pushNodeDecorationsInRange = (from: number, to: number, isPrimary: boolean) => {
+              if (from >= to) return;
+              doc.nodesBetween(from, to, (node, pos) => {
+                const isRichModalNode = NON_TEXT_MODAL_NODE_TYPES.has(node.type.name) || (node.isAtom && !node.isText);
+                if (!isRichModalNode) return true;
+
+                const fullyCovered = pos >= from && pos + node.nodeSize <= to;
+                let innerCovered = false;
+                if (!fullyCovered && (node.type.name === 'notice' || node.type.name === 'blockquote')) {
+                  const { firstTextStart, lastTextEnd } = getContainerInnerTextBounds(node, pos);
+                  innerCovered =
+                    pluginState.mode === 'select' &&
+                    firstTextStart !== -1 &&
+                    lastTextEnd !== -1 &&
+                    from <= firstTextStart &&
+                    to >= lastTextEnd;
+                }
+
+                if (fullyCovered || innerCovered) {
+                  decos.push(
+                    Decoration.node(pos, pos + node.nodeSize, {
+                      class: isPrimary
+                        ? selection instanceof NodeSelection && pos === selection.from
+                          ? 'pm-modal-node-selection pm-modal-cursor'
+                          : 'pm-modal-node-selection'
+                        : 'pm-modal-node-selection pm-multi-selection',
+                      'data-pm-modal-node-selection': pluginState.mode,
+                      ...(isPrimary && selection instanceof NodeSelection && pos === selection.from
+                        ? { 'data-pm-modal-cursor': pluginState.mode }
+                        : {}),
+                    }),
+                  );
+                }
+                return true;
+              });
+            };
+
             const pushCursorDecoration = (pos: number, isMulti = false) => {
               if (pos < 0 || pos > doc.content.size) return;
               const $pos = doc.resolve(pos);
@@ -1015,6 +1362,16 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
                       ? { class: 'pm-multi-cursor', 'data-pm-multi-cursor': 'true' }
                       : { class: 'pm-modal-cursor', 'data-pm-modal-cursor': pluginState.mode },
                   ),
+                );
+                return;
+              }
+              if (nodeAfter && nodeAfter.isAtom && !nodeAfter.isText) {
+                decos.push(
+                  Decoration.node(pos, pos + nodeAfter.nodeSize, {
+                    class: 'pm-modal-node-selection pm-modal-cursor',
+                    'data-pm-modal-node-selection': pluginState.mode,
+                    'data-pm-modal-cursor': pluginState.mode,
+                  }),
                 );
                 return;
               }
@@ -1044,9 +1401,12 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
               }
             };
 
-            if (selection.empty) {
+            if (selection instanceof NodeSelection) {
+              pushNodeDecorationsInRange(selection.from, selection.to, true);
+            } else if (selection.empty) {
               pushCursorDecoration(head, false);
             } else if (selection.from < selection.to) {
+              pushNodeDecorationsInRange(selection.from, selection.to, true);
               decos.push(
                 Decoration.inline(selection.from, selection.to, {
                   class: 'pm-modal-selection',
@@ -1054,17 +1414,20 @@ export const ModalKeymap = Extension.create<ModalKeymapOptions, ModalKeymapStora
                 }),
               );
               const $head = doc.resolve(head);
-              const cursorPos =
-                selection.head > selection.anchor
-                  ? $head.nodeBefore?.isText && head - 1 >= selection.from
-                    ? head - 1
-                    : head
-                  : head;
-              pushCursorDecoration(cursorPos, false);
+              if ($head.parent.isTextblock) {
+                const cursorPos =
+                  selection.head > selection.anchor
+                    ? $head.nodeBefore?.isText && head - 1 >= selection.from
+                      ? head - 1
+                      : head
+                    : head;
+                pushCursorDecoration(cursorPos, false);
+              }
             }
 
             for (const range of pluginState.secondaryRanges) {
               if (range.from >= 0 && range.to <= doc.content.size && range.from < range.to) {
+                pushNodeDecorationsInRange(range.from, range.to, false);
                 decos.push(
                   Decoration.inline(range.from, range.to, {
                     class: 'pm-multi-selection',

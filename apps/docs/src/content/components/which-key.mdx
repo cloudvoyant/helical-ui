@@ -94,3 +94,13 @@ Trigger 2D jump labels with `g w` to either focus or activate any visible intera
 | `open` | `boolean` | — | Optional controlled open state. |
 | `onOpenChange` | `(open: boolean) => void` | — | Callback fired when the explorer Dialog opens or closes. |
 | `placeholder` | `string` | `'Search keybindings...'` | Placeholder text for the filter input. |
+
+### `useKeymap` & `RegisterKeymapOptions`
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `priority` | `'overlay' \| 'widget' \| 'extension' \| 'editor' \| 'pane' \| 'global'` | `'pane'` / `'global'` | Priority tier (`overlay` layers always run first, followed by deepest DOM `element`, priority tier, and registration recency). |
+| `element` | `HTMLElement \| null \| (() => HTMLElement \| null)` | — | Optional DOM containment target checked against `event.target` / `document.activeElement` (deepest element wins). |
+| `matchesTarget` | `(target: EventTarget \| null, event: KeyboardEvent) => boolean` | — | Optional custom predicate for filtering target elements. |
+| `enabled` | `boolean \| (() => boolean)` | `true` | Static boolean or reactive getter controlling whether the keymap layer is active. |
+| `scope` | `string` | — | Optional pane ID scope restriction. |
