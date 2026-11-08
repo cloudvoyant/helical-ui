@@ -14,6 +14,7 @@ import {
   generateJumpLabels,
   getNodeChildren,
   isGroupNode,
+  nodeExplicitlyIncludesMode,
   nodeMatchesMode,
   resolveNode,
 } from './core';
@@ -28,6 +29,8 @@ import {
   type KeymapExplorerEntry,
   type KeymapHandler,
   type KeymapMode,
+  type KeymapNodesInput,
+  type KeymapPriority,
   type ModalMotion,
   type ModalOperator,
   type ModalSelectionTransform,
@@ -35,17 +38,136 @@ import {
   type PaneDirection,
   type PaneRect,
   type PaneRegistration,
+  type RegisterKeymapOptions,
   type WhichKeyController,
   type WhichKeyControllerOptions,
   type WhichKeyNode,
   type WhichKeyState,
 } from './types';
 
+const PRIORITY_WEIGHT: Record<KeymapPriority, number> = {
+  overlay: 60,
+  widget: 50,
+  extension: 40,
+  editor: 30,
+  pane: 20,
+  global: 10,
+};
+
 interface RegisteredKeymapLayer {
   id: string;
-  nodes: Record<string, WhichKeyNode>;
+  nodes: KeymapNodesInput;
   scope?: string;
-  enabled: boolean;
+  enabled: boolean | (() => boolean);
+  priority: KeymapPriority;
+  hasElementOption: boolean;
+  element?: HTMLElement | null | (() => HTMLElement | null);
+  matchesTarget?: (target: EventTarget | null, event: KeyboardEvent) => boolean;
+  registrationOrder: number;
+}
+
+interface ResolvedActiveLayer {
+  id: string;
+  nodes: Record<string, WhichKeyNode>;
+  priority: KeymapPriority;
+  matchedElement: HTMLElement | null;
+  elementDepth: number;
+  registrationOrder: number;
+  isPreset?: boolean;
+}
+
+function resolveLayerEnabled(layer: RegisteredKeymapLayer): boolean {
+  try {
+    return typeof layer.enabled === 'function' ? Boolean(layer.enabled()) : Boolean(layer.enabled);
+  } catch {
+    return false;
+  }
+}
+
+function resolveLayerNodes(layer: RegisteredKeymapLayer): Record<string, WhichKeyNode> {
+  try {
+    return (typeof layer.nodes === 'function' ? layer.nodes() : layer.nodes) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function resolveLayerElement(layer: RegisteredKeymapLayer): HTMLElement | null {
+  if (!layer.hasElementOption) return null;
+  try {
+    return (typeof layer.element === 'function' ? layer.element() : layer.element) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function elementContains(container: Element, target: Element | null): boolean {
+  if (!target) return false;
+  if (container === target) return true;
+  if (typeof container.contains === 'function') {
+    try {
+      if (container.contains(target as Node)) return true;
+    } catch {
+      // Fallback to parentElement traversal for mock objects in unit tests
+    }
+  }
+  let curr: Element | null | undefined = target.parentElement;
+  while (curr) {
+    if (curr === container) return true;
+    curr = curr.parentElement;
+  }
+  return false;
+}
+
+function getElementDepth(el: Element): number {
+  let depth = 0;
+  let curr: Element | null | undefined = el.parentElement;
+  while (curr) {
+    depth += 1;
+    curr = curr.parentElement;
+  }
+  return depth;
+}
+
+function compareResolvedLayers(a: ResolvedActiveLayer, b: ResolvedActiveLayer): number {
+  if (Boolean(a.isPreset) !== Boolean(b.isPreset)) {
+    return a.isPreset ? 1 : -1;
+  }
+
+  // 1. Overlay priority first
+  const aIsOverlay = a.priority === 'overlay';
+  const bIsOverlay = b.priority === 'overlay';
+  if (aIsOverlay !== bIsOverlay) {
+    return aIsOverlay ? -1 : 1;
+  }
+
+  // 2. Innermost DOM element containment (deepest element wins)
+  if (a.matchedElement && b.matchedElement) {
+    if (a.matchedElement !== b.matchedElement) {
+      if (elementContains(a.matchedElement, b.matchedElement)) {
+        return 1;
+      }
+      if (elementContains(b.matchedElement, a.matchedElement)) {
+        return -1;
+      }
+      if (b.elementDepth !== a.elementDepth) {
+        return b.elementDepth - a.elementDepth;
+      }
+    }
+  } else if (a.matchedElement && !b.matchedElement) {
+    return -1;
+  } else if (!a.matchedElement && b.matchedElement) {
+    return 1;
+  }
+
+  // 3. Priority tier (overlay > widget > extension > editor > pane > global)
+  const weightDiff = PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
+  if (weightDiff !== 0) {
+    return weightDiff;
+  }
+
+  // 4. Registration recency (most recently registered wins)
+  return b.registrationOrder - a.registrationOrder;
 }
 
 function mergeKeymapTrees(
@@ -151,6 +273,21 @@ export function eventToChordKeys(event: KeyboardEvent): string[] {
     if (baseKey.length === 1 && baseKey.toLowerCase() !== baseKey) {
       candidates.push([...mods, baseKey.toLowerCase()].join('+'));
     }
+    if (hasCtrl !== hasMeta) {
+      const modAliasMods: string[] = ['Mod'];
+      if (hasAlt) modAliasMods.push('Alt');
+      if (hasShift) modAliasMods.push('Shift');
+      const modPrimary = [...modAliasMods, primaryKey].join('+');
+      if (!candidates.includes(modPrimary)) {
+        candidates.push(modPrimary);
+      }
+      if (baseKey.length === 1 && baseKey.toLowerCase() !== baseKey) {
+        const modLower = [...modAliasMods, baseKey.toLowerCase()].join('+');
+        if (!candidates.includes(modLower)) {
+          candidates.push(modLower);
+        }
+      }
+    }
     try {
       const parsed = parseKeyboardEvent(event);
       if (parsed?.key) {
@@ -171,7 +308,14 @@ export function eventToChordKeys(event: KeyboardEvent): string[] {
   }
 
   // No Ctrl/Alt/Meta: preserve exact case for single characters ('g' vs 'G', 'z' vs 'Z', '?' etc.)
-  const candidates: string[] = [baseKey];
+  const candidates: string[] = [];
+  if (hasShift && baseKey.length > 1) {
+    candidates.push(`Shift+${baseKey}`);
+    if (normalizedName !== baseKey) {
+      candidates.push(`Shift+${normalizedName}`);
+    }
+  }
+  candidates.push(baseKey);
   if (hasShift && baseKey.length === 1) {
     candidates.push(`Shift+${baseKey.toUpperCase()}`);
     candidates.push(`Shift+${baseKey}`);
@@ -284,6 +428,7 @@ function getJumpableItems(container: HTMLElement, ownScope?: HTMLElement | null)
 }
 
 interface AttachedControllerEntry {
+  controller: WhichKeyController;
   getScopeElement: () => HTMLElement | null;
   isBusy: () => boolean;
 }
@@ -323,7 +468,34 @@ function notifyRootControllerListeners(doc: Document): void {
 export function getDocumentWhichKeyController(doc?: Document): WhichKeyController | null {
   const resolved = doc ?? (typeof document !== 'undefined' ? document : undefined);
   if (!resolved) return null;
-  return rootControllerByDoc.get(resolved) ?? null;
+  const root = rootControllerByDoc.get(resolved);
+  if (root) return root;
+  const entries = attachedEntriesByDoc.get(resolved);
+  if (!entries || entries.size === 0) return null;
+  const activeEl =
+    resolved.activeElement && isElementLike(resolved.activeElement) ? (resolved.activeElement as HTMLElement) : null;
+  const focusedScope = activeEl ? ((activeEl.closest?.('[data-which-key-scope]') as HTMLElement | null) ?? null) : null;
+  if (focusedScope) {
+    for (const entry of entries) {
+      if (entry.getScopeElement() === focusedScope) {
+        return entry.controller;
+      }
+    }
+  }
+  const remembered = lastInteractedScopeByDoc.get(resolved) ?? null;
+  if (remembered) {
+    for (const entry of entries) {
+      if (entry.getScopeElement() === remembered) {
+        return entry.controller;
+      }
+    }
+  }
+  for (const entry of entries) {
+    if (isScopeElementActive(entry.getScopeElement(), resolved)) {
+      return entry.controller;
+    }
+  }
+  return Array.from(entries)[0]?.controller ?? null;
 }
 
 export function subscribeDocumentWhichKeyController(doc: Document | undefined, listener: () => void): () => void {
@@ -515,12 +687,16 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   const commandHandlers = new Map<string, KeymapHandler>();
   const panes = new Map<string, PaneRegistration>();
   const jumplist = createJumplist(50);
+  let layerRegistrationCounter = 0;
 
   if (options.keymap) {
     keymapLayers.set('__initial__', {
       id: '__initial__',
       nodes: options.keymap,
       enabled: true,
+      priority: 'global',
+      hasElementOption: false,
+      registrationOrder: ++layerRegistrationCounter,
     });
   }
 
@@ -568,12 +744,77 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     }
   }
 
-  function buildMergedTrie(): Record<string, WhichKeyNode> {
-    let trie = getPresetKeymap(preset, leaderKey);
+  function getOrderedActiveLayers(
+    event?: KeyboardEvent,
+    includePreset = true,
+    ignoreElementContainment = false,
+  ): ResolvedActiveLayer[] {
+    const doc = resolveDoc();
+    const rawEventTarget = event?.target ?? null;
+    const eventTargetEl = isElementLike(rawEventTarget) ? rawEventTarget : null;
+    const activeEl = doc?.activeElement && isElementLike(doc.activeElement) ? doc.activeElement : null;
+
+    const resolved: ResolvedActiveLayer[] = [];
+
     for (const layer of keymapLayers.values()) {
-      if (!layer.enabled) continue;
+      if (!resolveLayerEnabled(layer)) continue;
       if (layer.scope && layer.scope !== activePaneId) continue;
-      trie = mergeKeymapTrees(trie, layer.nodes);
+
+      let matchedElement: HTMLElement | null = null;
+      let elementDepth = -1;
+      if (layer.hasElementOption) {
+        const el = resolveLayerElement(layer);
+        if (!el) continue;
+        if (!ignoreElementContainment) {
+          const containsEventTarget = elementContains(el, eventTargetEl);
+          const containsActiveEl = elementContains(el, activeEl);
+          if (!containsEventTarget && !containsActiveEl) continue;
+        }
+        matchedElement = el;
+        elementDepth = getElementDepth(el);
+      }
+
+      if (layer.matchesTarget && event) {
+        const checkTarget = rawEventTarget ?? (activeEl as EventTarget | null);
+        try {
+          if (!layer.matchesTarget(checkTarget, event)) continue;
+        } catch {
+          continue;
+        }
+      }
+
+      resolved.push({
+        id: layer.id,
+        nodes: resolveLayerNodes(layer),
+        priority: layer.priority,
+        matchedElement,
+        elementDepth,
+        registrationOrder: layer.registrationOrder,
+      });
+    }
+
+    resolved.sort(compareResolvedLayers);
+
+    if (includePreset) {
+      resolved.push({
+        id: '__preset__',
+        nodes: getPresetKeymap(preset, leaderKey),
+        priority: 'global',
+        matchedElement: null,
+        elementDepth: -1,
+        registrationOrder: -1,
+        isPreset: true,
+      });
+    }
+
+    return resolved;
+  }
+
+  function buildMergedTrie(): Record<string, WhichKeyNode> {
+    const layers = getOrderedActiveLayers(undefined, true, true);
+    let trie: Record<string, WhichKeyNode> = {};
+    for (let i = layers.length - 1; i >= 0; i -= 1) {
+      trie = mergeKeymapTrees(trie, layers[i]!.nodes);
     }
     return trie;
   }
@@ -1854,23 +2095,32 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     return handled;
   }
 
-  function invokeNode(node: WhichKeyNode, event?: KeyboardEvent): boolean {
+  function createCommandContext(event?: KeyboardEvent): KeymapCommandContext {
     const count = countBuffer ? Math.max(1, Number.parseInt(countBuffer, 10)) : 1;
-    const ctx: KeymapCommandContext = {
+    return {
       count,
       mode,
       preset,
       activePaneId,
       event,
     };
+  }
+
+  function tryInvokeLeafNode(node: WhichKeyNode, ctx: KeymapCommandContext): boolean {
+    if (node.when && !node.when(ctx)) {
+      return false;
+    }
 
     let handled = false;
     if (node.action) {
       const res = node.action(ctx);
       handled = res !== false;
     }
-    if (!handled && node.commandId) {
+    if (!handled && !node.action && node.commandId) {
       handled = executeCommand(node.commandId, ctx);
+    }
+    if (!handled) {
+      return false;
     }
 
     countBuffer = '';
@@ -1878,7 +2128,116 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       activePath = [];
     }
     emit();
-    return handled;
+    return true;
+  }
+
+  function evaluateLayersInPrefix(
+    chordCandidates: string[],
+    event?: KeyboardEvent,
+  ): { handled: boolean; matchedAnyNode: boolean } {
+    const layers = getOrderedActiveLayers(event, true);
+    const mergedTrie = buildMergedTrie();
+    let matchedAnyNode = false;
+
+    for (const layer of layers) {
+      const parentNode = resolveNode(layer.nodes, activePath, mode, mergedTrie);
+      if (!parentNode) continue;
+      const children = getNodeChildren(parentNode, mergedTrie);
+
+      for (const candidate of chordCandidates) {
+        const child = children[candidate];
+        if (!child || !nodeMatchesMode(child, mode)) continue;
+        matchedAnyNode = true;
+
+        const ctx = createCommandContext(event);
+        if (child.when && !child.when(ctx)) continue;
+
+        if (!child.action && !child.commandId && isGroupNode(child, mergedTrie)) {
+          activePath = [...activePath, candidate];
+          if (child.sticky || child.loop) {
+            sticky = true;
+          }
+          announce(`${child.group ?? child.label} menu`);
+          emit();
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return { handled: true, matchedAnyNode: true };
+        }
+
+        if (tryInvokeLeafNode(child, ctx)) {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return { handled: true, matchedAnyNode: true };
+        }
+      }
+    }
+
+    return { handled: false, matchedAnyNode };
+  }
+
+  function evaluateLayersAtRoot(
+    chordCandidates: string[],
+    event: KeyboardEvent | undefined,
+    evalOptions: { insertModeOnly?: boolean; includePreset?: boolean } = {},
+  ): boolean {
+    const insertModeOnly = Boolean(evalOptions.insertModeOnly);
+    const includePreset = evalOptions.includePreset ?? !insertModeOnly;
+    const layers = getOrderedActiveLayers(event, includePreset);
+    let mergedTrieCache: Record<string, WhichKeyNode> | null = null;
+    const getMerged = () => (mergedTrieCache ??= buildMergedTrie());
+
+    for (const layer of layers) {
+      for (const candidate of chordCandidates) {
+        const node = layer.nodes[candidate];
+        if (!node) continue;
+
+        if (insertModeOnly) {
+          if (!nodeExplicitlyIncludesMode(node, 'insert')) continue;
+        } else if (!nodeMatchesMode(node, mode)) {
+          continue;
+        }
+
+        const ctx = createCommandContext(event);
+        if (node.when && !node.when(ctx)) continue;
+
+        if (!node.action && !node.commandId && isGroupNode(node, getMerged())) {
+          activePath = [candidate];
+          sticky = Boolean(node.sticky || node.loop);
+          announce(`${node.group ?? node.label} menu`);
+          emit();
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return true;
+        }
+
+        if (tryInvokeLeafNode(node, ctx)) {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function hasRegisteredNodeForCandidate(candidate: string, event?: KeyboardEvent): boolean {
+    const layers = getOrderedActiveLayers(event, false);
+    for (const layer of layers) {
+      const node = layer.nodes[candidate];
+      if (node && nodeMatchesMode(node, mode)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function executeExplorerEntry(entryOrId: KeymapExplorerEntry | string): boolean {
@@ -1971,60 +2330,39 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function triggerKey(key: string, event?: KeyboardEvent): boolean {
-    const rootTrie = buildMergedTrie();
+    if (mode === 'insert') {
+      return evaluateLayersAtRoot([key], event, { insertModeOnly: true, includePreset: false });
+    }
 
     if (activePath.length > 0) {
-      const currentParent = resolveNode(rootTrie, activePath, mode);
-      if (!currentParent) {
+      const { handled } = evaluateLayersInPrefix([key], event);
+      if (!handled && !sticky) {
         closePrefix();
-        return false;
       }
-      const children = getNodeChildren(currentParent, rootTrie);
-      const child = children[key];
-      if (!child || !nodeMatchesMode(child, mode)) {
-        if (!sticky) {
-          closePrefix();
-        }
-        return false;
-      }
-
-      if (isGroupNode(child, rootTrie)) {
-        activePath = [...activePath, key];
-        if (child.sticky || child.loop) {
-          sticky = true;
-        }
-        announce(`${child.group ?? child.label} menu`);
-        emit();
-        return true;
-      }
-
-      return invokeNode(child, event);
+      return handled;
     }
+
+    const rootTrie = buildMergedTrie();
 
     // At root of normal / select mode:
     // Check numeric count prefix [1-9] or [0-9] when countBuffer is already non-empty
-    if (/^[0-9]$/.test(key) && (countBuffer.length > 0 || key !== '0' || !rootTrie['0'])) {
+    if (
+      /^[0-9]$/.test(key) &&
+      !hasRegisteredNodeForCandidate(key, event) &&
+      (countBuffer.length > 0 || key !== '0' || !rootTrie['0'])
+    ) {
       if (countBuffer.length > 0 || key !== '0') {
         countBuffer += key;
         emit();
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
         return true;
       }
     }
 
-    const rootNode = rootTrie[key];
-    if (!rootNode || !nodeMatchesMode(rootNode, mode)) {
-      return false;
-    }
-
-    if (isGroupNode(rootNode, rootTrie)) {
-      activePath = [key];
-      sticky = Boolean(rootNode.sticky || rootNode.loop);
-      announce(`${rootNode.group ?? rootNode.label} menu`);
-      emit();
-      return true;
-    }
-
-    return invokeNode(rootNode, event);
+    return evaluateLayersAtRoot([key], event, { insertModeOnly: false, includePreset: true });
   }
 
   function handleKeyDown(event: KeyboardEvent): boolean {
@@ -2064,6 +2402,17 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     // 2. When in insert mode (or inside an editable input when mode === 'insert'):
     if (mode === 'insert') {
+      const insertChordCandidates = eventToChordKeys(event);
+      if (
+        insertChordCandidates.length > 0 &&
+        evaluateLayersAtRoot(insertChordCandidates, event, {
+          insertModeOnly: true,
+          includePreset: false,
+        })
+      ) {
+        return true;
+      }
+
       if (event.key === 'Escape') {
         // If inside a ProseMirror editor with an open slash/mention suggestion popup, let ProseMirror close it first
         if (editorTarget?.hasActiveSuggestion?.()) {
@@ -2103,23 +2452,71 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       const chordCandidates = eventToChordKeys(event);
       if (chordCandidates.length === 0) return false;
 
-      const rootTrie = buildMergedTrie();
-      const parentNode = resolveNode(rootTrie, activePath, mode);
-      const children = parentNode ? getNodeChildren(parentNode, rootTrie) : {};
-      const matchedChord = chordCandidates.find((c) => Boolean(children[c]));
-
-      event.preventDefault();
-      event.stopPropagation();
-      if (matchedChord) {
-        return triggerKey(matchedChord, event);
+      const { handled, matchedAnyNode } = evaluateLayersInPrefix(chordCandidates, event);
+      if (handled) {
+        return true;
       }
       if (!sticky) {
         closePrefix();
       }
-      return true;
+      if (!matchedAnyNode) {
+        event.preventDefault();
+        event.stopPropagation();
+        return true;
+      }
+      return false;
     }
 
     // 5. At root of normal / select mode:
+    const chordCandidates = eventToChordKeys(event);
+
+    // Preserve native Space key toggling on focused checkboxes, switches, radios, and component demo buttons.
+    if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && targetEl) {
+      const role = targetEl.getAttribute('role');
+      const isToggleControl =
+        (targetEl instanceof HTMLInputElement && (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
+        role === 'checkbox' ||
+        role === 'switch' ||
+        role === 'radio';
+      if (isToggleControl) {
+        return false;
+      }
+
+      const isButtonControl = targetEl.tagName === 'BUTTON' || role === 'button';
+      if (isButtonControl) {
+        const previewAncestor = targetEl.closest('[data-example-preview]');
+        const ownScope = options.getScopeElement?.() ?? null;
+        if (previewAncestor && (!ownScope || !previewAncestor.contains(ownScope))) {
+          return false;
+        }
+      }
+    }
+
+    // Evaluate numeric count prefix [1-9] (or 0 when countBuffer is non-empty) unless overridden by a registered layer
+    if (chordCandidates.length > 0) {
+      const rootTrie = buildMergedTrie();
+      for (const candidate of chordCandidates) {
+        if (
+          /^[0-9]$/.test(candidate) &&
+          !hasRegisteredNodeForCandidate(candidate, event) &&
+          (countBuffer.length > 0 || candidate !== '0' || !rootTrie['0'])
+        ) {
+          if (countBuffer.length > 0 || candidate !== '0') {
+            countBuffer += keyFromCandidate(candidate);
+            emit();
+            event.preventDefault();
+            event.stopPropagation();
+            return true;
+          }
+        }
+      }
+
+      // Priority-ordered layer evaluation (overlay -> deepest element -> priority tier -> recency -> preset)
+      if (evaluateLayersAtRoot(chordCandidates, event, { insertModeOnly: false, includePreset: true })) {
+        return true;
+      }
+    }
+
     if (event.key === 'Escape') {
       if (editorTarget && (mode === 'select' || !editorTarget.hasActiveSuggestion?.())) {
         event.preventDefault();
@@ -2194,28 +2591,6 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       return true;
     }
 
-    // Preserve native Space key toggling on focused checkboxes, switches, radios, and component demo buttons.
-    if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && targetEl) {
-      const role = targetEl.getAttribute('role');
-      const isToggleControl =
-        (targetEl instanceof HTMLInputElement && (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
-        role === 'checkbox' ||
-        role === 'switch' ||
-        role === 'radio';
-      if (isToggleControl) {
-        return false;
-      }
-
-      const isButtonControl = targetEl.tagName === 'BUTTON' || role === 'button';
-      if (isButtonControl) {
-        const previewAncestor = targetEl.closest('[data-example-preview]');
-        const ownScope = options.getScopeElement?.() ?? null;
-        if (previewAncestor && (!ownScope || !previewAncestor.contains(ownScope))) {
-          return false;
-        }
-      }
-    }
-
     if (
       editorTarget &&
       !editorTarget.hasActiveSuggestion?.() &&
@@ -2245,25 +2620,6 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       return true;
     }
 
-    const chordCandidates = eventToChordKeys(event);
-    if (chordCandidates.length === 0) return false;
-
-    const rootTrie = buildMergedTrie();
-    for (const candidate of chordCandidates) {
-      if (/^[0-9]$/.test(candidate) && (countBuffer.length > 0 || candidate !== '0' || !rootTrie['0'])) {
-        if (countBuffer.length > 0 || candidate !== '0') {
-          event.preventDefault();
-          event.stopPropagation();
-          return triggerKey(candidate, event);
-        }
-      }
-      if (rootTrie[candidate] && nodeMatchesMode(rootTrie[candidate]!, mode)) {
-        event.preventDefault();
-        event.stopPropagation();
-        return triggerKey(candidate, event);
-      }
-    }
-
     // If focused inside a text input or ProseMirror in normal/select mode, block unbound printable keys
     // from mutating the input/document while in normal/select mode.
     if (inEditable && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -2275,11 +2631,20 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     return false;
   }
 
+  function keyFromCandidate(candidate: string): string {
+    return candidate;
+  }
+
   function attach(target?: Document | HTMLElement): () => void {
     detachCleanups.forEach((fn) => fn());
     detachCleanups = [];
 
-    const doc = target instanceof Document ? target : (target?.ownerDocument ?? resolveDoc());
+    const doc =
+      typeof Document !== 'undefined' && target instanceof Document
+        ? target
+        : target && 'ownerDocument' in target && target.ownerDocument
+          ? target.ownerDocument
+          : ((target as Document | undefined) ?? resolveDoc());
     if (!doc) return () => {};
 
     const eventTarget: Document | HTMLElement = target ?? doc;
@@ -2308,6 +2673,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     }
 
     const entry: AttachedControllerEntry = {
+      controller: controllerApi,
       getScopeElement: () => options.getScopeElement?.() ?? null,
       isBusy: () => activePath.length > 0 || sticky || explorerOpen || mode === 'jump' || countBuffer.length > 0,
     };
@@ -2318,8 +2684,10 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       attachedEntriesByDoc.set(doc, docEntries);
     }
     docEntries.add(entry);
+    notifyRootControllerListeners(doc);
     detachCleanups.push(() => {
       docEntries?.delete(entry);
+      notifyRootControllerListeners(doc);
     });
 
     if (!options.getScopeElement?.()) {
@@ -2479,21 +2847,30 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     keymapLayers.clear();
   }
 
-  function registerKeymap(
-    id: string,
-    nodes: Record<string, WhichKeyNode>,
-    layerOptions?: { scope?: string; enabled?: boolean },
-  ): () => void {
-    keymapLayers.set(id, {
+  function registerKeymap(id: string, nodes: KeymapNodesInput, layerOptions?: RegisterKeymapOptions): () => void {
+    const hasElementOption =
+      layerOptions !== undefined &&
+      Object.prototype.hasOwnProperty.call(layerOptions, 'element') &&
+      layerOptions.element !== undefined;
+    const defaultPriority: KeymapPriority = layerOptions?.scope ? 'pane' : 'global';
+    const entry: RegisteredKeymapLayer = {
       id,
       nodes,
       scope: layerOptions?.scope,
       enabled: layerOptions?.enabled ?? true,
-    });
+      priority: layerOptions?.priority ?? defaultPriority,
+      hasElementOption,
+      element: layerOptions?.element,
+      matchesTarget: layerOptions?.matchesTarget,
+      registrationOrder: ++layerRegistrationCounter,
+    };
+    keymapLayers.set(id, entry);
     emit();
     return () => {
-      keymapLayers.delete(id);
-      emit();
+      if (keymapLayers.get(id) === entry) {
+        keymapLayers.delete(id);
+        emit();
+      }
     };
   }
 

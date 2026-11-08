@@ -154,6 +154,18 @@ export interface WhichKeyState {
   statusMessage: string;
 }
 
+export type KeymapPriority = 'overlay' | 'widget' | 'extension' | 'editor' | 'pane' | 'global';
+
+export type KeymapNodesInput = Record<string, WhichKeyNode> | (() => Record<string, WhichKeyNode>);
+
+export interface RegisterKeymapOptions {
+  scope?: string;
+  enabled?: boolean | (() => boolean);
+  priority?: KeymapPriority;
+  element?: HTMLElement | null | (() => HTMLElement | null);
+  matchesTarget?: (target: EventTarget | null, event: KeyboardEvent) => boolean;
+}
+
 export interface WhichKeyControllerOptions {
   preset?: KeybindingPreset;
   defaultMode?: KeymapMode;
@@ -204,11 +216,7 @@ export interface WhichKeyController {
   closeExplorer(): void;
   setExplorerQuery(query: string): void;
   executeExplorerEntry(entry: KeymapExplorerEntry | string): boolean;
-  registerKeymap(
-    id: string,
-    nodes: Record<string, WhichKeyNode>,
-    options?: { scope?: string; enabled?: boolean },
-  ): () => void;
+  registerKeymap(id: string, nodes: KeymapNodesInput, options?: RegisterKeymapOptions): () => void;
   registerCommand(commandId: string, handler: KeymapHandler): () => void;
   executeCommand(commandId: string, partialCtx?: Partial<KeymapCommandContext>): boolean;
   registerPane(pane: {

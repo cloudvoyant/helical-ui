@@ -19,10 +19,12 @@ import {
   type JumpAction,
   type KeybindingPreset,
   type KeymapCommandContext,
+  type KeymapHandler,
   type KeymapMode,
+  type KeymapNodesInput,
+  type RegisterKeymapOptions,
   type WhichKeyController,
   type WhichKeyControllerOptions,
-  type WhichKeyNode,
   type WhichKeyState,
 } from '@cloudvoyant/helical-ui';
 
@@ -227,24 +229,106 @@ export function useWhichKey(): UseWhichKeyReturn {
 }
 
 export function useKeymap(
-  nodes: Record<string, WhichKeyNode>,
-  options?: { scope?: string; enabled?: boolean },
+  nodes: KeymapNodesInput,
+  options?: RegisterKeymapOptions,
 ): void {
   const controller = useOptionalWhichKeyController();
   const layerId = useId();
+  const latestRef = useRef<{
+    nodes: KeymapNodesInput;
+    options?: RegisterKeymapOptions;
+  }>({ nodes, options });
+  latestRef.current = { nodes, options };
+
+  const isStaticDisabled = options?.enabled === false;
+  const hasElementOption = options !== undefined && 'element' in options;
+  const scope = options?.scope;
+  const priority = options?.priority;
 
   useEffect(() => {
-    if (!controller || options?.enabled === false) return;
-    return controller.registerKeymap(layerId, nodes, options);
-  }, [controller, layerId, nodes, options]);
+    if (!controller || isStaticDisabled) return;
+
+    const resolveNodes = () => {
+      const currentNodes = latestRef.current.nodes;
+      return typeof currentNodes === 'function' ? currentNodes() : currentNodes;
+    };
+
+    const registerOptions: RegisterKeymapOptions = {
+      scope,
+      priority,
+      enabled: () => {
+        const currentEnabled = latestRef.current.options?.enabled;
+        return typeof currentEnabled === 'function'
+          ? currentEnabled()
+          : (currentEnabled ?? true);
+      },
+      ...(hasElementOption
+        ? {
+            element: () => {
+              const currentElement = latestRef.current.options?.element;
+              return typeof currentElement === 'function'
+                ? currentElement()
+                : (currentElement ?? null);
+            },
+          }
+        : {}),
+      matchesTarget: (target, event) => {
+        const currentMatchesTarget = latestRef.current.options?.matchesTarget;
+        return currentMatchesTarget ? currentMatchesTarget(target, event) : true;
+      },
+    };
+
+    return controller.registerKeymap(layerId, resolveNodes, registerOptions);
+  }, [
+    controller,
+    layerId,
+    isStaticDisabled,
+    hasElementOption,
+    scope,
+    priority,
+  ]);
 }
 
 export function useKeymapScope(
   scopeId: string,
-  nodes: Record<string, WhichKeyNode>,
-  enabled = true,
+  nodes: KeymapNodesInput,
+  enabledOrOptions:
+    | boolean
+    | (() => boolean)
+    | Omit<RegisterKeymapOptions, 'scope'> = true,
 ): void {
-  useKeymap(nodes, { scope: scopeId, enabled });
+  if (
+    typeof enabledOrOptions === 'boolean' ||
+    typeof enabledOrOptions === 'function'
+  ) {
+    useKeymap(nodes, { scope: scopeId, enabled: enabledOrOptions });
+    return;
+  }
+  useKeymap(nodes, { ...enabledOrOptions, scope: scopeId });
+}
+
+export function useKeymapCommand(
+  commandId: string,
+  handler: KeymapHandler,
+  options?: { enabled?: boolean | (() => boolean) },
+): void {
+  const controller = useOptionalWhichKeyController();
+  const latestRef = useRef({ handler, options });
+  latestRef.current = { handler, options };
+  const isStaticDisabled = options?.enabled === false;
+
+  useEffect(() => {
+    if (!controller || isStaticDisabled) return;
+    return controller.registerCommand(commandId, (ctx) => {
+      const currentEnabled = latestRef.current.options?.enabled;
+      const enabled =
+        typeof currentEnabled === 'function'
+          ? currentEnabled()
+          : (currentEnabled ?? true);
+      if (!enabled) return false;
+      return latestRef.current.handler(ctx);
+    });
+  }, [controller, commandId, isStaticDisabled]);
 }
 
 export interface UsePaneRegistrationOptions {

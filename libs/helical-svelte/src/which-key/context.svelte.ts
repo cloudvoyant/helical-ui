@@ -1,10 +1,16 @@
 // libs/helical-svelte/src/which-key/context.svelte.ts
 import { getContext, hasContext, setContext } from 'svelte';
 import {
+  getDocumentWhichKeyController,
+  subscribeDocumentWhichKeyController,
   type JumpAction,
   type KeybindingPreset,
   type KeymapCommandContext,
+  type KeymapHandler,
   type KeymapMode,
+  type KeymapNodesInput,
+  type KeymapPriority,
+  type RegisterKeymapOptions,
   type WhichKeyController,
   type WhichKeyNode,
   type WhichKeyState,
@@ -22,12 +28,19 @@ export function setWhichKeyContext(ctx: ReactiveWhichKeyContext) {
 }
 
 export function getOptionalWhichKeyContext(): ReactiveWhichKeyContext | null {
-  if (!hasContext(WHICH_KEY_CONTEXT_KEY)) return null;
-  return getContext<ReactiveWhichKeyContext>(WHICH_KEY_CONTEXT_KEY) ?? null;
+  try {
+    if (!hasContext(WHICH_KEY_CONTEXT_KEY)) return null;
+    return getContext<ReactiveWhichKeyContext>(WHICH_KEY_CONTEXT_KEY) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function useOptionalWhichKeyController(): WhichKeyController | null {
-  return getOptionalWhichKeyContext()?.controller ?? null;
+  return (
+    getOptionalWhichKeyContext()?.controller ??
+    getDocumentWhichKeyController(typeof document !== 'undefined' ? document : undefined)
+  );
 }
 
 export function useWhichKeyController(): WhichKeyController {
@@ -155,17 +168,101 @@ export function useWhichKey(): UseWhichKeyReturn {
 
 let keymapCounter = 0;
 
-export function useKeymap(nodes: Record<string, WhichKeyNode>, options?: { scope?: string; enabled?: boolean }): void {
+export function useKeymap(nodes: KeymapNodesInput, options?: RegisterKeymapOptions): void {
   const ctx = getOptionalWhichKeyContext();
   const layerId = `svelte-keymap-${++keymapCounter}`;
-  $effect(() => {
-    if (!ctx || options?.enabled === false) return;
-    return ctx.controller.registerKeymap(layerId, nodes, options);
-  });
+
+  try {
+    $effect(() => {
+      if (options?.enabled === false) return;
+
+      const contextController = ctx?.controller ?? null;
+      if (contextController) {
+        return contextController.registerKeymap(layerId, nodes, options);
+      }
+
+      if (typeof document === 'undefined') return;
+      let unregister: (() => void) | null = null;
+      const sync = () => {
+        unregister?.();
+        unregister = null;
+        const docController = getDocumentWhichKeyController(document);
+        if (docController) {
+          unregister = docController.registerKeymap(layerId, nodes, options);
+        }
+      };
+      sync();
+      const unsubDoc = subscribeDocumentWhichKeyController(document, sync);
+      return () => {
+        unsubDoc();
+        unregister?.();
+      };
+    });
+  } catch {
+    if (options?.enabled === false) return;
+    const controller =
+      ctx?.controller ?? getDocumentWhichKeyController(typeof document !== 'undefined' ? document : undefined);
+    controller?.registerKeymap(layerId, nodes, options);
+  }
 }
 
-export function useKeymapScope(scopeId: string, nodes: Record<string, WhichKeyNode>, enabled = true): void {
-  useKeymap(nodes, { scope: scopeId, enabled });
+export function useKeymapScope(
+  scopeId: string,
+  nodes: KeymapNodesInput,
+  enabledOrOptions: boolean | (() => boolean) | Omit<RegisterKeymapOptions, 'scope'> = true,
+): void {
+  if (typeof enabledOrOptions === 'boolean' || typeof enabledOrOptions === 'function') {
+    useKeymap(nodes, { scope: scopeId, enabled: enabledOrOptions });
+    return;
+  }
+  useKeymap(nodes, { ...enabledOrOptions, scope: scopeId });
+}
+
+export function useKeymapCommand(
+  commandId: string,
+  handler: KeymapHandler,
+  options?: { enabled?: boolean | (() => boolean) },
+): void {
+  const ctx = getOptionalWhichKeyContext();
+
+  const wrappedHandler: KeymapHandler = (commandCtx) => {
+    const isEnabled = typeof options?.enabled === 'function' ? options.enabled() : (options?.enabled ?? true);
+    if (!isEnabled) return false;
+    return handler(commandCtx);
+  };
+
+  try {
+    $effect(() => {
+      if (options?.enabled === false) return;
+
+      const contextController = ctx?.controller ?? null;
+      if (contextController) {
+        return contextController.registerCommand(commandId, wrappedHandler);
+      }
+
+      if (typeof document === 'undefined') return;
+      let unregister: (() => void) | null = null;
+      const sync = () => {
+        unregister?.();
+        unregister = null;
+        const docController = getDocumentWhichKeyController(document);
+        if (docController) {
+          unregister = docController.registerCommand(commandId, wrappedHandler);
+        }
+      };
+      sync();
+      const unsubDoc = subscribeDocumentWhichKeyController(document, sync);
+      return () => {
+        unsubDoc();
+        unregister?.();
+      };
+    });
+  } catch {
+    if (options?.enabled === false) return;
+    const controller =
+      ctx?.controller ?? getDocumentWhichKeyController(typeof document !== 'undefined' ? document : undefined);
+    controller?.registerCommand(commandId, wrappedHandler);
+  }
 }
 
 export interface UsePaneRegistrationOptions {
@@ -251,4 +348,15 @@ export function useOptionalPaneRegistration(
   };
 }
 
-export type { JumpAction, KeybindingPreset, KeymapCommandContext, KeymapMode, WhichKeyNode, WhichKeyState };
+export type {
+  JumpAction,
+  KeybindingPreset,
+  KeymapCommandContext,
+  KeymapHandler,
+  KeymapMode,
+  KeymapNodesInput,
+  KeymapPriority,
+  RegisterKeymapOptions,
+  WhichKeyNode,
+  WhichKeyState,
+};
