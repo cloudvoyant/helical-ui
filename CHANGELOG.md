@@ -1,3 +1,10 @@
+# [0.23.0](https://github.com/cloudvoyant/helical-ui/compare/v0.22.0...v0.23.0) (2026-11-08)
+
+
+### Features
+
+* **which-key:** add scoped priority keymaps and fallthrough ([#38](https://github.com/cloudvoyant/helical-ui/issues/38)) ([d115214](https://github.com/cloudvoyant/helical-ui/commit/d115214f0291b0abbea6057dd9202ff2d52d2172))
+
 # [0.22.0](https://github.com/cloudvoyant/helical-ui/compare/v0.21.1...v0.22.0) (2026-11-08)
 
 
