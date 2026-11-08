@@ -28,7 +28,7 @@ export default function ReactColonCommandDefault() {
   // --- Render ---
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button variant="outline" data-testid="cc-default-open" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         Open Command Menu <Kbd size="sm">:</Kbd>
       </Button>
       <ColonCommand items={items} open={open} onOpenChange={setOpen} onSelectCommand={handleSelectCommand} />

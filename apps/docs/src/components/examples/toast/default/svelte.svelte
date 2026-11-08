@@ -18,7 +18,7 @@
 
 <!-- Render -->
 <HStack class="flex-wrap items-center gap-2">
-  <Button variant="outline" data-testid="toast-default-trigger" onclick={handleShowToast}>
+  <Button variant="outline" onclick={handleShowToast}>
     Show Toast
   </Button>
 </HStack>

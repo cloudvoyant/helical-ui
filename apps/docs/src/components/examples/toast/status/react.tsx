@@ -40,16 +40,16 @@ export default function ReactToastStatus() {
   // --- Render ---
   return (
     <HStack className="flex-wrap items-center gap-2">
-      <Button size="sm" variant="outline" data-testid="toast-status-info" onClick={showInfo}>
+      <Button size="sm" variant="outline" onClick={showInfo}>
         Info
       </Button>
-      <Button size="sm" variant="outline" color="success" data-testid="toast-status-success" onClick={showSuccess}>
+      <Button size="sm" variant="outline" color="success" onClick={showSuccess}>
         Success
       </Button>
-      <Button size="sm" variant="outline" color="warn" data-testid="toast-status-warning" onClick={showWarning}>
+      <Button size="sm" variant="outline" color="warn" onClick={showWarning}>
         Warning
       </Button>
-      <Button size="sm" variant="outline" color="danger" data-testid="toast-status-error" onClick={showError}>
+      <Button size="sm" variant="outline" color="danger" onClick={showError}>
         Error
       </Button>
     </HStack>

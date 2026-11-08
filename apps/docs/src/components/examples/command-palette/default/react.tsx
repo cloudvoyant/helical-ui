@@ -31,8 +31,8 @@ export default function ReactCommandPaletteDefault() {
   // --- Render ---
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button variant="outline" data-testid="cp-default-open" onClick={() => setOpen(true)}>
-        Open Command Palette <Kbd size="sm">⌘K</Kbd>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open Command Palette <Kbd size="sm" hotkey="Mod+K" />
       </Button>
       <CommandPalette items={items} open={open} onOpenChange={setOpen} onSelectCommand={handleSelectCommand} />
     </div>

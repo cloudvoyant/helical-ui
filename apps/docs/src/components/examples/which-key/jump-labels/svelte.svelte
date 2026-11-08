@@ -32,7 +32,6 @@
       <Pane
         paneId="wk-jump-pane"
         paneTitle="Jump Targets"
-        data-testid="wk-jump-surface"
         class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
       >
         <HStack class="flex-wrap items-center justify-between gap-2">
@@ -48,48 +47,32 @@
               }}
               aria-label="Jump action mode"
             >
-              <ToggleGroupItem
-                value="focus"
-                size="sm"
-                variant="outline"
-                data-testid="wk-jump-mode-focus"
-              >
+              <ToggleGroupItem value="focus" size="sm" variant="outline">
                 jumpAction: focus
               </ToggleGroupItem>
-              <ToggleGroupItem
-                value="activate"
-                size="sm"
-                variant="outline"
-                data-testid="wk-jump-mode-activate"
-              >
+              <ToggleGroupItem value="activate" size="sm" variant="outline">
                 jumpAction: activate
               </ToggleGroupItem>
             </ToggleGroup>
-            <Button
-              size="sm"
-              variant="outline"
-              data-testid="wk-jump-trigger"
-              onclick={() => wk.startJumpMode()}
-            >
+            <Button size="sm" variant="outline" onclick={() => wk.startJumpMode()}>
               Trigger Jump (<Kbd size="sm" hotkey="g w" />)
             </Button>
           </HStack>
 
           <HStack class="items-center gap-2 text-xs">
             <span>
-              Focused: <strong data-testid="wk-jump-focused">{focusedItem}</strong>
+              Focused: <strong>{focusedItem}</strong>
             </span>
             <Badge variant="subtle" color="primary">
-              Activated: <strong data-testid="wk-jump-activated">{activatedItem}</strong>
+              Activated: <strong>{activatedItem}</strong>
             </Badge>
           </HStack>
         </HStack>
 
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {#each JUMP_ITEMS as item, idx (item)}
+          {#each JUMP_ITEMS as item (item)}
             <button
               type="button"
-              data-testid={`wk-jump-target-${idx}`}
               onfocus={() => {
                 focusedItem = item;
               }}

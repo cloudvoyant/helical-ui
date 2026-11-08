@@ -18,10 +18,9 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-surface').click();
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
           await page.keyboard.press('Space');
 
-          await expect(demo.getByTestId('wk-default-prefix')).toHaveText('Space');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-variant', 'helix');
@@ -38,7 +37,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then drills into a submenu ("Space » w") and steps back on Backspace', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-surface').click();
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
           await page.keyboard.press('Space');
           await page.keyboard.press('w');
 
@@ -55,18 +54,17 @@ for (const framework of FRAMEWORKS) {
       test.describe('When a non-leader prefix (g) is pressed', () => {
         test('Then opens the Go to menu and executes ge and gg motions', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-surface').click();
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
 
           await page.keyboard.press('g');
           const panel = page.getByTestId('which-key-panel');
-          await expect(demo.getByTestId('wk-default-prefix')).toHaveText('g');
           await expect(panel).toBeVisible();
           await page.keyboard.press('e');
-          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docEnd');
+          await expect(demo).toContainText('motion.docEnd');
 
           await page.keyboard.press('g');
           await page.keyboard.press('g');
-          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docStart');
+          await expect(demo).toContainText('motion.docStart');
         });
       });
     });
@@ -80,23 +78,24 @@ for (const framework of FRAMEWORKS) {
       test.describe('When a non-leader prefix (g) is pressed', () => {
         test('Then keeps the popup hidden while still executing ge and gg chords', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-toggle-leader-only').click();
-          await expect(demo.getByTestId('wk-default-toggle-leader-only')).toHaveAttribute('aria-pressed', 'true');
-          await demo.getByTestId('wk-default-surface').click();
+          const toggleBtn = demo.getByRole('button', { name: /Popup:/i });
+          await toggleBtn.click();
+          await expect(toggleBtn).toHaveAttribute('aria-pressed', 'true');
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
 
           const panel = page.getByTestId('which-key-panel');
           await page.keyboard.press('g');
           await expect(panel).toBeHidden();
           await page.keyboard.press('e');
-          await expect(demo.getByTestId('wk-default-last-action')).toContainText('motion.docEnd');
+          await expect(demo).toContainText('motion.docEnd');
         });
       });
 
       test.describe('When the leader key (Space) is pressed', () => {
         test('Then opens the WhichKey popup', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-toggle-leader-only').click();
-          await demo.getByTestId('wk-default-surface').click();
+          await demo.getByRole('button', { name: /Popup:/i }).click();
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
 
           const panel = page.getByTestId('which-key-panel');
           await page.keyboard.press('Space');
@@ -117,8 +116,8 @@ for (const framework of FRAMEWORKS) {
       test.describe('When Escape is pressed', () => {
         test('Then closes only WhichKey and keeps the Dialog open', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-open-dialog').click();
-          const dialog = page.getByTestId('wk-default-dialog');
+          await demo.getByRole('button', { name: 'Open Modal Dialog' }).click();
+          const dialog = page.getByRole('dialog', { name: 'Nested Modal Layer' });
           await expect(dialog).toBeVisible();
 
           await page.keyboard.press('Space');
@@ -141,7 +140,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When opened via ?', () => {
         test('Then lists active preset bindings grouped by category', async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-surface').click();
+          await demo.locator('[data-pane-id="wk-explorer-pane"]').click();
           await page.keyboard.press('?');
 
           const explorer = page.getByTestId('which-key-explorer');
@@ -154,7 +153,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When filtered with a search query', () => {
         test('Then highlights matches and executes the selected command on Enter', async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-trigger').click();
+          await demo.getByRole('button', { name: /Open Explorer/i }).click();
           const explorer = page.getByTestId('which-key-explorer');
           const input = explorer.getByTestId('which-key-explorer-input');
           await expect(explorer).toBeVisible();
@@ -166,14 +165,14 @@ for (const framework of FRAMEWORKS) {
 
           await input.press('Enter');
           await expect(explorer).toBeHidden();
-          await expect(demo.getByTestId('wk-explorer-executed')).toHaveText('demo.formatDocument');
+          await expect(demo).toContainText('demo.formatDocument');
         });
       });
 
       test.describe('When Escape is pressed', () => {
         test('Then closes the explorer dialog', async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-trigger').click();
+          await demo.getByRole('button', { name: /Open Explorer/i }).click();
           const explorer = page.getByTestId('which-key-explorer');
           await expect(explorer).toBeVisible();
 
@@ -192,13 +191,13 @@ for (const framework of FRAMEWORKS) {
       test.describe('When preset is Helix', () => {
         test('Then opens Go to on g and sticky View mode on Shift+Z', async ({ page }) => {
           const demo = island(page, framework, 'presets');
-          await demo.getByTestId('wk-preset-item-0').focus();
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
 
           await page.keyboard.press('g');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await page.keyboard.press('e');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Delta Item');
+          await expect(demo).toContainText('Focused target: Delta Item');
 
           await page.keyboard.press('Shift+Z');
           await expect(panel).toBeVisible();
@@ -213,16 +212,16 @@ for (const framework of FRAMEWORKS) {
       test.describe('When preset is Vim or Kakoune', () => {
         test('Then executes Vim Shift+G / 0 motions and Kakoune Shift+V view lock', async ({ page }) => {
           const demo = island(page, framework, 'presets');
-          await demo.getByTestId('wk-preset-btn-vim').click();
-          await demo.getByTestId('wk-preset-item-0').focus();
+          await demo.getByRole('radio', { name: 'VIM' }).click();
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
 
           await page.keyboard.press('Shift+G');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Delta Item');
+          await expect(demo).toContainText('Focused target: Delta Item');
           await page.keyboard.press('0');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Alpha Item');
+          await expect(demo).toContainText('Focused target: Alpha Item');
 
-          await demo.getByTestId('wk-preset-btn-kakoune').click();
-          await demo.getByTestId('wk-preset-item-0').focus();
+          await demo.getByRole('radio', { name: 'KAKOUNE' }).click();
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
           await page.keyboard.press('Shift+V');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
@@ -244,29 +243,29 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'panes');
-          const btn1Pane1 = demo.getByTestId('wk-pane-1-btn-2');
+          const btn1Pane1 = demo.getByRole('button', { name: 'src/controller.ts' });
           await btn1Pane1.focus();
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
+          await expect(demo).toContainText('Active: pane-nav');
 
           await page.keyboard.press('Space');
           await page.keyboard.press('w');
           await page.keyboard.press('l');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-editor');
+          await expect(demo).toContainText('Active: pane-editor');
 
           await page.keyboard.press('Space');
           await page.keyboard.press('3');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-inspector');
+          await expect(demo).toContainText('Active: pane-inspector');
 
           await page.keyboard.press('Space');
           await page.keyboard.press('1');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
+          await expect(demo).toContainText('Active: pane-nav');
           await expect(btn1Pane1).toBeFocused();
 
           await page.keyboard.press('Control+o');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-inspector');
+          await expect(demo).toContainText('Active: pane-inspector');
 
           await page.keyboard.press('Control+i');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
+          await expect(demo).toContainText('Active: pane-nav');
         });
       });
     });
@@ -282,16 +281,17 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'forms');
-          const startBtn = demo.getByTestId('wk-form-btn-start');
-          const nameInput = demo.getByTestId('wk-form-input-name');
-          const notesInput = demo.getByTestId('wk-form-input-notes');
+          const startBtn = demo.getByRole('button', { name: /Focus Anchor Button/i });
+          const nameInput = demo.getByPlaceholder(/Project name/i);
+          const notesInput = demo.getByPlaceholder(/Commit notes/i);
+          const modeBadge = demo.getByTestId('which-key-mode-badge');
 
           await startBtn.focus();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
 
           await page.keyboard.press('j');
           await expect(nameInput).toBeFocused();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
 
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
@@ -300,13 +300,13 @@ for (const framework of FRAMEWORKS) {
           await page.keyboard.press('k');
           await expect(nameInput).toBeFocused();
           await page.keyboard.press('i');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/insert/i);
+          await expect(modeBadge).toHaveText(/insert/i);
 
           await page.keyboard.type('jk g');
           await expect(nameInput).toHaveValue('jk g');
 
           await page.keyboard.press('Escape');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
         });
@@ -325,7 +325,7 @@ for (const framework of FRAMEWORKS) {
           await demo.evaluate((el) =>
             el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior }),
           );
-          await demo.getByTestId('wk-jump-target-0').focus();
+          await demo.getByRole('button', { name: 'Deploy Service' }).focus();
 
           await page.keyboard.press('g');
           await page.keyboard.press('w');
@@ -335,7 +335,7 @@ for (const framework of FRAMEWORKS) {
           const badges = overlay.getByTestId('which-key-jump-badge');
           expect(await badges.count()).toBeGreaterThanOrEqual(4);
 
-          const targetBtn = demo.getByTestId('wk-jump-target-1');
+          const targetBtn = demo.getByRole('button', { name: 'Run Migrations' });
           const findLabelForTarget = async () => {
             const box = await targetBtn.boundingBox();
             expect(box).not.toBeNull();
@@ -362,11 +362,11 @@ for (const framework of FRAMEWORKS) {
           }
 
           await expect(overlay).toBeHidden();
-          await expect(demo.getByTestId('wk-jump-focused')).toHaveText('Run Migrations');
-          await expect(demo.getByTestId('wk-jump-activated')).toHaveText('None');
+          await expect(demo).toContainText('Focused: Run Migrations');
+          await expect(demo).toContainText('Activated: None');
 
-          await demo.getByTestId('wk-jump-mode-activate').click();
-          await demo.getByTestId('wk-jump-trigger').click();
+          await demo.getByRole('radio', { name: 'jumpAction: activate' }).click();
+          await demo.getByRole('button', { name: /Trigger Jump/i }).click();
           await expect(overlay).toBeVisible();
           await expect(overlay).toHaveAttribute('data-jump-action', 'activate');
 
@@ -376,7 +376,7 @@ for (const framework of FRAMEWORKS) {
           }
 
           await expect(overlay).toBeHidden();
-          await expect(demo.getByTestId('wk-jump-activated')).toHaveText('Run Migrations');
+          await expect(demo).toContainText('Activated: Run Migrations');
         });
       });
     });

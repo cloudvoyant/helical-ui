@@ -39,12 +39,11 @@
 <div class="flex flex-col items-center gap-4">
   <Button
     variant="outline"
-    data-testid="cp-default-open"
     onclick={() => {
       open = true;
     }}
   >
-    Open Command Palette <Kbd size="sm">⌘K</Kbd>
+    Open Command Palette <Kbd size="sm" hotkey="Mod+K" />
   </Button>
   <CommandPalette {items} bind:open onSelectCommand={handleSelectCommand} />
 </div>

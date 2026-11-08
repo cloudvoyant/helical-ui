@@ -45,12 +45,7 @@
       aria-label="Compactness size"
     >
       {#each SIZES as s (s)}
-        <ToggleGroupItem
-          value={s}
-          size="sm"
-          variant="outline"
-          data-testid={`cc-size-${s}`}
-        >
+        <ToggleGroupItem value={s} size="sm" variant="outline">
           {s === 'sm' ? 'Compact (sm)' : s === 'md' ? 'Default (md)' : 'Comfortable (lg)'}
         </ToggleGroupItem>
       {/each}
@@ -67,12 +62,7 @@
       aria-label="Completion columns"
     >
       {#each COLUMNS as col (String(col))}
-        <ToggleGroupItem
-          value={String(col)}
-          size="sm"
-          variant="outline"
-          data-testid={`cc-columns-${col}`}
-        >
+        <ToggleGroupItem value={String(col)} size="sm" variant="outline">
           {col === 'auto' ? 'auto cols' : `${col} col`}
         </ToggleGroupItem>
       {/each}

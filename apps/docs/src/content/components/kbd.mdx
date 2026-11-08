@@ -1,6 +1,6 @@
 ---
 title: Kbd
-description: Semantic keyboard keycap primitive for displaying single keys, modifier chords, and multi-step sequences.
+description: Semantic keyboard keycap primitive for displaying single keys, modifier chords, and registered command shortcuts.
 order: 8
 group: keyboard
 ---
@@ -8,7 +8,7 @@ group: keyboard
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-The `Kbd` component renders a semantic `<kbd>` keycap element or a multi-step sequence of keycaps for keyboard shortcuts and modal command prefixes.
+The `Kbd` component renders a semantic `<kbd>` keycap element or a multi-step sequence of keycaps for keyboard shortcuts, modal command prefixes, and registered commands.
 
 <Demo component="kbd" example="default" />
 
@@ -26,7 +26,6 @@ The `Kbd` component renders a semantic `<kbd>` keycap element or a multi-step se
 | --- | --- | --- | --- |
 | `variant` | `'outline' \| 'subtle' \| 'solid'` | `'outline'` | Visual style of the keycap. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Keycap size. |
-| `hotkey` | `KbdHotkey` | — | Type-safe chord or space-separated multi-chord command string/array (`'Mod+K'`, `'Space w v'`, `['Space', '?']`) backed by `@tanstack/hotkeys`. Broken commands emit a console warning and render with `data-invalid="true"` destructive styling. |
-| `platform` | `'mac' \| 'windows' \| 'linux'` | `'mac'` | Target platform for modifier symbol formatting (`⌘`, `⌃`, `⌥`, `⇧`). |
+| `hotkey` | `KbdHotkey` | — | Hotkey chord or multi-step sequence (`'Mod+K'`, `'Space w v'`, `['Space', '?']`) validated and formatted via `@tanstack/hotkeys` with automatic platform inference. Malformed chords log a console warning and render with `data-invalid="true"` destructive styling. |
 | `useSymbols` | `boolean` | `true` | Whether to render symbol glyphs or text labels for modifiers. |
 | `className` / `class` | `string` | — | Additional Tailwind classes merged via `cn`. |

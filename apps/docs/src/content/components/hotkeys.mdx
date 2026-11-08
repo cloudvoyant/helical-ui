@@ -88,13 +88,13 @@ export function WorkspaceLayout() {
 
 ### Single-Chord Matching & Keycap Formatting
 
-For standalone shortcuts outside a modal trie (such as `Mod+k` or `Shift+?`), use `matchesCommandHotkey`, `formatKeycap`, and `formatHotkeySequence` from `@cloudvoyant/helical-ui`:
+For standalone shortcuts outside a modal trie (such as `Mod+k` or `Shift+?`), use `matchesCommandHotkey`, `formatKeyChord`, and `formatKeySequence` from `@cloudvoyant/helical-ui`:
 
 ```ts
 import {
   matchesCommandHotkey,
-  formatKeycap,
-  formatHotkeySequence,
+  formatKeyChord,
+  formatKeySequence,
 } from '@cloudvoyant/helical-ui';
 
 window.addEventListener('keydown', (event) => {
@@ -104,8 +104,8 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-const symbols = formatHotkeySequence('Mod+Shift+P', { platform: 'mac' });
-// -> [['⌘', '⇧', 'P']]
+const steps = formatKeySequence('Space w v');
+// -> ['Space', 'w', 'v']
 ```
 
 ## API Reference
@@ -127,5 +127,5 @@ const symbols = formatHotkeySequence('Mod+Shift+P', { platform: 'mac' });
 | --- | --- | --- |
 | `createWhichKeyController` | `(options?: WhichKeyControllerOptions) => WhichKeyController` | Creates a standalone, framework-agnostic modal keybinding and pane controller. |
 | `matchesCommandHotkey` | `(event: KeyboardEvent, hotkey: string) => boolean` | Matches a `KeyboardEvent` against a hotkey string such as `'Mod+k'` or `'Escape'`. |
-| `formatKeycap` | `(chord: string, options?: KbdFormatOptions) => string[]` | Splits and formats a single chord into platform modifier glyphs and key labels. |
-| `formatHotkeySequence` | `(hotkey: string \| string[], options?: KbdFormatOptions) => string[][]` | Formats a space-separated or array chord sequence into per-step keycap arrays. |
+| `formatKeyChord` | `(chord: string, options?: { useSymbols?: boolean }) => string` | Formats a single chord with automatically inferred platform modifier symbols. |
+| `formatKeySequence` | `(hotkey: string \| readonly string[], options?: { useSymbols?: boolean }) => string[]` | Formats a space-separated or array chord sequence into per-step keycap labels. |

@@ -11,7 +11,6 @@
 <div class="flex flex-col items-center gap-4">
   <Button
     variant="outline"
-    data-testid="cp-empty-open"
     onclick={() => {
       open = true;
     }}

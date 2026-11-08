@@ -33,10 +33,7 @@
   {#snippet children()}
     {@const wk = useWhichKey()}
     <VStack class="w-full gap-3">
-      <div
-        data-testid="wk-presets-surface"
-        class="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
-      >
+      <div class="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
         <HStack class="flex-wrap items-center justify-between gap-2">
           <ToggleGroup
             attached
@@ -48,19 +45,14 @@
             aria-label="Preset selector"
           >
             {#each PRESETS as p (p)}
-              <ToggleGroupItem
-                value={p}
-                size="sm"
-                variant="outline"
-                data-testid={`wk-preset-btn-${p}`}
-              >
+              <ToggleGroupItem value={p} size="sm" variant="outline">
                 {p.toUpperCase()}
               </ToggleGroupItem>
             {/each}
           </ToggleGroup>
           <HStack class="items-center gap-2">
-            <WhichKeyMode showPreset data-testid="wk-presets-active" />
-            <span class="text-xs text-muted-foreground" data-testid="wk-presets-last-cmd">
+            <WhichKeyMode showPreset />
+            <span class="text-xs text-muted-foreground">
               {lastCommand}
             </span>
           </HStack>
@@ -84,10 +76,9 @@
 
         <Pane paneId="wk-presets-pane" paneTitle="Preset Sandbox" class="flex flex-col gap-2">
           <HStack class="flex-wrap gap-2">
-            {#each PRESET_ITEMS as label, idx (label)}
+            {#each PRESET_ITEMS as label (label)}
               <button
                 type="button"
-                data-testid={`wk-preset-item-${idx}`}
                 onfocus={() => {
                   focusedItem = label;
                 }}
@@ -99,7 +90,7 @@
           </HStack>
         </Pane>
         <span class="text-xs text-muted-foreground">
-          Focused target: <strong data-testid="wk-presets-focused-item">{focusedItem}</strong>
+          Focused target: <strong>{focusedItem}</strong>
         </span>
       </div>
       <WhichKey />

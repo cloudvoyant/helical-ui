@@ -27,10 +27,10 @@ export default function ReactToastAction() {
   // --- Render ---
   return (
     <HStack className="flex-wrap items-center gap-3">
-      <Button size="sm" variant="outline" data-testid="toast-action-trigger" onClick={handleArchive}>
+      <Button size="sm" variant="outline" onClick={handleArchive}>
         Archive File
       </Button>
-      <Badge variant="subtle" color={undone ? 'success' : 'secondary'} data-testid="toast-action-state">
+      <Badge variant="subtle" color={undone ? 'success' : 'secondary'}>
         {undone ? 'Restored' : 'Idle'}
       </Badge>
     </HStack>

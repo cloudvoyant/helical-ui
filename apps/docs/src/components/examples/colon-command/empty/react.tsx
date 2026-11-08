@@ -12,7 +12,7 @@ export default function ReactColonCommandEmpty() {
   // --- Render ---
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button variant="outline" data-testid="cc-empty-open" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         Open Empty Command Menu
       </Button>
       <ColonCommand items={[]} open={open} onOpenChange={setOpen} />

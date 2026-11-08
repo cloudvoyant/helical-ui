@@ -11,13 +11,13 @@ for (const framework of FRAMEWORKS) {
       });
 
       test.describe('When viewing the default demo', () => {
-        test('Then renders semantic <kbd> keycaps for single keys and multi-modifier chords', async ({ page }) => {
+        test('Then renders semantic <kbd> keycaps with automatically inferred platform modifiers', async ({ page }) => {
           const demo = island(page, framework, 'default');
           const keycaps = demo.locator('kbd[data-slot="kbd"]');
           const sequences = demo.locator('[data-slot="kbd-sequence"]');
 
           await expect(keycaps.first()).toBeVisible();
-          await expect(keycaps.first()).toContainText('⌘K');
+          await expect(keycaps.first()).toContainText(/(?:⌘\s*K|Ctrl\+K)/);
           await expect(keycaps.nth(1)).toContainText(/(?:⌃\s*W|Ctrl\+W)/);
           await expect(sequences).toHaveCount(1);
           await expect(sequences.locator('kbd[data-slot="kbd"]')).toHaveCount(2);
@@ -25,32 +25,31 @@ for (const framework of FRAMEWORKS) {
       });
 
       test.describe('When viewing the chords demo', () => {
-        test('Then renders space-separated command strings as multi-keycap chord sequences', async ({ page }) => {
+        test('Then formats single chords and splits multi-step sequences into individual keycaps', async ({ page }) => {
           const demo = island(page, framework, 'chords');
-          const modK = demo.getByTestId('kbd-chord-mod-k');
-          const seq = demo.locator('[data-slot="kbd-sequence"]').first();
-          const winChord = demo.getByTestId('kbd-platform-win');
+          const keycaps = demo.locator('kbd[data-slot="kbd"]');
+          const sequences = demo.locator('[data-slot="kbd-sequence"]');
 
-          await expect(modK).toHaveText('⌘ K');
-          await expect(seq.locator('kbd[data-slot="kbd"]')).toHaveCount(3);
-          await expect(seq.locator('kbd[data-slot="kbd"]').nth(0)).toHaveText('Space');
-          await expect(seq.locator('kbd[data-slot="kbd"]').nth(1)).toHaveText('w');
-          await expect(seq.locator('kbd[data-slot="kbd"]').nth(2)).toHaveText('v');
-          await expect(winChord).toHaveText('Ctrl+Shift+P');
+          await expect(keycaps.first()).toContainText(/(?:⌘\s*K|Ctrl\+K)/);
+          await expect(keycaps.nth(1)).toContainText(/(?:⌃\s*O|Ctrl\+O)/);
+          await expect(keycaps.nth(2)).toHaveText('Z');
+          await expect(keycaps.nth(3)).toHaveText('Esc');
+          await expect(sequences).toHaveCount(4);
+          await expect(sequences.first().locator('kbd[data-slot="kbd"]')).toHaveCount(3);
         });
 
-        test('Then marks broken commands with data-invalid="true" and distinctive destructive styling', async ({
-          page,
-        }) => {
+        test('Then marks malformed chords with data-invalid="true" and destructive styling', async ({ page }) => {
           const demo = island(page, framework, 'chords');
-          const invalidChord = demo.getByTestId('kbd-invalid-chord');
-          const invalidSeq = demo.locator('[data-slot="kbd-sequence"][data-invalid="true"]');
+          const invalidKeycaps = demo.locator('kbd[data-slot="kbd"][data-invalid="true"]');
 
-          await expect(invalidChord).toHaveAttribute('data-invalid', 'true');
-          await expect(invalidChord).toHaveAttribute('aria-invalid', 'true');
-          await expect(invalidChord).toHaveClass(/line-through/);
-          await expect(invalidSeq).toBeVisible();
-          await expect(invalidSeq.locator('kbd[data-invalid="true"]')).toHaveCount(1);
+          await expect(invalidKeycaps).toHaveCount(2);
+          await expect(invalidKeycaps.first()).toHaveAttribute('aria-invalid', 'true');
+          await expect(invalidKeycaps.first()).toHaveClass(/line-through/);
+          await expect(invalidKeycaps.first()).toHaveText('InvalidMod+K');
+
+          await expect(invalidKeycaps.nth(1)).toHaveAttribute('aria-invalid', 'true');
+          await expect(invalidKeycaps.nth(1)).toHaveClass(/line-through/);
+          await expect(invalidKeycaps.nth(1)).toHaveText('UnknownKey');
         });
       });
 

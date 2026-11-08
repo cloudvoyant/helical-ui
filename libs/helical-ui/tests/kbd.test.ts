@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   formatKeyChord,
   formatKeySequence,
+  inferPlatform,
   isChordCommandString,
   kbdVariants,
   resolveKbdSteps,
@@ -11,18 +12,20 @@ import {
 } from '../src/kbd';
 
 describe('kbd utilities and validation', () => {
-  it('formats valid single chords and platform modifiers', () => {
-    expect(formatKeyChord('Mod+K', { platform: 'mac' })).toBe('⌘ K');
-    expect(formatKeyChord('Mod+K', { platform: 'windows' })).toBe('Ctrl+K');
-    expect(formatKeyChord('Control+w', { platform: 'mac' })).toBe('⌃ W');
+  it('infers platform automatically and formats single chords and platform modifiers', () => {
+    const inferred = inferPlatform();
+    expect(['mac', 'windows', 'linux']).toContain(inferred);
+    expect(formatKeyChord('Mod+K')).toBe(inferred === 'mac' ? '⌘ K' : 'Ctrl+K');
+    expect(formatKeyChord('Control+w')).toBe(inferred === 'mac' ? '⌃ W' : 'Ctrl+W');
     expect(formatKeyChord('Shift+Z')).toBe('Z');
     expect(formatKeyChord('Escape')).toBe('Esc');
     expect(formatKeyChord('g')).toBe('g');
   });
 
-  it('splits multi-chord command strings into formatted keycap sequences', () => {
-    expect(formatKeySequence('Space w v', { platform: 'mac' })).toEqual(['Space', 'w', 'v']);
-    expect(formatKeySequence('Control+w l', { platform: 'mac' })).toEqual(['⌃ W', 'l']);
+  it('splits multi-chord sequences into formatted keycap steps', () => {
+    const inferred = inferPlatform();
+    expect(formatKeySequence('Space w v')).toEqual(['Space', 'w', 'v']);
+    expect(formatKeySequence('Control+w l')).toEqual([inferred === 'mac' ? '⌃ W' : 'Ctrl+W', 'l']);
     expect(formatKeySequence(['g', 'g'])).toEqual(['g', 'g']);
   });
 
@@ -47,7 +50,7 @@ describe('kbd utilities and validation', () => {
     expect(badSequence.errors[0]).toContain("Step 2: Unknown key: 'UnknownKey'");
   });
 
-  it('logs console.warn and marks steps invalid when resolveKbdSteps receives broken commands', () => {
+  it('logs console.warn and marks steps invalid when resolveKbdSteps receives broken hotkeys', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const resolved = resolveKbdSteps('InvalidMod+K');

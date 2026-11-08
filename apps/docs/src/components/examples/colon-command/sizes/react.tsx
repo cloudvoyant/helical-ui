@@ -35,7 +35,7 @@ export default function ReactColonCommandSizes() {
           aria-label="Compactness size"
         >
           {SIZES.map((s) => (
-            <ToggleGroupItem key={s} value={s} size="sm" variant="outline" data-testid={`cc-size-${s}`}>
+            <ToggleGroupItem key={s} value={s} size="sm" variant="outline">
               {s === 'sm' ? 'Compact (sm)' : s === 'md' ? 'Default (md)' : 'Comfortable (lg)'}
             </ToggleGroupItem>
           ))}
@@ -52,13 +52,7 @@ export default function ReactColonCommandSizes() {
           aria-label="Completion columns"
         >
           {COLUMNS.map((col) => (
-            <ToggleGroupItem
-              key={String(col)}
-              value={String(col)}
-              size="sm"
-              variant="outline"
-              data-testid={`cc-columns-${col}`}
-            >
+            <ToggleGroupItem key={String(col)} value={String(col)} size="sm" variant="outline">
               {col === 'auto' ? 'auto cols' : `${col} col`}
             </ToggleGroupItem>
           ))}

@@ -19,13 +19,12 @@ export function Kbd({
   variant = 'outline',
   size = 'md',
   hotkey,
-  platform,
   useSymbols = true,
   className,
   children,
   ...props
 }: KbdProps) {
-  // --- State ---
+  // --- Helpers ---
   const rawHotkey: string | ReadonlyArray<string> | undefined =
     hotkey !== undefined
       ? hotkey
@@ -33,10 +32,10 @@ export function Kbd({
         ? children
         : undefined;
 
-  // --- Render ---
-  if (rawHotkey !== undefined) {
-    const resolved = resolveKbdSteps(rawHotkey, { platform, useSymbols });
+  const resolved = rawHotkey !== undefined ? resolveKbdSteps(rawHotkey, { useSymbols }) : null;
 
+  // --- Render ---
+  if (resolved) {
     if (resolved.steps.length > 1) {
       return (
         <span

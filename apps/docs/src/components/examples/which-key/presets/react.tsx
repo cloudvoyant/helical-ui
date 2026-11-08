@@ -28,7 +28,7 @@ function PresetsSurface({ lastCommand }: { lastCommand: string }) {
 
   // --- Render ---
   return (
-    <div data-testid="wk-presets-surface" className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
       <HStack className="flex-wrap items-center justify-between gap-2">
         <ToggleGroup
           attached
@@ -40,16 +40,14 @@ function PresetsSurface({ lastCommand }: { lastCommand: string }) {
           aria-label="Preset selector"
         >
           {PRESETS.map((p) => (
-            <ToggleGroupItem key={p} value={p} size="sm" variant="outline" data-testid={`wk-preset-btn-${p}`}>
+            <ToggleGroupItem key={p} value={p} size="sm" variant="outline">
               {p.toUpperCase()}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
         <HStack className="items-center gap-2">
-          <WhichKeyMode showPreset data-testid="wk-presets-active" />
-          <span className="text-xs text-muted-foreground" data-testid="wk-presets-last-cmd">
-            {lastCommand}
-          </span>
+          <WhichKeyMode showPreset />
+          <span className="text-xs text-muted-foreground">{lastCommand}</span>
         </HStack>
       </HStack>
 
@@ -79,11 +77,10 @@ function PresetsSurface({ lastCommand }: { lastCommand: string }) {
 
       <Pane paneId="wk-presets-pane" paneTitle="Preset Sandbox" className="flex flex-col gap-2">
         <HStack className="flex-wrap gap-2">
-          {PRESET_ITEMS.map((label, idx) => (
+          {PRESET_ITEMS.map((label) => (
             <button
               key={label}
               type="button"
-              data-testid={`wk-preset-item-${idx}`}
               onFocus={() => setFocusedItem(label)}
               className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none"
             >
@@ -93,7 +90,7 @@ function PresetsSurface({ lastCommand }: { lastCommand: string }) {
         </HStack>
       </Pane>
       <span className="text-xs text-muted-foreground">
-        Focused target: <strong data-testid="wk-presets-focused-item">{focusedItem}</strong>
+        Focused target: <strong>{focusedItem}</strong>
       </span>
     </div>
   );

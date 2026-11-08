@@ -14,7 +14,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When a default toast is triggered', () => {
         test('Then renders the title and description', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('toast-default-trigger').click();
+          await demo.getByRole('button', { name: 'Show Toast' }).click();
 
           const toastItem = page.getByTestId('toast-item').last();
           await expect(toastItem).toBeVisible();
@@ -24,7 +24,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then dismisses when the close button is clicked', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('toast-default-trigger').click();
+          await demo.getByRole('button', { name: 'Show Toast' }).click();
 
           const toastItem = page.getByTestId('toast-item').last();
           await expect(toastItem).toBeVisible();
@@ -37,12 +37,12 @@ for (const framework of FRAMEWORKS) {
         test('Then renders success and error toasts with matching data-type attributes', async ({ page }) => {
           const demo = island(page, framework, 'status');
 
-          await demo.getByTestId('toast-status-success').click();
+          await demo.getByRole('button', { name: 'Success' }).click();
           const successToast = page.locator('[data-testid="toast-item"][data-type="success"]').last();
           await expect(successToast).toBeVisible();
           await expect(successToast.getByTestId('toast-title')).toHaveText('Changes saved');
 
-          await demo.getByTestId('toast-status-error').click();
+          await demo.getByRole('button', { name: 'Error' }).click();
           const errorToast = page.locator('[data-testid="toast-item"][data-type="error"]').last();
           await expect(errorToast).toBeVisible();
           await expect(errorToast.getByTestId('toast-title')).toHaveText('Deployment failed');
@@ -52,15 +52,15 @@ for (const framework of FRAMEWORKS) {
       test.describe('When an action toast is triggered', () => {
         test('Then invokes the action callback when the action button is clicked', async ({ page }) => {
           const demo = island(page, framework, 'action');
-          await expect(demo.getByTestId('toast-action-state')).toHaveText('Idle');
+          await expect(demo.getByText('Idle')).toBeVisible();
 
-          await demo.getByTestId('toast-action-trigger').click();
+          await demo.getByRole('button', { name: 'Archive File' }).click();
           const toastItem = page.getByTestId('toast-item').last();
           await expect(toastItem).toBeVisible();
           await expect(toastItem.getByTestId('toast-action')).toHaveText('Undo');
 
           await toastItem.getByTestId('toast-action').click();
-          await expect(demo.getByTestId('toast-action-state')).toHaveText('Restored');
+          await expect(demo.getByText('Restored')).toBeVisible();
         });
       });
     });

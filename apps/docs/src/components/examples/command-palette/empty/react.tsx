@@ -12,7 +12,7 @@ export default function ReactCommandPaletteEmpty() {
   // --- Render ---
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button variant="outline" data-testid="cp-empty-open" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         Open Empty Command Palette
       </Button>
       <CommandPalette items={[]} open={open} onOpenChange={setOpen} />

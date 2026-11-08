@@ -4,6 +4,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
   ALL_KEYS,
+  detectPlatform,
   formatForDisplay,
   hasNonModifierKey,
   isModifierKey,
@@ -62,7 +63,7 @@ export type KbdChord = KbdKey | Modifier | `${CoreModifier}+${KbdKey}` | `${Core
 
 /**
  * Type-safe hotkey prop accepting a single chord (`'Mod+K'`), a space-separated
- * multi-chord command string (`'Space w v'`, `'Control+w l'`), or a sequence array (`['Space', '?']`).
+ * multi-chord sequence (`'Space w v'`, `'Control+w l'`), or a sequence array (`['Space', '?']`).
  */
 export type KbdHotkey = KbdChord | `${SequencePrefixChord} ${string}` | ReadonlyArray<KbdChord>;
 
@@ -78,11 +79,10 @@ export interface KbdProps {
   variant?: KbdVariants['variant'];
   size?: KbdVariants['size'];
   /**
-   * Hotkey chord or multi-chord command string/array (e.g. `'Mod+K'`, `'Control+w l'`, `['Space', '?']`).
-   * Validated via `@tanstack/hotkeys`; broken commands trigger a console warning and render with invalid styling.
+   * Direct hotkey chord or sequence (e.g. `'Mod+K'`, `'Control+w l'`, `['Space', '?']`).
+   * Validated via `@tanstack/hotkeys` with automatic platform inference; broken chords trigger a console warning and render in the broken state.
    */
   hotkey?: KbdHotkey;
-  platform?: 'mac' | 'windows' | 'linux';
   useSymbols?: boolean;
   className?: string;
 }
@@ -120,6 +120,12 @@ function isKnownSingleKey(keyPart: string): boolean {
 }
 
 // 4. Exported functions
+export function inferPlatform(): 'mac' | 'windows' | 'linux' {
+  const hint =
+    typeof navigator !== 'undefined' ? `${navigator.platform ?? ''} ${navigator.userAgent ?? ''}`.trim() : undefined;
+  return detectPlatform(hint || undefined);
+}
+
 export function validateKbdChord(chord: string): ValidationResult {
   const trimmed = chord.trim();
   if (!trimmed) {
@@ -196,10 +202,7 @@ export function validateKbdHotkey(hotkey: string | ReadonlyArray<string>): Valid
   };
 }
 
-export function formatKeyChord(
-  chord: string,
-  options?: { platform?: 'mac' | 'windows' | 'linux'; useSymbols?: boolean },
-): string {
+export function formatKeyChord(chord: string, options?: { useSymbols?: boolean }): string {
   const trimmed = chord.trim();
   if (!trimmed) return '';
   if (Object.hasOwn(KEY_LABEL_OVERRIDES, trimmed)) {
@@ -217,7 +220,7 @@ export function formatKeyChord(
   }
   try {
     const formatted = formatForDisplay(trimmed as DisplayHotkeyChord, {
-      platform: options?.platform ?? 'mac',
+      platform: inferPlatform(),
       useSymbols: options?.useSymbols ?? true,
     });
     return formatted || trimmed;
@@ -228,7 +231,7 @@ export function formatKeyChord(
 
 export function formatKeySequence(
   hotkey: string | ReadonlyArray<string>,
-  options?: { platform?: 'mac' | 'windows' | 'linux'; useSymbols?: boolean },
+  options?: { useSymbols?: boolean },
 ): string[] {
   const steps: ReadonlyArray<string> = typeof hotkey === 'string' ? hotkey.trim().split(/\s+/).filter(Boolean) : hotkey;
   return steps.map((step: string) => formatKeyChord(step, options));
@@ -236,7 +239,7 @@ export function formatKeySequence(
 
 export function resolveKbdSteps(
   hotkey: string | ReadonlyArray<string>,
-  options?: { platform?: 'mac' | 'windows' | 'linux'; useSymbols?: boolean; warn?: boolean },
+  options?: { useSymbols?: boolean; warn?: boolean },
 ): { steps: KbdStepResult[]; valid: boolean; message: string | undefined } {
   const rawSteps = Array.isArray(hotkey)
     ? [...hotkey]

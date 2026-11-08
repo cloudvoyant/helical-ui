@@ -5,7 +5,7 @@
 </script>
 
 <HStack class="flex-wrap items-center gap-3">
-  <Kbd>⌘K</Kbd>
+  <Kbd hotkey="Mod+K" />
   <Kbd hotkey="Control+w" />
   <Kbd hotkey="Space ?" />
   <Kbd hotkey="Shift+Z" />

@@ -23,16 +23,16 @@
     variant = 'outline',
     size = 'md',
     hotkey,
-    platform,
     useSymbols = true,
     class: className = '',
     children,
     ...rest
   }: Props = $props();
 
+  // --- Helpers ---
   const resolved = $derived(
     hotkey !== undefined && !children
-      ? resolveKbdSteps(hotkey, { platform, useSymbols })
+      ? resolveKbdSteps(hotkey, { useSymbols })
       : null,
   );
   const singleStep = $derived(

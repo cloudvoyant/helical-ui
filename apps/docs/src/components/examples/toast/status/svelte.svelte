@@ -42,34 +42,16 @@
 
 <!-- Render -->
 <HStack class="flex-wrap items-center gap-2">
-  <Button size="sm" variant="outline" data-testid="toast-status-info" onclick={showInfo}>
+  <Button size="sm" variant="outline" onclick={showInfo}>
     Info
   </Button>
-  <Button
-    size="sm"
-    variant="outline"
-    color="success"
-    data-testid="toast-status-success"
-    onclick={showSuccess}
-  >
+  <Button size="sm" variant="outline" color="success" onclick={showSuccess}>
     Success
   </Button>
-  <Button
-    size="sm"
-    variant="outline"
-    color="warn"
-    data-testid="toast-status-warning"
-    onclick={showWarning}
-  >
+  <Button size="sm" variant="outline" color="warn" onclick={showWarning}>
     Warning
   </Button>
-  <Button
-    size="sm"
-    variant="outline"
-    color="danger"
-    data-testid="toast-status-error"
-    onclick={showError}
-  >
+  <Button size="sm" variant="outline" color="danger" onclick={showError}>
     Error
   </Button>
 </HStack>

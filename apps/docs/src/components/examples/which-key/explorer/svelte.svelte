@@ -64,23 +64,17 @@
       <Pane
         paneId="wk-explorer-pane"
         paneTitle="Explorer Demo"
-        data-testid="wk-explorer-surface"
         class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
       >
         <HStack class="flex-wrap items-center justify-between gap-2">
           <HStack class="items-center gap-2">
             <span class="text-xs font-medium text-muted-foreground">Executed Command:</span>
-            <Badge variant="subtle" color="primary" data-testid="wk-explorer-executed">
+            <Badge variant="subtle" color="primary">
               {lastExecuted}
             </Badge>
           </HStack>
-          <Button
-            size="sm"
-            variant="outline"
-            data-testid="wk-explorer-trigger"
-            onclick={() => wk.openExplorer()}
-          >
-            Open Explorer <Kbd size="sm" hotkey="?" />
+          <Button size="sm" variant="outline" onclick={() => wk.openExplorer()}>
+            Open Explorer <Kbd size="sm">?</Kbd>
           </Button>
         </HStack>
         <p class="text-xs text-muted-foreground">

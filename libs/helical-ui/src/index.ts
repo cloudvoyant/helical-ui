@@ -360,6 +360,7 @@ export {
 export {
   kbdVariants,
   kbdGroupBase,
+  inferPlatform,
   formatKeyChord,
   formatKeySequence,
   validateKbdChord,

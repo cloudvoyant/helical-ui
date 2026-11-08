@@ -14,7 +14,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When opened', () => {
         test('Then centers in the viewport and focuses the search input', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette).toBeVisible();
@@ -31,7 +31,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then lists root commands with badges and without colon prefixes', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           const searchItem = palette.locator('[data-testid="command-palette-item"][data-value="search"]');
@@ -49,7 +49,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When navigating with the keyboard', () => {
         test('Then cycles through items on Tab and selects the highlighted item on Enter', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           const searchItem = palette.locator('[data-testid="command-palette-item"][data-value="search"]');
@@ -68,7 +68,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then closes the dialog on Escape', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette).toBeVisible();
@@ -80,7 +80,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When a branch command is selected', () => {
         test('Then drills into child commands and shows a breadcrumb badge', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
@@ -93,7 +93,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then returns to the parent level on Backspace when the input is empty', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
@@ -108,7 +108,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When a theme command is selected', () => {
         test('Then applies the theme to the document and updates the active checkmark', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
@@ -117,7 +117,7 @@ for (const framework of FRAMEWORKS) {
           await expect(palette).toBeHidden();
           await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
 
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
           await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
 
           const catppuccinItem = palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]');
@@ -132,7 +132,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When filtering with a fuzzy search query', () => {
         test('Then ranks matching nested commands with <mark> highlights and ancestor path', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await palette.getByTestId('command-palette-input').fill('catp');
@@ -145,7 +145,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then executes the top match on Enter and closes the dialog', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cp-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           const input = palette.getByTestId('command-palette-input');
@@ -163,7 +163,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When opened', () => {
         test('Then displays "No commands registered."', async ({ page }) => {
           const demo = island(page, framework, 'empty');
-          await demo.getByTestId('cp-empty-open').click();
+          await demo.getByRole('button', { name: /Open Empty Command Palette/i }).click();
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette).toBeVisible();

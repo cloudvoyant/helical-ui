@@ -20,7 +20,7 @@ export default function ReactToastDefault() {
   // --- Render ---
   return (
     <HStack className="flex-wrap items-center gap-2">
-      <Button variant="outline" data-testid="toast-default-trigger" onClick={handleShowToast}>
+      <Button variant="outline" onClick={handleShowToast}>
         Show Toast
       </Button>
     </HStack>

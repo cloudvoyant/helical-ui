@@ -14,7 +14,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When opened', () => {
         test('Then docks at the bottom of the viewport with the ":" prefix and "Tab Next" hint', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           await expect(colon).toBeVisible();
@@ -32,7 +32,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then renders root command tokens in a column-first completion grid', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           await expect(colon.getByTestId('colon-command-list')).toHaveAttribute('data-columns', 'auto');
@@ -62,7 +62,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When navigating the completion grid with arrow keys', () => {
         test('Then moves vertically within a column on ArrowDown and ArrowUp', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const searchItem = colon.locator('[data-testid="colon-command-item"][data-value="search"]');
@@ -80,7 +80,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then moves horizontally across columns on ArrowRight and ArrowLeft', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const searchItem = colon.locator('[data-testid="colon-command-item"][data-value="search"]');
@@ -97,7 +97,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When completing tokens with Tab', () => {
         test('Then completes a branch token with a trailing space and lists subcommands', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
@@ -113,7 +113,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then cycles leaf completions on repeated Tab presses and executes on Enter', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
@@ -135,7 +135,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then allows editing the completed input with Backspace', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
@@ -154,7 +154,7 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
@@ -165,7 +165,7 @@ for (const framework of FRAMEWORKS) {
           await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
           await expect(page.getByTestId('toast-item').last()).toContainText('Catppuccin');
 
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
           await input.fill('theme ');
 
           const catppuccinItem = colon.locator('[data-testid="colon-command-item"][data-value="theme/catppuccin"]');
@@ -176,7 +176,7 @@ for (const framework of FRAMEWORKS) {
 
         test('Then stays open and displays an inline error for an unrecognized command', async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('cc-default-open').click();
+          await demo.getByRole('button', { name: /Open Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           const input = colon.getByTestId('colon-command-input');
@@ -201,11 +201,11 @@ for (const framework of FRAMEWORKS) {
           await expect(inlineColon).toHaveAttribute('data-size', 'md');
           const mdBox = await firstItem.boundingBox();
 
-          await demo.getByTestId('cc-size-sm').click();
+          await demo.getByRole('radio', { name: 'Compact (sm)' }).click();
           await expect(inlineColon).toHaveAttribute('data-size', 'sm');
           const smBox = await firstItem.boundingBox();
 
-          await demo.getByTestId('cc-size-lg').click();
+          await demo.getByRole('radio', { name: 'Comfortable (lg)' }).click();
           await expect(inlineColon).toHaveAttribute('data-size', 'lg');
           const lgBox = await firstItem.boundingBox();
 
@@ -222,7 +222,7 @@ for (const framework of FRAMEWORKS) {
       test.describe('When opened', () => {
         test('Then displays "No commands registered."', async ({ page }) => {
           const demo = island(page, framework, 'empty');
-          await demo.getByTestId('cc-empty-open').click();
+          await demo.getByRole('button', { name: /Open Empty Command Menu/i }).click();
 
           const colon = page.locator('[data-testid="colon-command"][data-modal="true"]').last();
           await expect(colon).toBeVisible();
