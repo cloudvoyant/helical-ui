@@ -1,3 +1,10 @@
+# [0.22.0](https://github.com/cloudvoyant/helical-ui/compare/v0.21.1...v0.22.0) (2026-11-08)
+
+
+### Features
+
+* **commands:** add CommandPalette and CommandMenu components ([#37](https://github.com/cloudvoyant/helical-ui/issues/37)) ([b5ff086](https://github.com/cloudvoyant/helical-ui/commit/b5ff086c6249ce1cbe8170b6adbb283e0a1cbfe7))
+
 ## [0.21.1](https://github.com/cloudvoyant/helical-ui/compare/v0.21.0...v0.21.1) (2026-11-02)
 
 
