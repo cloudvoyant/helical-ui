@@ -1,123 +1,47 @@
 <!-- apps/docs/src/components/examples/which-key/default/svelte.svelte -->
 <script lang="ts">
+  // 1. Imports
   import {
     Button,
-    Dialog,
-    DialogBackdrop,
-    DialogContent,
-    DialogDescription,
-    DialogDismiss,
-    DialogHeader,
-    DialogTitle,
     HStack,
     Kbd,
     Pane,
-    VStack,
     WhichKey,
     WhichKeyMode,
     WhichKeyProvider,
     useWhichKey,
   } from '@cloudvoyant/helical-svelte';
 
-  let dialogOpen = $state(false);
-  let lastAction = $state('None');
+  // 2. Module constants & types
+  const ITEMS = ['Workspace File A', 'Workspace File B'];
 </script>
 
-<WhichKeyProvider preset="helix" onCommand={(id) => (lastAction = id)}>
+<WhichKeyProvider preset="helix">
   {#snippet children()}
     {@const wk = useWhichKey()}
-    {@render DefaultSurface({ wk })}
-  {/snippet}
-</WhichKeyProvider>
-
-{#snippet DefaultSurface({ wk }: { wk: ReturnType<typeof useWhichKey> })}
-  <VStack class="w-full gap-3">
     <Pane
       paneId="wk-default-pane"
       paneTitle="Workspace"
-      class="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+      class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
     >
       <HStack class="flex-wrap items-center justify-between gap-2">
-        <HStack class="items-center gap-2">
-          <WhichKeyMode />
-          <span class="text-xs text-muted-foreground">
-            Preset: <strong class="text-foreground">{wk.preset}</strong>
-          </span>
-          {#if wk.activePath.length > 0}
-            <span class="font-mono text-xs text-primary">
-              {wk.activePath.join(' » ')}
-            </span>
-          {/if}
-        </HStack>
-        <span class="text-xs text-muted-foreground">
-          Last command: <strong class="text-foreground">{lastAction}</strong>
-        </span>
+        <WhichKeyMode showPreset />
+        <Button size="sm" variant="outline" onclick={() => wk.openPrefix(['Space'])}>
+          Open <Kbd size="sm" hotkey="Space" /> Menu
+        </Button>
       </HStack>
 
-      <p class="text-xs text-muted-foreground">
-        Click inside this workspace and press <Kbd size="sm">Space</Kbd> for the leader menu,
-        <Kbd size="sm">g</Kbd> for Goto, <Kbd size="sm">z</Kbd> for View, or
-        <Kbd size="sm">?</Kbd> to search all bindings.
-      </p>
-
-      <HStack class="flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onclick={() => wk.openPrefix(['Space'])}
-        >
-          Open <Kbd size="sm">Space</Kbd> Menu
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onclick={() => wk.openExplorer()}
-        >
-          Explore <Kbd size="sm">?</Kbd>
-        </Button>
-
-        <Button
-          size="sm"
-          variant={wk.leaderOnly ? 'solid' : 'outline'}
-          aria-pressed={wk.leaderOnly}
-          onclick={() => wk.setLeaderOnly(!wk.leaderOnly)}
-        >
-          {wk.leaderOnly ? 'Popup: Leader only' : 'Popup: All prefixes'}
-        </Button>
-
-        <Button
-          size="sm"
-          variant="outline"
-          onclick={() => {
-            dialogOpen = true;
-          }}
-        >
-          Open Modal Dialog
-        </Button>
-
-        <Dialog bind:open={dialogOpen} lazyMount unmountOnExit>
-          <DialogBackdrop />
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nested Modal Layer</DialogTitle>
-              <DialogDismiss />
-            </DialogHeader>
-            <DialogDescription>
-              Press <Kbd size="sm">Space</Kbd> inside this dialog to open WhichKey, then press
-              <Kbd size="sm">Esc</Kbd>. WhichKey closes first while keeping this dialog open.
-            </DialogDescription>
-            <HStack class="mt-3 gap-2">
-              <Button size="sm" variant="outline">
-                Dialog Action 1
-              </Button>
-              <Button size="sm" variant="outline">
-                Dialog Action 2
-              </Button>
-            </HStack>
-          </DialogContent>
-        </Dialog>
+      <HStack class="flex-wrap gap-2">
+        {#each ITEMS as label (label)}
+          <button
+            type="button"
+            class="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none"
+          >
+            {label}
+          </button>
+        {/each}
       </HStack>
     </Pane>
     <WhichKey />
-  </VStack>
-{/snippet}
+  {/snippet}
+</WhichKeyProvider>

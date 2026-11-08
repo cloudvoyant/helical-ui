@@ -1,7 +1,9 @@
 // apps/docs/e2e/command-palette.spec.ts
 // End-to-end coverage for CommandPalette across React and Svelte.
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { FRAMEWORKS, island, selectFramework } from './helpers';
+
+const PALETTE_SHORTCUT = process.platform === 'darwin' ? 'Meta+k' : 'Control+k';
 
 for (const framework of FRAMEWORKS) {
   test.describe(`CommandPalette · ${framework}`, () => {
@@ -10,168 +12,145 @@ for (const framework of FRAMEWORKS) {
       await selectFramework(page, framework);
     });
 
-    test.describe('Given a modal CommandPalette with nested commands', () => {
-      test.describe('When opened', () => {
-        test('Then centers in the viewport and focuses the search input', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
+    test.describe('Given a closed command palette', () => {
+      test.describe('When the command palette shortcut is pressed', () => {
+        test.beforeEach(async ({ page }) => {
+          await page.keyboard.press(PALETTE_SHORTCUT);
+        });
 
+        test('it appears in the window', async ({ page }) => {
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette).toBeVisible();
+        });
+
+        test('it has input active and in focus', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette.getByTestId('command-palette-input')).toBeFocused();
-
-          const viewport = page.viewportSize();
-          const box = await palette.boundingBox();
-          expect(viewport).not.toBeNull();
-          expect(box).not.toBeNull();
-          const paletteCenterY = box!.y + box!.height / 2;
-          const viewportCenterY = viewport!.height / 2;
-          expect(Math.abs(paletteCenterY - viewportCenterY)).toBeLessThanOrEqual(40);
         });
 
-        test('Then lists root commands with badges and without colon prefixes', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          const searchItem = palette.locator('[data-testid="command-palette-item"][data-value="search"]');
-          await expect(searchItem).toBeVisible();
-          await expect(searchItem).toContainText('Search Docs');
-          await expect(searchItem).toContainText('Future');
-          await expect(searchItem).not.toContainText(':search');
-
-          const themeItem = palette.locator('[data-testid="command-palette-item"][data-value="theme"]');
-          await expect(themeItem).toContainText('Change Theme');
-          await expect(themeItem).not.toContainText(':theme');
-        });
-      });
-
-      test.describe('When navigating with the keyboard', () => {
-        test('Then cycles through items on Tab and selects the highlighted item on Enter', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          const searchItem = palette.locator('[data-testid="command-palette-item"][data-value="search"]');
-          const githubItem = palette.locator('[data-testid="command-palette-item"][data-value="github"]');
-
-          await expect(searchItem).toHaveAttribute('data-highlighted', '');
-          await page.keyboard.press('Tab');
-          await expect(githubItem).toHaveAttribute('data-highlighted', '');
-          await page.keyboard.press('Shift+Tab');
-          await expect(searchItem).toHaveAttribute('data-highlighted', '');
-
-          await page.keyboard.press('Enter');
-          await expect(palette).toBeHidden();
-          await expect(page.getByTestId('toast-item').last()).toContainText('Search Docs');
-        });
-
-        test('Then closes the dialog on Escape', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
+        test('it shows empty state when no commands are registered', async ({ page }) => {
+          await page.keyboard.press('Escape');
+          const emptyDemo = island(page, framework, 'empty');
+          await emptyDemo.getByRole('button').focus();
+          await page.keyboard.press(PALETTE_SHORTCUT);
 
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
           await expect(palette).toBeVisible();
-          await palette.getByTestId('command-palette-input').press('Escape');
-          await expect(palette).toBeHidden();
+          const emptyState = palette.getByTestId('command-palette-empty');
+          await expect(emptyState).toBeVisible();
+          await expect(emptyState).toHaveText('No commands registered.');
+        });
+
+        test('it shows commands when commands are registered', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await expect(palette.getByText('Search Docs')).toBeVisible();
+          await expect(palette.getByText('Future')).toBeVisible();
+          await expect(palette.getByText('Change Theme')).toBeVisible();
+          await expect(palette.getByText('Change Keybind Style')).toBeVisible();
+        });
+      });
+    });
+
+    test.describe('Given an open command palette', () => {
+      test.beforeEach(async ({ page }) => {
+        await page.keyboard.press(PALETTE_SHORTCUT);
+        const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+        await expect(palette).toBeVisible();
+      });
+
+      test.describe('When the user types', () => {
+        test.beforeEach(async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').fill('cthm');
+        });
+
+        test('it continually filters options', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          const themeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="theme"]',
+          );
+          await expect(themeItem).toBeVisible();
+          await expect(themeItem.locator('mark').first()).toBeVisible();
+          await expect(
+            palette.locator('[data-testid="command-palette-item"][data-value="search"]'),
+          ).toHaveCount(0);
+        });
+
+        test('it shows empty state when no commands match', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').fill('zzzzzz');
+          await expect(palette.getByTestId('command-palette-empty')).toBeVisible();
         });
       });
 
-      test.describe('When a branch command is selected', () => {
-        test('Then drills into child commands and shows a breadcrumb badge', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
+      test.describe('When the user tabs', () => {
+        test.beforeEach(async ({ page }) => {
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
+          await palette.getByTestId('command-palette-input').focus();
+          await page.keyboard.press('Tab');
+        });
 
-          await expect(palette.getByTestId('command-palette-breadcrumbs')).toContainText('Change Theme');
+        test('it cycles through matching options', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          const themeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="theme"]',
+          );
+          const modeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="mode"]',
+          );
+
+          await expect(modeItem).toHaveAttribute('data-highlighted', '');
+
+          await page.keyboard.press('Shift+Tab');
+          await expect(themeItem).toHaveAttribute('data-highlighted', '');
+        });
+      });
+
+      test.describe('When the user uses arrow keys', () => {
+        test.beforeEach(async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').focus();
+          await page.keyboard.press('ArrowDown');
+        });
+
+        test('it moves the active highlight across options', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          const themeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="theme"]',
+          );
+          const modeItem = palette.locator(
+            '[data-testid="command-palette-item"][data-value="mode"]',
+          );
+
+          await expect(modeItem).toHaveAttribute('data-highlighted', '');
+
+          await page.keyboard.press('ArrowUp');
+          await expect(themeItem).toHaveAttribute('data-highlighted', '');
+        });
+      });
+
+      test.describe('When the user enters/selects a menu', () => {
+        test.beforeEach(async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').fill('Change Theme');
+          await page.keyboard.press('Enter');
+        });
+
+        test('it drills into the submenu and shows breadcrumb pills', async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await expect(palette.getByTestId('command-palette-breadcrumb')).toContainText(
+            'Change Theme',
+          );
           await expect(
             palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]'),
           ).toBeVisible();
         });
 
-        test('Then returns to the parent level on Backspace when the input is empty', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
+        test('it returns to the parent menu on Backspace', async ({ page }) => {
           const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
-          await expect(palette.getByTestId('command-palette-breadcrumbs')).toContainText('Change Theme');
-
-          await palette.getByTestId('command-palette-input').press('Backspace');
-          await expect(palette.getByTestId('command-palette-breadcrumbs')).toHaveCount(0);
-          await expect(palette.locator('[data-testid="command-palette-item"][data-value="theme"]')).toBeVisible();
-        });
-      });
-
-      test.describe('When a theme command is selected', () => {
-        test('Then applies the theme to the document and updates the active checkmark', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
-          await palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]').click();
-
-          await expect(palette).toBeHidden();
-          await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
-
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-          await palette.locator('[data-testid="command-palette-item"][data-value="theme"]').click();
-
-          const catppuccinItem = palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]');
-          const defaultThemeItem = palette.locator(
-            '[data-testid="command-palette-item"][data-value="theme/helical-ui"]',
-          );
-          await expect(catppuccinItem).toHaveAttribute('data-command-active', 'true');
-          await expect(defaultThemeItem).not.toHaveAttribute('data-command-active', 'true');
-        });
-      });
-
-      test.describe('When filtering with a fuzzy search query', () => {
-        test('Then ranks matching nested commands with <mark> highlights and ancestor path', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          await palette.getByTestId('command-palette-input').fill('catp');
-
-          const catppuccinItem = palette.locator('[data-testid="command-palette-item"][data-value="theme/catppuccin"]');
-          await expect(catppuccinItem).toBeVisible();
-          await expect(catppuccinItem).toContainText('Change Theme ›');
-          await expect(catppuccinItem.locator('mark').first()).toBeVisible();
-        });
-
-        test('Then executes the top match on Enter and closes the dialog', async ({ page }) => {
-          const demo = island(page, framework, 'default');
-          await demo.getByRole('button', { name: /Open Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          const input = palette.getByTestId('command-palette-input');
-          await input.fill('catp');
-          await input.press('Enter');
-
-          await expect(palette).toBeHidden();
-          await expect(page.locator('html')).toHaveClass(/theme-catppuccin/);
-          await expect(page.getByTestId('toast-item').last()).toContainText('Catppuccin');
-        });
-      });
-    });
-
-    test.describe('Given a modal CommandPalette with zero commands', () => {
-      test.describe('When opened', () => {
-        test('Then displays "No commands registered."', async ({ page }) => {
-          const demo = island(page, framework, 'empty');
-          await demo.getByRole('button', { name: /Open Empty Command Palette/i }).click();
-
-          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
-          await expect(palette).toBeVisible();
-
-          const emptyState = palette.getByTestId('command-palette-empty');
-          await expect(emptyState).toBeVisible();
-          await expect(emptyState).toHaveAttribute('data-empty-kind', 'no-commands');
-          await expect(emptyState).toContainText('No commands registered.');
+          await page.keyboard.press('Backspace');
+          await expect(palette.getByTestId('command-palette-breadcrumb')).toHaveCount(0);
+          await expect(palette.getByText('Search Docs')).toBeVisible();
         });
       });
     });

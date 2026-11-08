@@ -78,8 +78,12 @@
       setStyle('palette');
       setOpen(true);
     },
+    openMenu() {
+      setStyle('menu');
+      setOpen(true);
+    },
     openColon() {
-      setStyle('colon');
+      setStyle('menu');
       setOpen(true);
     },
     close() {

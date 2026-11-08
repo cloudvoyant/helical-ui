@@ -1,21 +1,21 @@
-// libs/helical-react/src/colon-command/context.tsx
+// libs/helical-react/src/command-menu/context.tsx
 
 // 1. Imports
 import { createContext, useContext, type KeyboardEvent } from 'react';
 import type {
-  ColonCommandColumns,
-  ColonCommandResolution,
   CommandFlatItem,
+  CommandMenuColumns,
+  CommandMenuResolution,
 } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
-export interface ColonCommandContextValue {
-  resolution: ColonCommandResolution;
+export interface CommandMenuContextValue {
+  resolution: CommandMenuResolution;
   enabledSuggestions: CommandFlatItem[];
   effectiveHighlightedValue: string | null;
   currentInput: string;
   activeError: string | null;
-  columns: ColonCommandColumns;
+  columns: CommandMenuColumns;
   size: 'sm' | 'md' | 'lg';
   showShortcuts: boolean;
   inline: boolean;
@@ -29,13 +29,18 @@ export interface ColonCommandContextValue {
   handleInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export const ColonCommandContext = createContext<ColonCommandContextValue | null>(null);
+export type ColonCommandContextValue = CommandMenuContextValue;
+
+export const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
+export const ColonCommandContext = CommandMenuContext;
 
 // 3. Local helpers / hooks
-export function useColonCommandContext(): ColonCommandContextValue {
-  const ctx = useContext(ColonCommandContext);
+export function useCommandMenuContext(): CommandMenuContextValue {
+  const ctx = useContext(CommandMenuContext);
   if (!ctx) {
-    throw new Error('useColonCommandContext must be used within a <ColonCommand>');
+    throw new Error('useCommandMenuContext must be used within a <CommandMenu>');
   }
   return ctx;
 }
+
+export const useColonCommandContext = useCommandMenuContext;

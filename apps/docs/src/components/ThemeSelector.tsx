@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
-import { THEMES, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import { THEMES, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import { useWhichKey } from '@cloudvoyant/helical-react';
 import { APPEARANCE_CHANGE_EVENT, OPEN_SETTINGS_MODAL_EVENT } from '../lib/commands';
 import {
   applyColorMode,
@@ -22,6 +23,56 @@ const MODES: { value: ColorMode; label: string; Icon: LucideIcon }[] = [
   { value: 'dark', label: 'Dark', Icon: Moon },
   { value: 'system', label: 'System', Icon: Monitor },
 ];
+
+const KEYBINDING_PRESETS: { value: KeybindingPreset; label: string }[] = [
+  { value: 'helix', label: 'Helix' },
+  { value: 'vim', label: 'Vim' },
+  { value: 'kakoune', label: 'Kakoune' },
+];
+
+function KeybindingPresetToggle() {
+  const { preset, setPreset } = useWhichKey();
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-muted-foreground">Keybinding mode</div>
+      <div
+        role="group"
+        className="flex w-full items-stretch"
+        aria-label="Keybinding preset"
+        data-keybinding-selector
+        data-ready="true"
+      >
+        {KEYBINDING_PRESETS.map((p, i) => {
+          const active = preset === p.value;
+          return (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setPreset(p.value)}
+              aria-pressed={active}
+              data-preset={p.value}
+              className={[
+                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
+                i === 0 && 'rounded-l-md',
+                i === KEYBINDING_PRESETS.length - 1 && 'rounded-r-md',
+                i > 0 && '-ml-px',
+                active
+                  ? 'z-10 border-foreground text-foreground'
+                  : 'border-border text-muted-foreground hover:border-muted-foreground',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Light/Dark/System segmented button group. Owns the color-mode state and drives
@@ -277,6 +328,7 @@ export default function ThemeSelector() {
                 </button>
               </div>
 
+              <KeybindingPresetToggle />
               <ColorModeToggle onResolvedDarkChange={setIsDark} />
               <ThemeGrid isDark={isDark} />
             </div>

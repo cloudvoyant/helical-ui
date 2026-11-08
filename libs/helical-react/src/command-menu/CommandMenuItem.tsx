@@ -1,22 +1,24 @@
-// libs/helical-react/src/colon-command/ColonCommandItem.tsx
+// libs/helical-react/src/command-menu/CommandMenuItem.tsx
 
 // 1. Imports
 import { Highlight } from '@ark-ui/react/highlight';
 import { Check, ChevronRight } from 'lucide-react';
 import {
-  colonCommandItemVariants,
+  commandMenuItemVariants,
   splitHighlightSegments,
   type CommandFlatItem,
 } from '@cloudvoyant/helical-ui';
 import { Kbd } from '../kbd';
 import { ListboxItem, ListboxItemText } from '../listbox';
 import { Row } from '../row';
-import { useColonCommandContext } from './context';
+import { useCommandMenuContext } from './context';
 
 // 2. Module constants & types
-export interface ColonCommandItemProps {
+export interface CommandMenuItemProps {
   item: CommandFlatItem;
 }
+
+export type ColonCommandItemProps = CommandMenuItemProps;
 
 const HIGHLIGHT_MARK_CLASS =
   'rounded-xs bg-primary/20 px-0.5 font-semibold text-foreground';
@@ -58,7 +60,7 @@ function renderFuzzyText(
 }
 
 // 4. Exported component
-export function ColonCommandItem({ item }: ColonCommandItemProps) {
+export function CommandMenuItem({ item }: CommandMenuItemProps) {
   // --- State ---
   const {
     resolution,
@@ -66,7 +68,7 @@ export function ColonCommandItem({ item }: ColonCommandItemProps) {
     size,
     showShortcuts,
     executeOrDrillItem,
-  } = useColonCommandContext();
+  } = useCommandMenuContext();
 
   const isHighlighted = effectiveHighlightedValue === item.value;
 
@@ -78,7 +80,7 @@ export function ColonCommandItem({ item }: ColonCommandItemProps) {
         label: item.command,
         disabled: item.disabled,
       }}
-      data-testid="colon-command-item"
+      data-testid="command-menu-item"
       data-command-value={item.node.value}
       data-command-token={item.command}
       data-command-branch={item.isBranch ? 'true' : 'false'}
@@ -89,7 +91,7 @@ export function ColonCommandItem({ item }: ColonCommandItemProps) {
         e.stopPropagation();
         executeOrDrillItem(item);
       }}
-      className={colonCommandItemVariants({ size })}
+      className={commandMenuItemVariants({ size })}
     >
       <ListboxItemText className="min-w-0 flex-1 truncate">
         <Row className="min-w-0 items-center gap-2">
@@ -122,3 +124,5 @@ export function ColonCommandItem({ item }: ColonCommandItemProps) {
     </ListboxItem>
   );
 }
+
+export const ColonCommandItem = CommandMenuItem;

@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
-  colonCommandDialogContentBase,
-  colonCommandItemVariants,
-  colonCommandListVariants,
-  colonCommandPositionerBase,
-  colonCommandPromptBarVariants,
+  commandMenuDialogContentBase,
+  commandMenuItemVariants,
+  commandMenuListVariants,
+  commandMenuPositionerBase,
+  commandMenuPromptBarVariants,
   createCommandTree,
-  formatColonCompletionInput,
+  formatCommandMenuCompletionInput,
   matchesCommandHotkey,
-  resolveColonCommandGridNavigation,
-  resolveColonCommandGridStyle,
-  resolveColonCommandState,
+  resolveCommandMenuGridNavigation,
+  resolveCommandMenuGridStyle,
+  resolveCommandMenuState,
   resolveCommandLevel,
   splitHighlightSegments,
   type CommandNode,
@@ -113,16 +113,16 @@ describe('Given an empty CommandNode[] array passed to createCommandTree', () =>
     });
   });
 
-  describe('When resolveColonCommandState is called', () => {
+  describe('When resolveCommandMenuState is called', () => {
     it('Then returns hasCommands: false and empty suggestions so the UI renders "No commands registered."', () => {
       const emptyTree = createCommandTree([]);
 
-      const colonState = resolveColonCommandState(emptyTree, ':theme');
+      const menuState = resolveCommandMenuState(emptyTree, ':theme');
 
-      expect(colonState.hasCommands).toBe(false);
-      expect(colonState.suggestions).toEqual([]);
-      expect(colonState.exactNode).toBeNull();
-      expect(colonState.error).toBeNull();
+      expect(menuState.hasCommands).toBe(false);
+      expect(menuState.suggestions).toEqual([]);
+      expect(menuState.exactNode).toBeNull();
+      expect(menuState.error).toBeNull();
     });
   });
 });
@@ -200,12 +200,12 @@ describe('Given resolveCommandLevel is called at root and nested activePath leve
   });
 });
 
-describe('Given resolveColonCommandState is called with colon inputs', () => {
+describe('Given resolveCommandMenuState is called with command menu inputs', () => {
   const tree = createCommandTree(SAMPLE_COMMANDS);
 
   describe('When given a command alias followed by a trailing space (":t ")', () => {
     it('Then resolves the target branch and lists all child subcommand suggestions', () => {
-      const aliasDrill = resolveColonCommandState(tree, ':t ');
+      const aliasDrill = resolveCommandMenuState(tree, ':t ');
 
       expect(aliasDrill.hasCommands).toBe(true);
       expect(aliasDrill.completedTokens).toEqual(['theme']);
@@ -216,8 +216,8 @@ describe('Given resolveColonCommandState is called with colon inputs', () => {
 
   describe('When given a branch command and partial subcommand token (":theme cat")', () => {
     it('Then filters child suggestions via fzf and formats the leaf Tab completion string', () => {
-      const partialSub = resolveColonCommandState(tree, ':theme cat');
-      const completedInput = formatColonCompletionInput(partialSub.completedTokens, partialSub.suggestions[0]!);
+      const partialSub = resolveCommandMenuState(tree, ':theme cat');
+      const completedInput = formatCommandMenuCompletionInput(partialSub.completedTokens, partialSub.suggestions[0]!);
 
       expect(partialSub.completedTokens).toEqual(['theme']);
       expect(partialSub.partialToken).toBe('cat');
@@ -229,8 +229,11 @@ describe('Given resolveColonCommandState is called with colon inputs', () => {
 
   describe('When given a partial branch command token (":th")', () => {
     it('Then formats the branch Tab completion string with a trailing space', () => {
-      const partialBranch = resolveColonCommandState(tree, ':th');
-      const completedInput = formatColonCompletionInput(partialBranch.completedTokens, partialBranch.suggestions[0]!);
+      const partialBranch = resolveCommandMenuState(tree, ':th');
+      const completedInput = formatCommandMenuCompletionInput(
+        partialBranch.completedTokens,
+        partialBranch.suggestions[0]!,
+      );
 
       expect(partialBranch.suggestions[0]?.command).toBe('theme');
       expect(completedInput).toBe(':theme ');
@@ -239,7 +242,7 @@ describe('Given resolveColonCommandState is called with colon inputs', () => {
 
   describe('When given an unrecognized command token (":notacommand")', () => {
     it('Then returns an "Unknown command" error diagnostic and empty suggestions', () => {
-      const unknown = resolveColonCommandState(tree, ':notacommand');
+      const unknown = resolveCommandMenuState(tree, ':notacommand');
 
       expect(unknown.hasCommands).toBe(true);
       expect(unknown.suggestions).toEqual([]);
@@ -250,7 +253,7 @@ describe('Given resolveColonCommandState is called with colon inputs', () => {
 
   describe('When given extra arguments after a leaf command (":github extra")', () => {
     it('Then returns a "does not take arguments" error diagnostic and empty suggestions', () => {
-      const leafExtraArgs = resolveColonCommandState(tree, ':github extra');
+      const leafExtraArgs = resolveCommandMenuState(tree, ':github extra');
 
       expect(leafExtraArgs.suggestions).toEqual([]);
       expect(leafExtraArgs.error).toContain("Command ':github' does not take arguments");
@@ -259,8 +262,8 @@ describe('Given resolveColonCommandState is called with colon inputs', () => {
 });
 
 describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey string', () => {
-  describe('When testing Mod+k and non-matching key events', () => {
-    it('Then returns true when the platform modifier and key match and false otherwise', () => {
+  describe('When testing Mod+k, colon (:), and non-matching key events', () => {
+    it('Then returns true when the platform modifier or colon key matches and false otherwise', () => {
       const matchingEvent = {
         key: 'k',
         code: 'KeyK',
@@ -268,6 +271,15 @@ describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey s
         metaKey: true,
         altKey: false,
         shiftKey: false,
+      } as unknown as KeyboardEvent;
+      const colonEvent = {
+        key: ':',
+        code: 'Semicolon',
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: true,
+        target: null,
       } as unknown as KeyboardEvent;
       const nonMatchingEvent = {
         key: 'j',
@@ -279,38 +291,39 @@ describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey s
       } as unknown as KeyboardEvent;
 
       expect(matchesCommandHotkey(matchingEvent, 'Mod+k')).toBe(true);
+      expect(matchesCommandHotkey(colonEvent, ':')).toBe(true);
       expect(matchesCommandHotkey(nonMatchingEvent, 'Mod+k')).toBe(false);
     });
   });
 });
 
-describe('Given ColonCommand bottom-docked positioner, compactness variants, and multi-column list variants', () => {
+describe('Given CommandMenu bottom-docked positioner, compactness variants, and multi-column list variants', () => {
   describe('When size and columns variants are resolved', () => {
     it('Then docks flush across the bottom edge of the viewport, scales compactness across sm/md/lg, and computes column-first grid styles', () => {
-      expect(colonCommandPositionerBase).toContain('items-end');
-      expect(colonCommandDialogContentBase).toContain('fixed inset-x-0 bottom-0');
-      expect(colonCommandListVariants({ columns: 'auto', size: 'sm' })).toContain('grid-flow-col');
-      expect(colonCommandListVariants({ columns: 'auto', size: 'sm' })).toContain('py-1');
-      expect(colonCommandItemVariants({ size: 'sm' })).toContain('py-0.5');
-      expect(colonCommandItemVariants({ size: 'lg' })).toContain('py-2');
-      expect(colonCommandPromptBarVariants({ size: 'sm' })).toContain('py-1');
-      expect(colonCommandPromptBarVariants({ size: 'lg' })).toContain('py-2.5');
-      expect(resolveColonCommandGridStyle('auto', 6)).toEqual({
+      expect(commandMenuPositionerBase).toContain('items-end');
+      expect(commandMenuDialogContentBase).toContain('fixed inset-x-0 bottom-0');
+      expect(commandMenuListVariants({ columns: 'auto', size: 'sm' })).toContain('grid-flow-col');
+      expect(commandMenuListVariants({ columns: 'auto', size: 'sm' })).toContain('py-1');
+      expect(commandMenuItemVariants({ size: 'sm' })).toContain('py-0.5');
+      expect(commandMenuItemVariants({ size: 'lg' })).toContain('py-2');
+      expect(commandMenuPromptBarVariants({ size: 'sm' })).toContain('py-1');
+      expect(commandMenuPromptBarVariants({ size: 'lg' })).toContain('py-2.5');
+      expect(resolveCommandMenuGridStyle('auto', 6)).toEqual({
         display: 'grid',
         gridAutoFlow: 'column',
         gridTemplateRows: 'repeat(3, minmax(0, auto))',
         gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
       });
-      expect(resolveColonCommandGridStyle(3, 6)).toEqual({
+      expect(resolveCommandMenuGridStyle(3, 6)).toEqual({
         display: 'grid',
         gridAutoFlow: 'column',
         gridTemplateRows: 'repeat(2, minmax(0, auto))',
         gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
       });
-      expect(resolveColonCommandGridNavigation('auto', 6, 0, 'ArrowDown')).toBe(1);
-      expect(resolveColonCommandGridNavigation('auto', 6, 0, 'ArrowRight')).toBe(3);
-      expect(resolveColonCommandGridNavigation('auto', 6, 3, 'ArrowLeft')).toBe(0);
-      expect(resolveColonCommandGridNavigation('auto', 6, 1, 'ArrowRight')).toBe(4);
+      expect(resolveCommandMenuGridNavigation('auto', 6, 0, 'ArrowDown')).toBe(1);
+      expect(resolveCommandMenuGridNavigation('auto', 6, 0, 'ArrowRight')).toBe(3);
+      expect(resolveCommandMenuGridNavigation('auto', 6, 3, 'ArrowLeft')).toBe(0);
+      expect(resolveCommandMenuGridNavigation('auto', 6, 1, 'ArrowRight')).toBe(4);
     });
   });
 });

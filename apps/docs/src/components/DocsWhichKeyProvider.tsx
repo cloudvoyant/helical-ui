@@ -1,9 +1,9 @@
 // apps/docs/src/components/DocsWhichKeyProvider.tsx
-// Site-wide WhichKeyProvider + WhichKey command panel + CommandPalette / ColonCommand for the Astro docs shell.
+// Site-wide WhichKeyProvider + WhichKey command panel + CommandPalette / CommandMenu for the Astro docs shell.
 import { useEffect, useMemo, useState } from 'react';
 import { matchesCommandHotkey, type CommandStyle } from '@cloudvoyant/helical-ui';
 import {
-  ColonCommand,
+  CommandMenu,
   CommandPalette,
   Toaster,
   WhichKey,
@@ -157,6 +157,7 @@ function DocsCommandShell({
         items={commandItems}
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
+        hotkey={false}
         onSelectCommand={(ctx) => {
           if (ctx.value !== 'search') {
             toast.create({
@@ -166,10 +167,11 @@ function DocsCommandShell({
           }
         }}
       />
-      <ColonCommand
+      <CommandMenu
         items={commandItems}
         open={colonOpen}
         onOpenChange={setColonOpen}
+        hotkey={false}
         onSelectCommand={(ctx) => {
           if (ctx.value !== 'search') {
             toast.create({

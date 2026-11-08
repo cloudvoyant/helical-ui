@@ -8,17 +8,17 @@ group: navigation
 import Demo from '../../components/Demo.astro';
 import Examples from '../../components/Examples.astro';
 
-`ColonCommand` provides a Helix and Kakoune-inspired `:` command-line prompt docked at the bottom of the page, with multi-column command completion, `Tab` cycling, nested subcommands, and inline error feedback.
+`CommandMenu` provides a Helix and Kakoune-inspired `:` command-line prompt docked at the bottom of the page, with multi-column command completion, `Tab` cycling, nested subcommands, and inline error feedback.
 
-<Demo component="colon-command" example="default" />
+<Demo component="command-menu" example="default" />
 
 ## Examples
 
-<Examples component="colon-command" exclude="default" order={['sizes', 'empty']} />
+<Examples component="command-menu" exclude="default" order={['sizes', 'empty']} />
 
 ## API Reference
 
-### ColonCommand
+### CommandMenu
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -33,12 +33,13 @@ import Examples from '../../components/Examples.astro';
 | `placeholder` | `string` | `''` | Optional input placeholder text (e.g. `'Type a command'`). Empty by default. |
 | `emptyText` | `string` | `'No matching commands.'` | Text rendered when commands are registered but none match the typed filter. |
 | `noCommandsText` | `string` | `'No commands registered.'` | Text rendered in the UI when zero commands are registered in the tree. |
-| `columns` | `'auto' \| 1 \| 2 \| 3 \| 4` | `'auto'` | Number of completion columns rendered above the colon prompt bar. |
+| `columns` | `'auto' \| 1 \| 2 \| 3 \| 4` | `'auto'` | Number of completion columns rendered above the prompt bar. |
 | `showShortcuts` | `boolean` | `false` | Whether to display keyboard shortcut badges next to completion items. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Compactness variant (`'sm'` compact, `'md'` default, `'lg'` comfortable) for completion items, grid spacing, and the prompt bar. |
-| `inline` | `boolean` | `false` | Renders the colon command surface inline inside its container instead of a modal `Dialog`. |
+| `inline` | `boolean` | `false` | Renders the command menu surface inline inside its container instead of a modal `Dialog`. |
+| `hotkey` | `string \| false` | `':'` | Global shortcut chord to open the command menu, or `false` to disable. |
 
 ### Subcomponents & Shared Context
 
-- `ColonCommandList`, `ColonCommandItem`, `ColonCommandPromptBar`, `ColonCommandError`, `useColonCommandContext` / `getColonCommandContext` — modular subcomponents composing `ColonCommand`.
-- `CommandProvider` & `useCommand` / `getCommandContext` — shared command context provider that supplies `items`, `collection`, `open`, `style` (`'palette' | 'colon'`), `openPalette()`, `openColon()`, and `onSelectCommand` to both `CommandPalette` and `ColonCommand`.
+- `CommandMenuList`, `CommandMenuItem`, `CommandMenuPromptBar`, `CommandMenuError`, `useCommandMenuContext` / `getCommandMenuContext` — modular subcomponents composing `CommandMenu`.
+- `CommandProvider` & `useCommand` / `getCommandContext` — shared command context provider that supplies `items`, `collection`, `open`, `style` (`'palette' | 'menu'`), `openPalette()`, `openMenu()`, and `onSelectCommand` to both `CommandPalette` and `CommandMenu`.

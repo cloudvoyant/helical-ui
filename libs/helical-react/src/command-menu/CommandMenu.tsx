@@ -1,40 +1,57 @@
-// libs/helical-react/src/colon-command/ColonCommand.tsx
+// libs/helical-react/src/command-menu/CommandMenu.tsx
 
 // 1. Imports
-import { forwardRef, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { createListCollection } from '@ark-ui/react/listbox';
 import {
   announceCommandMessage,
   cn,
-  colonCommandDialogContentBase,
-  colonCommandPositionerBase,
-  colonCommandVariants,
+  commandMenuDialogContentBase,
+  commandMenuPositionerBase,
+  commandMenuVariants,
   createCommandTree,
-  formatColonCompletionInput,
-  resolveColonCommandGridNavigation,
-  resolveColonCommandState,
-  type ColonCommandProps as CoreColonCommandProps,
+  formatCommandMenuCompletionInput,
+  matchesCommandHotkey,
+  resolveCommandMenuGridNavigation,
+  resolveCommandMenuState,
+  shouldHandleCommandHotkey,
   type CommandFlatItem,
+  type CommandMenuProps as CoreCommandMenuProps,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
+import { Button } from '../button';
 import { useOptionalCommand } from '../command';
 import {
   Dialog,
   DialogBackdrop,
   DialogContent,
   DialogTitle,
+  DialogTrigger,
 } from '../dialog';
+import { Kbd } from '../kbd';
 import { Listbox } from '../listbox';
-import { ColonCommandError } from './ColonCommandError';
-import { ColonCommandList } from './ColonCommandList';
-import { ColonCommandPromptBar } from './ColonCommandPromptBar';
-import { ColonCommandContext, type ColonCommandContextValue } from './context';
+import { CommandMenuError } from './CommandMenuError';
+import { CommandMenuList } from './CommandMenuList';
+import { CommandMenuPromptBar } from './CommandMenuPromptBar';
+import { CommandMenuContext, type CommandMenuContextValue } from './context';
 
 // 2. Module constants & types
-export type ColonCommandProps = CoreColonCommandProps;
+export interface CommandMenuProps extends CoreCommandMenuProps {
+  children?: ReactNode;
+}
+
+export type ColonCommandProps = CommandMenuProps;
 
 // 4. Exported component
-export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
+export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
   (
     {
       items: itemsProp,
@@ -52,12 +69,15 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       showShortcuts = false,
       size = 'md',
       inline = false,
+      hotkey = ':',
       className,
+      children,
     },
     ref,
   ) => {
     // --- State ---
     const sharedCommand = useOptionalCommand();
+    const isStandalone = itemsProp !== undefined || externalCollectionProp !== undefined;
     const items = itemsProp ?? sharedCommand?.items;
     const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
 
@@ -68,9 +88,14 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
     const [submittedError, setSubmittedError] = useState<string | null>(null);
 
     const rootRef = useRef<HTMLDivElement | null>(null);
+    const anchorRef = useRef<HTMLSpanElement | null>(null);
 
     const sharedOpen =
-      sharedCommand && sharedCommand.style === 'colon' ? sharedCommand.open : undefined;
+      !isStandalone &&
+      sharedCommand &&
+      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+        ? sharedCommand.open
+        : undefined;
     const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentInput = controlledInputValue ?? uncontrolledInput;
 
@@ -82,7 +107,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
     const effectiveResolutionInput = tabBaseInput ?? currentInput;
 
     const resolution = useMemo(
-      () => resolveColonCommandState(tree, effectiveResolutionInput),
+      () => resolveCommandMenuState(tree, effectiveResolutionInput),
       [tree, effectiveResolutionInput],
     );
 
@@ -119,6 +144,22 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
 
     // --- Effects ---
     useEffect(() => {
+      if (inline || !hotkey || typeof window === 'undefined') return;
+      const onWindowKeyDown = (event: globalThis.KeyboardEvent) => {
+        if (!matchesCommandHotkey(event, hotkey)) return;
+        if (!shouldHandleCommandHotkey(anchorRef.current, '[data-command-menu-anchor="true"]')) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        handleOpenChange(true);
+      };
+      window.addEventListener('keydown', onWindowKeyDown, true);
+      return () => window.removeEventListener('keydown', onWindowKeyDown, true);
+    });
+
+    useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
       const focusInput = () => {
         getInputElement()?.focus();
@@ -142,7 +183,11 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
       }
-      if (sharedCommand && sharedCommand.style === 'colon') {
+      if (
+        !isStandalone &&
+        sharedCommand &&
+        (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+      ) {
         sharedCommand.setOpen(nextOpen);
       }
       if (!nextOpen) {
@@ -155,7 +200,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
     const executeOrDrillItem = (item: CommandFlatItem) => {
       if (item.disabled) return;
       if (item.isBranch) {
-        const nextInput = formatColonCompletionInput(
+        const nextInput = formatCommandMenuCompletionInput(
           resolution.completedTokens,
           item,
         );
@@ -176,7 +221,9 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       };
       item.node.onSelect?.(ctx);
       onSelectCommandProp?.(ctx);
-      sharedCommand?.onSelectCommand?.(ctx);
+      if (!isStandalone) {
+        sharedCommand?.onSelectCommand?.(ctx);
+      }
       announceCommandMessage(`Executed ${item.fullCommand}`);
 
       if (!inline && item.node.closeOnSelect !== false) {
@@ -216,7 +263,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
           currentTarget.isBranch &&
           resolution.partialToken.length > 0
         ) {
-          const completed = formatColonCompletionInput(
+          const completed = formatCommandMenuCompletionInput(
             resolution.completedTokens,
             currentTarget,
             true,
@@ -245,7 +292,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
           nextTarget = enabledSuggestions[nextIdx]!;
         }
 
-        const completed = formatColonCompletionInput(
+        const completed = formatCommandMenuCompletionInput(
           resolution.completedTokens,
           nextTarget,
           false,
@@ -273,7 +320,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
         const currentIdx = enabledSuggestions.findIndex(
           (item) => item.value === effectiveHighlightedValue,
         );
-        const nextIdx = resolveColonCommandGridNavigation(
+        const nextIdx = resolveCommandMenuGridNavigation(
           columns,
           enabledSuggestions.length,
           currentIdx,
@@ -281,7 +328,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
         );
         const nextTarget = enabledSuggestions[nextIdx]!;
         if (tabBaseInput !== null) {
-          const completed = formatColonCompletionInput(
+          const completed = formatCommandMenuCompletionInput(
             resolution.completedTokens,
             nextTarget,
             false,
@@ -325,7 +372,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
     function getInputElement(): HTMLInputElement | null {
       if (rootRef.current) {
         return rootRef.current.querySelector<HTMLInputElement>(
-          '[data-testid="colon-command-input"]',
+          '[data-testid="command-menu-input"]',
         );
       }
       return null;
@@ -346,7 +393,7 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
       });
     }
 
-    const contextValue: ColonCommandContextValue = {
+    const contextValue: CommandMenuContextValue = {
       resolution,
       enabledSuggestions,
       effectiveHighlightedValue,
@@ -367,8 +414,8 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
     };
 
     // --- Render ---
-    const colonSurface = (
-      <ColonCommandContext.Provider value={contextValue}>
+    const menuSurface = (
+      <CommandMenuContext.Provider value={contextValue}>
         <div
           ref={(node) => {
             rootRef.current = node;
@@ -378,14 +425,14 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
               ref.current = node;
             }
           }}
-          data-colon-command="true"
+          data-command-menu="true"
           data-modal={inline ? 'false' : undefined}
           data-size={size}
-          data-colon-columns={String(columns)}
-          data-colon-command-inline={inline ? 'true' : undefined}
-          data-testid={inline ? 'colon-command' : 'colon-command-surface'}
+          data-command-menu-columns={String(columns)}
+          data-command-menu-inline={inline ? 'true' : undefined}
+          data-testid={inline ? 'command-menu' : 'command-menu-surface'}
           className={cn(
-            colonCommandVariants({ size }),
+            commandMenuVariants({ size }),
             inline ? cn('rounded-lg border', className) : 'max-w-none border-0 shadow-none',
           )}
         >
@@ -400,46 +447,61 @@ export const ColonCommand = forwardRef<HTMLDivElement, ColonCommandProps>(
             }}
             className="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
           >
-            <ColonCommandList />
-            <ColonCommandPromptBar />
-            <ColonCommandError />
+            <CommandMenuList />
+            <CommandMenuPromptBar />
+            <CommandMenuError />
           </Listbox>
         </div>
-      </ColonCommandContext.Provider>
+      </CommandMenuContext.Provider>
     );
 
     if (inline) {
-      return colonSurface;
+      return menuSurface;
     }
 
+    const showTrigger = children !== undefined || (controlledOpen === undefined && sharedOpen === undefined);
+
     return (
-      <Dialog
-        open={isOpen}
-        lazyMount
-        unmountOnExit
-        initialFocusEl={() => getInputElement()}
-        onOpenChange={(details) => handleOpenChange(details.open)}
-      >
-        <DialogBackdrop className="bg-black/20" />
-        <DialogContent
-          positionerClassName={colonCommandPositionerBase}
-          data-colon-command="true"
-          data-modal="true"
-          data-size={size}
-          data-colon-columns={String(columns)}
-          data-testid="colon-command"
-          className={cn(
-            colonCommandDialogContentBase,
-            colonCommandVariants({ size }),
-            className,
-          )}
+      <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
+        <Dialog
+          open={isOpen}
+          lazyMount
+          unmountOnExit
+          initialFocusEl={() => getInputElement()}
+          onOpenChange={(details) => handleOpenChange(details.open)}
         >
-          <DialogTitle className="sr-only">Colon Command Prompt</DialogTitle>
-          {colonSurface}
-        </DialogContent>
-      </Dialog>
+          {showTrigger && (
+            <DialogTrigger asChild>
+              {children ?? (
+                <Button variant="outline">
+                  Open Command Menu {hotkey ? <Kbd size="sm">{hotkey}</Kbd> : null}
+                </Button>
+              )}
+            </DialogTrigger>
+          )}
+          <DialogBackdrop className="bg-black/20" />
+          <DialogContent
+            positionerClassName={commandMenuPositionerBase}
+            data-command-menu="true"
+            data-modal="true"
+            data-size={size}
+            data-command-menu-columns={String(columns)}
+            data-testid="command-menu"
+            className={cn(
+              commandMenuDialogContentBase,
+              commandMenuVariants({ size }),
+              className,
+            )}
+          >
+            <DialogTitle className="sr-only">Command Menu</DialogTitle>
+            {menuSurface}
+          </DialogContent>
+        </Dialog>
+      </span>
     );
   },
 );
 
-ColonCommand.displayName = 'ColonCommand';
+CommandMenu.displayName = 'CommandMenu';
+
+export const ColonCommand = CommandMenu;

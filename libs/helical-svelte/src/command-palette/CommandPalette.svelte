@@ -1,5 +1,6 @@
 <!-- libs/helical-svelte/src/command-palette/CommandPalette.svelte -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-svelte';
@@ -18,18 +19,21 @@
     createCommandTree,
     matchesCommandHotkey,
     resolveCommandLevel,
+    shouldHandleCommandHotkey,
     splitHighlightSegments,
     type CommandFlatItem,
     type CommandPaletteProps as CoreCommandPaletteProps,
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
   import Badge from '../Badge.svelte';
+  import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';
   import {
     Dialog,
     DialogBackdrop,
     DialogContent,
     DialogTitle,
+    DialogTrigger,
   } from '../dialog';
   import Kbd from '../Kbd.svelte';
   import {
@@ -49,6 +53,7 @@
   type Props = Omit<CoreCommandPaletteProps, 'className'> & {
     class?: string;
     className?: string;
+    children?: Snippet;
   };
 
   const HIGHLIGHT_MARK_CLASS =
@@ -71,9 +76,10 @@
     noCommandsText = 'No commands registered.',
     size = 'md',
     inline = false,
-    hotkey = false,
+    hotkey = 'Mod+k',
     class: className = '',
     className: reactClassName = '',
+    children,
   }: Props = $props();
 
   const sharedCommand = getOptionalCommandContext();
@@ -84,13 +90,22 @@
   let uncontrolledQuery = $state('');
   let highlightedValue = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
+  let anchorEl = $state<HTMLSpanElement | null>(null);
 
+  const isStandalone = $derived(
+    itemsProp !== undefined || externalCollectionProp !== undefined,
+  );
   const items = $derived(itemsProp ?? sharedCommand?.items);
   const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
   const sharedOpen = $derived(
-    sharedCommand && sharedCommand.style === 'palette' ? sharedCommand.open : undefined,
+    !isStandalone && sharedCommand && sharedCommand.style === 'palette'
+      ? sharedCommand.open
+      : undefined,
   );
   const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
+  const showTrigger = $derived(
+    children !== undefined || (controlledOpen === undefined && sharedOpen === undefined),
+  );
   const currentActivePath = $derived(controlledActivePath ?? uncontrolledActivePath);
   const currentQuery = $derived(controlledQuery ?? uncontrolledQuery);
 
@@ -130,14 +145,20 @@
   $effect(() => {
     if (inline || !hotkey || typeof window === 'undefined') return;
     const onWindowKeyDown = (event: KeyboardEvent) => {
-      if (matchesCommandHotkey(event, hotkey)) {
-        event.preventDefault();
-        event.stopPropagation();
-        handleOpenChange(!isOpen);
+      if (!matchesCommandHotkey(event, hotkey)) return;
+      if (
+        !isOpen &&
+        !shouldHandleCommandHotkey(anchorEl, '[data-command-palette-anchor="true"]')
+      ) {
+        return;
       }
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      handleOpenChange(!isOpen);
     };
-    window.addEventListener('keydown', onWindowKeyDown);
-    return () => window.removeEventListener('keydown', onWindowKeyDown);
+    window.addEventListener('keydown', onWindowKeyDown, true);
+    return () => window.removeEventListener('keydown', onWindowKeyDown, true);
   });
 
   $effect(() => {
@@ -320,7 +341,7 @@
           oninput={(e: Event) => {
             setQuery((e.currentTarget as HTMLInputElement).value);
           }}
-          onkeydown={(e: KeyboardEvent) => {
+          onkeydowncapture={(e: KeyboardEvent) => {
             if (e.key === 'Backspace' && currentQuery === '' && currentActivePath.length > 0) {
               e.preventDefault();
               e.stopPropagation();
@@ -560,29 +581,40 @@
 {#if inline}
   {@render paletteSurface()}
 {:else}
-  <Dialog
-    open={isOpen}
-    lazyMount
-    unmountOnExit
-    closeOnEscape={currentActivePath.length === 0}
-    initialFocusEl={() => getInputElement()}
-    onOpenChange={(details) => handleOpenChange(details.open)}
-  >
-    <DialogBackdrop />
-    <DialogContent
-      positionerClass={commandPalettePositionerBase}
-      data-command-palette="true"
-      data-modal="true"
-      data-testid="command-palette"
-      class={cn(
-        commandPaletteDialogContentBase,
-        commandPaletteVariants({ size }),
-        className,
-        reactClassName,
-      )}
+  <span bind:this={anchorEl} data-command-palette-anchor="true" class="inline-flex">
+    <Dialog
+      open={isOpen}
+      lazyMount
+      unmountOnExit
+      closeOnEscape={currentActivePath.length === 0}
+      initialFocusEl={() => getInputElement()}
+      onOpenChange={(details) => handleOpenChange(details.open)}
     >
-      <DialogTitle class="sr-only">Command Palette</DialogTitle>
-      {@render paletteSurface()}
-    </DialogContent>
-  </Dialog>
+      {#if showTrigger}
+        {#if children}
+          <DialogTrigger asChild={children} />
+        {:else}
+          <Button variant="outline" onclick={() => handleOpenChange(true)}>
+            Open Command Palette <Kbd size="sm" hotkey="Mod+k" />
+          </Button>
+        {/if}
+      {/if}
+      <DialogBackdrop />
+      <DialogContent
+        positionerClass={commandPalettePositionerBase}
+        data-command-palette="true"
+        data-modal="true"
+        data-testid="command-palette"
+        class={cn(
+          commandPaletteDialogContentBase,
+          commandPaletteVariants({ size }),
+          className,
+          reactClassName,
+        )}
+      >
+        <DialogTitle class="sr-only">Command Palette</DialogTitle>
+        {@render paletteSurface()}
+      </DialogContent>
+    </Dialog>
+  </span>
 {/if}

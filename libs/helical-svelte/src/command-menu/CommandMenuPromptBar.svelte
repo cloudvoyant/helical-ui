@@ -1,39 +1,39 @@
-<!-- libs/helical-svelte/src/colon-command/ColonCommandPromptBar.svelte -->
+<!-- libs/helical-svelte/src/command-menu/CommandMenuPromptBar.svelte -->
 <script lang="ts">
   // 1. Imports
   import { CornerDownLeft } from 'lucide-svelte';
   import {
-    colonCommandInputVariants,
-    colonCommandPrefixBase,
-    colonCommandPromptBarVariants,
+    commandMenuInputVariants,
+    commandMenuPrefixBase,
+    commandMenuPromptBarVariants,
   } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import { ListboxInput } from '../listbox';
   import Row from '../Row.svelte';
-  import { getColonCommandContext } from './context.svelte';
+  import { getCommandMenuContext } from './context.svelte';
 
   // --- State ---
-  const ctx = getColonCommandContext();
+  const ctx = getCommandMenuContext();
 </script>
 
-<div class={colonCommandPromptBarVariants({ size: ctx.size })}>
+<div class={commandMenuPromptBarVariants({ size: ctx.size })}>
   <span
-    data-testid="colon-command-prefix"
-    class={colonCommandPrefixBase}
+    data-testid="command-menu-prefix"
+    class={commandMenuPrefixBase}
   >
     :
   </span>
   <ListboxInput
     autofocus={!ctx.inline}
     autoHighlight
-    data-testid="colon-command-input"
+    data-testid="command-menu-input"
     placeholder={ctx.placeholder}
-    value={ctx.currentInput}
+    value={ctx.currentInput.replace(/^:/, '')}
     oninput={(e: Event) => {
       ctx.setInputValue((e.currentTarget as HTMLInputElement).value, null);
     }}
     onkeydowncapture={ctx.handleInputKeyDown}
-    class={colonCommandInputVariants({ size: ctx.size })}
+    class={commandMenuInputVariants({ size: ctx.size })}
   />
   <Row class="shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
     <span class="hidden items-center gap-1 sm:inline-flex">
@@ -50,7 +50,7 @@
       <button
         type="button"
         tabindex={-1}
-        aria-label="Close colon command menu"
+        aria-label="Close command menu"
         onclick={() => ctx.handleOpenChange(false)}
         class="opacity-80 transition-opacity hover:opacity-100"
       >

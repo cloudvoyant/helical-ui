@@ -1,17 +1,17 @@
-<!-- libs/helical-svelte/src/colon-command/ColonCommandItem.svelte -->
+<!-- libs/helical-svelte/src/command-menu/CommandMenuItem.svelte -->
 <script lang="ts">
   // 1. Imports
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { Check, ChevronRight } from 'lucide-svelte';
   import {
-    colonCommandItemVariants,
+    commandMenuItemVariants,
     splitHighlightSegments,
     type CommandFlatItem,
   } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import { ListboxItem, ListboxItemText } from '../listbox';
   import Row from '../Row.svelte';
-  import { getColonCommandContext } from './context.svelte';
+  import { getCommandMenuContext } from './context.svelte';
 
   // 2. Module constants & types
   interface Props {
@@ -24,7 +24,7 @@
   // --- State ---
   let { item }: Props = $props();
 
-  const ctx = getColonCommandContext();
+  const ctx = getCommandMenuContext();
   const isHighlighted = $derived(ctx.effectiveHighlightedValue === item.value);
 </script>
 
@@ -34,7 +34,7 @@
     label: item.command,
     disabled: item.disabled,
   }}
-  data-testid="colon-command-item"
+  data-testid="command-menu-item"
   data-command-value={item.node.value}
   data-command-token={item.command}
   data-command-branch={item.isBranch ? 'true' : 'false'}
@@ -45,7 +45,7 @@
     e.stopPropagation();
     ctx.executeOrDrillItem(item);
   }}
-  class={colonCommandItemVariants({ size: ctx.size })}
+  class={commandMenuItemVariants({ size: ctx.size })}
 >
   <ListboxItemText class="min-w-0 flex-1 truncate">
     <Row class="min-w-0 items-center gap-2">

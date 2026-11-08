@@ -1,23 +1,25 @@
-// libs/helical-react/src/colon-command/ColonCommandList.tsx
+// libs/helical-react/src/command-menu/CommandMenuList.tsx
 
 // 1. Imports
 import {
   cn,
-  colonCommandListVariants,
-  resolveColonCommandGridStyle,
+  commandMenuListVariants,
+  resolveCommandMenuGridStyle,
 } from '@cloudvoyant/helical-ui';
 import { ListboxContent, ListboxEmpty } from '../listbox';
 import { Scroll } from '../scroll';
-import { ColonCommandItem } from './ColonCommandItem';
-import { useColonCommandContext } from './context';
+import { CommandMenuItem } from './CommandMenuItem';
+import { useCommandMenuContext } from './context';
 
 // 2. Module constants & types
-export interface ColonCommandListProps {
+export interface CommandMenuListProps {
   className?: string;
 }
 
+export type ColonCommandListProps = CommandMenuListProps;
+
 // 4. Exported component
-export function ColonCommandList({ className }: ColonCommandListProps = {}) {
+export function CommandMenuList({ className }: CommandMenuListProps = {}) {
   // --- State ---
   const {
     resolution,
@@ -26,22 +28,22 @@ export function ColonCommandList({ className }: ColonCommandListProps = {}) {
     activeError,
     emptyText,
     noCommandsText,
-  } = useColonCommandContext();
+  } = useCommandMenuContext();
 
   // --- Render ---
   return (
     <Scroll className="max-h-72 min-h-0 flex-1" viewportClassName="max-h-72">
       <ListboxContent
         tabIndex={-1}
-        data-testid="colon-command-list"
+        data-testid="command-menu-list"
         data-columns={String(columns)}
         data-size={size}
-        style={resolveColonCommandGridStyle(columns, resolution.suggestions.length)}
-        className={cn(colonCommandListVariants({ columns, size }), className)}
+        style={resolveCommandMenuGridStyle(columns, resolution.suggestions.length)}
+        className={cn(commandMenuListVariants({ columns, size }), className)}
       >
         {!resolution.hasCommands ? (
           <ListboxEmpty
-            data-testid="colon-command-empty"
+            data-testid="command-menu-empty"
             data-empty-kind="no-commands"
             className="col-span-full"
           >
@@ -49,7 +51,7 @@ export function ColonCommandList({ className }: ColonCommandListProps = {}) {
           </ListboxEmpty>
         ) : resolution.suggestions.length === 0 ? (
           <ListboxEmpty
-            data-testid="colon-command-empty"
+            data-testid="command-menu-empty"
             data-empty-kind="no-matches"
             className="col-span-full"
           >
@@ -57,10 +59,12 @@ export function ColonCommandList({ className }: ColonCommandListProps = {}) {
           </ListboxEmpty>
         ) : (
           resolution.suggestions.map((item) => (
-            <ColonCommandItem key={item.value} item={item} />
+            <CommandMenuItem key={item.value} item={item} />
           ))
         )}
       </ListboxContent>
     </Scroll>
   );
 }
+
+export const ColonCommandList = CommandMenuList;

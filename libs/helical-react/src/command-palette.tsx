@@ -1,7 +1,7 @@
 // libs/helical-react/src/command-palette.tsx
 
 // 1. Imports
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Highlight } from '@ark-ui/react/highlight';
 import { createListCollection } from '@ark-ui/react/listbox';
 import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-react';
@@ -20,17 +20,20 @@ import {
   createCommandTree,
   matchesCommandHotkey,
   resolveCommandLevel,
+  shouldHandleCommandHotkey,
   splitHighlightSegments,
   type CommandFlatItem,
   type CommandPaletteProps as CoreCommandPaletteProps,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
 import { Badge } from './badge';
+import { Button } from './button';
 import {
   Dialog,
   DialogBackdrop,
   DialogContent,
   DialogTitle,
+  DialogTrigger,
 } from './dialog';
 import { useOptionalCommand } from './command';
 import { Kbd } from './kbd';
@@ -48,7 +51,9 @@ import { Row } from './row';
 import { Scroll } from './scroll';
 
 // 2. Module constants & types
-export type CommandPaletteProps = CoreCommandPaletteProps;
+export interface CommandPaletteProps extends CoreCommandPaletteProps {
+  children?: ReactNode;
+}
 
 const HIGHLIGHT_MARK_CLASS =
   'rounded-xs bg-primary/20 px-0.5 font-semibold text-foreground';
@@ -108,13 +113,15 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       noCommandsText = 'No commands registered.',
       size = 'md',
       inline = false,
-      hotkey = false,
+      hotkey = 'Mod+k',
       className,
+      children,
     },
     ref,
   ) => {
     // --- State ---
     const sharedCommand = useOptionalCommand();
+    const isStandalone = itemsProp !== undefined || externalCollectionProp !== undefined;
     const items = itemsProp ?? sharedCommand?.items;
     const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
 
@@ -123,9 +130,12 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     const [uncontrolledQuery, setUncontrolledQuery] = useState('');
     const [highlightedValue, setHighlightedValue] = useState<string | null>(null);
     const rootRef = useRef<HTMLDivElement | null>(null);
+    const anchorRef = useRef<HTMLSpanElement | null>(null);
 
     const sharedOpen =
-      sharedCommand && sharedCommand.style === 'palette' ? sharedCommand.open : undefined;
+      !isStandalone && sharedCommand && sharedCommand.style === 'palette'
+        ? sharedCommand.open
+        : undefined;
     const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentActivePath = controlledActivePath ?? uncontrolledActivePath;
     const currentQuery = controlledQuery ?? uncontrolledQuery;
@@ -178,14 +188,20 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     useEffect(() => {
       if (inline || !hotkey || typeof window === 'undefined') return;
       const onWindowKeyDown = (event: KeyboardEvent) => {
-        if (matchesCommandHotkey(event, hotkey)) {
-          event.preventDefault();
-          event.stopPropagation();
-          handleOpenChange(!isOpen);
+        if (!matchesCommandHotkey(event, hotkey)) return;
+        if (
+          !isOpen &&
+          !shouldHandleCommandHotkey(anchorRef.current, '[data-command-palette-anchor="true"]')
+        ) {
+          return;
         }
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        handleOpenChange(!isOpen);
       };
-      window.addEventListener('keydown', onWindowKeyDown);
-      return () => window.removeEventListener('keydown', onWindowKeyDown);
+      window.addEventListener('keydown', onWindowKeyDown, true);
+      return () => window.removeEventListener('keydown', onWindowKeyDown, true);
     });
 
     useEffect(() => {
@@ -594,31 +610,44 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       return paletteSurface;
     }
 
+    const showTrigger = children !== undefined || (controlledOpen === undefined && sharedOpen === undefined);
+
     return (
-      <Dialog
-        open={isOpen}
-        lazyMount
-        unmountOnExit
-        closeOnEscape={currentActivePath.length === 0}
-        initialFocusEl={() => getInputElement()}
-        onOpenChange={(details) => handleOpenChange(details.open)}
-      >
-        <DialogBackdrop />
-        <DialogContent
-          positionerClassName={commandPalettePositionerBase}
-          data-command-palette="true"
-          data-modal="true"
-          data-testid="command-palette"
-          className={cn(
-            commandPaletteDialogContentBase,
-            commandPaletteVariants({ size }),
-            className,
-          )}
+      <span ref={anchorRef} data-command-palette-anchor="true" className="inline-flex">
+        <Dialog
+          open={isOpen}
+          lazyMount
+          unmountOnExit
+          closeOnEscape={currentActivePath.length === 0}
+          initialFocusEl={() => getInputElement()}
+          onOpenChange={(details) => handleOpenChange(details.open)}
         >
-          <DialogTitle className="sr-only">Command Palette</DialogTitle>
-          {paletteSurface}
-        </DialogContent>
-      </Dialog>
+          {showTrigger && (
+            <DialogTrigger asChild>
+              {children ?? (
+                <Button variant="outline">
+                  Open Command Palette <Kbd size="sm" hotkey="Mod+k" />
+                </Button>
+              )}
+            </DialogTrigger>
+          )}
+          <DialogBackdrop />
+          <DialogContent
+            positionerClassName={commandPalettePositionerBase}
+            data-command-palette="true"
+            data-modal="true"
+            data-testid="command-palette"
+            className={cn(
+              commandPaletteDialogContentBase,
+              commandPaletteVariants({ size }),
+              className,
+            )}
+          >
+            <DialogTitle className="sr-only">Command Palette</DialogTitle>
+            {paletteSurface}
+          </DialogContent>
+        </Dialog>
+      </span>
     );
   },
 );

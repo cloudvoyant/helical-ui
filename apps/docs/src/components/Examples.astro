@@ -1,50 +1,49 @@
 ---
-// apps/docs/src/components/Examples.astro
-// Enumerates a component's demo directories straight from the filesystem, so
-// there is no separate metadata manifest to keep in sync with the examples.
 import Demo from './Demo.astro';
 
 interface Props {
-  component?: string;
+  component: string;
   exclude?: string | string[];
   order?: string[];
 }
 
-const { component = 'button', exclude, order = [] } = Astro.props;
-const excludedExamples = new Set(Array.isArray(exclude) ? exclude : exclude ? [exclude] : []);
+const { component, exclude = [], order } = Astro.props;
+const excluded = new Set(Array.isArray(exclude) ? exclude : [exclude]);
 
-// Lazy glob over the example dirs — we only use the matched paths to derive
-// each example's id and title; the modules are never imported here.
-const examplePaths = import.meta.glob('./examples/*/*/react.tsx');
+const reactFiles = import.meta.glob('../components/examples/*/*/react.tsx');
 
-const titleFromId = (id: string) =>
-  id
+function titleFromId(id: string): string {
+  return id
     .split('-')
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(' ');
+}
 
-const entries = Object.keys(examplePaths)
-  .map((p) => /\.\/examples\/([^/]+)\/([^/]+)\/react\.tsx$/.exec(p))
-  .filter((m): m is RegExpExecArray => m !== null)
-  .filter((m) => m[1] === component)
-  .map((m) => ({ id: m[2], title: titleFromId(m[2]) }))
-  .filter((e) => !excludedExamples.has(e.id));
+const prefix = `../components/examples/${component}/`;
+const entries = Object.keys(reactFiles)
+  .filter((p) => p.startsWith(prefix))
+  .map((p) => p.slice(prefix.length).split('/')[0]!)
+  .filter((id) => !excluded.has(id))
+  .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+  .map((id) => ({ id, title: titleFromId(id) }));
 
-if (order.length > 0) {
+if (order && order.length > 0) {
   const rank = new Map(order.map((id, i) => [id, i]));
   entries.sort((a, b) => {
-    const ra = rank.has(a.id) ? rank.get(a.id)! : order.length;
-    const rb = rank.has(b.id) ? rank.get(b.id)! : order.length;
+    const ra = rank.get(a.id) ?? order.length;
+    const rb = rank.get(b.id) ?? order.length;
     return ra !== rb ? ra - rb : a.id.localeCompare(b.id);
   });
 }
 ---
 
 <div class="flex flex-col gap-10">
-  {entries.map((entry) => (
-    <section class="flex flex-col gap-3">
-      <h3 class="text-lg font-semibold tracking-tight">{entry.title}</h3>
-      <Demo component={component} example={entry.id} />
-    </section>
-  ))}
+  {
+    entries.map((entry) => (
+      <section class="flex flex-col gap-3">
+        <h3 class="text-lg font-semibold tracking-tight">{entry.title}</h3>
+        <Demo component={component} example={entry.id} />
+      </section>
+    ))
+  }
 </div>

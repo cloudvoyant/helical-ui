@@ -1,20 +1,20 @@
-<!-- libs/helical-svelte/src/colon-command/ColonCommandList.svelte -->
+<!-- libs/helical-svelte/src/command-menu/CommandMenuList.svelte -->
 <script lang="ts">
   // 1. Imports
   import {
-    colonCommandListVariants,
-    resolveColonCommandGridStyle,
+    commandMenuListVariants,
+    resolveCommandMenuGridStyle,
   } from '@cloudvoyant/helical-ui';
   import { ListboxContent, ListboxEmpty } from '../listbox';
   import Scroll from '../Scroll.svelte';
-  import ColonCommandItem from './ColonCommandItem.svelte';
-  import { getColonCommandContext } from './context.svelte';
+  import CommandMenuItem from './CommandMenuItem.svelte';
+  import { getCommandMenuContext } from './context.svelte';
 
   // --- State ---
-  const ctx = getColonCommandContext();
+  const ctx = getCommandMenuContext();
 
   const gridStyle = $derived(
-    resolveColonCommandGridStyle(ctx.columns, ctx.resolution.suggestions.length),
+    resolveCommandMenuGridStyle(ctx.columns, ctx.resolution.suggestions.length),
   );
   const gridStyleAttr = $derived(
     gridStyle
@@ -27,15 +27,15 @@
   {#snippet children()}
     <ListboxContent
       tabindex={-1}
-      data-testid="colon-command-list"
+      data-testid="command-menu-list"
       data-columns={String(ctx.columns)}
       data-size={ctx.size}
       style={gridStyleAttr}
-      class={colonCommandListVariants({ columns: ctx.columns, size: ctx.size })}
+      class={commandMenuListVariants({ columns: ctx.columns, size: ctx.size })}
     >
       {#if !ctx.resolution.hasCommands}
         <ListboxEmpty
-          data-testid="colon-command-empty"
+          data-testid="command-menu-empty"
           data-empty-kind="no-commands"
           class="col-span-full"
         >
@@ -43,7 +43,7 @@
         </ListboxEmpty>
       {:else if ctx.resolution.suggestions.length === 0}
         <ListboxEmpty
-          data-testid="colon-command-empty"
+          data-testid="command-menu-empty"
           data-empty-kind="no-matches"
           class="col-span-full"
         >
@@ -51,7 +51,7 @@
         </ListboxEmpty>
       {:else}
         {#each ctx.resolution.suggestions as item (item.value)}
-          <ColonCommandItem {item} />
+          <CommandMenuItem {item} />
         {/each}
       {/if}
     </ListboxContent>

@@ -3,14 +3,12 @@
 // 1. Imports
 import { useState } from 'react';
 import {
-  Badge,
   Button,
   HStack,
   Kbd,
   Pane,
   ToggleGroup,
   ToggleGroupItem,
-  VStack,
   WhichKey,
   WhichKeyProvider,
   useWhichKey,
@@ -30,8 +28,7 @@ function JumpLabelsSurface({
 }) {
   // --- State ---
   const { startJumpMode, setJumpAction } = useWhichKey();
-  const [activatedItem, setActivatedItem] = useState('None');
-  const [focusedItem, setFocusedItem] = useState('None');
+  const [activeItem, setActiveItem] = useState<string | null>(null);
 
   // --- Render ---
   return (
@@ -41,38 +38,27 @@ function JumpLabelsSurface({
       className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
     >
       <HStack className="flex-wrap items-center justify-between gap-2">
-        <HStack className="items-center gap-2">
-          <ToggleGroup
-            attached
-            value={[jumpAction]}
-            onValueChange={(d) => {
-              const next = d.value[0] as JumpAction | undefined;
-              if (!next) return;
-              setJumpAction(next);
-              onToggleJumpAction(next);
-            }}
-            aria-label="Jump action mode"
-          >
-            <ToggleGroupItem value="focus" size="sm" variant="outline">
-              jumpAction: focus
-            </ToggleGroupItem>
-            <ToggleGroupItem value="activate" size="sm" variant="outline">
-              jumpAction: activate
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Button size="sm" variant="outline" onClick={() => startJumpMode()}>
-            Trigger Jump (<Kbd size="sm" hotkey="g w" />)
-          </Button>
-        </HStack>
-
-        <HStack className="items-center gap-2 text-xs">
-          <span>
-            Focused: <strong>{focusedItem}</strong>
-          </span>
-          <Badge variant="subtle" color="primary">
-            Activated: <strong>{activatedItem}</strong>
-          </Badge>
-        </HStack>
+        <ToggleGroup
+          attached
+          value={[jumpAction]}
+          onValueChange={(d) => {
+            const next = d.value[0] as JumpAction | undefined;
+            if (!next) return;
+            setJumpAction(next);
+            onToggleJumpAction(next);
+          }}
+          aria-label="Jump action mode"
+        >
+          <ToggleGroupItem value="focus" size="sm" variant="outline">
+            jumpAction: focus
+          </ToggleGroupItem>
+          <ToggleGroupItem value="activate" size="sm" variant="outline">
+            jumpAction: activate
+          </ToggleGroupItem>
+        </ToggleGroup>
+        <Button size="sm" variant="outline" onClick={() => startJumpMode()}>
+          Trigger Jump (<Kbd size="sm" hotkey="g w" />)
+        </Button>
       </HStack>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -80,9 +66,9 @@ function JumpLabelsSurface({
           <button
             key={item}
             type="button"
-            onFocus={() => setFocusedItem(item)}
-            onClick={() => setActivatedItem(item)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none"
+            aria-pressed={activeItem === item}
+            onClick={() => setActiveItem(item)}
+            className="rounded-md border border-border bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none aria-pressed:border-primary aria-pressed:bg-primary/10"
           >
             {item}
           </button>
@@ -100,10 +86,8 @@ export default function ReactWhichKeyJumpLabels() {
   // --- Render ---
   return (
     <WhichKeyProvider preset="helix" jumpAction={jumpAction}>
-      <VStack className="w-full gap-3">
-        <JumpLabelsSurface jumpAction={jumpAction} onToggleJumpAction={setJumpAction} />
-        <WhichKey />
-      </VStack>
+      <JumpLabelsSurface jumpAction={jumpAction} onToggleJumpAction={setJumpAction} />
+      <WhichKey />
     </WhichKeyProvider>
   );
 }

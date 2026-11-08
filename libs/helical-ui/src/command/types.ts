@@ -5,7 +5,7 @@ import type { TreeCollection } from '@zag-js/collection';
 import type { KbdHotkey } from '../kbd';
 
 // 2. Module constants & types
-export type CommandStyle = 'palette' | 'colon';
+export type CommandStyle = 'palette' | 'menu' | 'colon';
 
 export interface CommandSelectContext {
   value: string;
@@ -19,9 +19,9 @@ export interface CommandNode {
   label: string;
   description?: string;
   group?: string;
-  /** Colon token for this level (defaults to `value`, e.g. 'theme' or 'catppuccin'). */
+  /** Command token for this level (defaults to `value`, e.g. 'theme' or 'catppuccin'). */
   command?: string;
-  /** Alternative colon tokens (e.g. ['t', 'colorscheme']). */
+  /** Alternative command tokens (e.g. ['t', 'colorscheme']). */
   aliases?: string[];
   /** Keyboard shortcut chord(s) rendered via <Kbd>. */
   shortcut?: KbdHotkey;
@@ -60,7 +60,7 @@ export interface CommandFlatItem {
   breadcrumbLabels: string[];
   /** Character indices matched by fzf in `label` for fuzzy highlighting. */
   matchPositions?: number[];
-  /** Character indices matched by fzf in `command` for colon completion highlighting. */
+  /** Character indices matched by fzf in `command` for command completion highlighting. */
   commandMatchPositions?: number[];
   score?: number;
   node: CommandNode;
@@ -74,7 +74,7 @@ export interface CommandLevelResolution {
   groups: Array<{ label: string; items: CommandFlatItem[] }>;
 }
 
-export interface ColonCommandResolution {
+export interface CommandMenuResolution {
   /** False when the root command tree has zero registered commands. */
   hasCommands: boolean;
   normalizedInput: string;
@@ -85,6 +85,8 @@ export interface ColonCommandResolution {
   exactNode: CommandFlatItem | null;
   error: string | null;
 }
+
+export type ColonCommandResolution = CommandMenuResolution;
 
 export interface CommandHighlightSegment {
   text: string;
@@ -110,14 +112,15 @@ export interface CommandPaletteProps {
   size?: 'sm' | 'md' | 'lg';
   /** Render inline inside a container instead of a modal Dialog (useful for docs previews). */
   inline?: boolean;
-  /** Global keyboard shortcut to toggle open (e.g. 'Mod+k'), or false to disable. */
+  /** Global keyboard shortcut to toggle open (e.g. 'Mod+k'), or false to disable. @default 'Mod+k' */
   hotkey?: string | false;
   className?: string;
 }
 
-export type ColonCommandColumns = 'auto' | 1 | 2 | 3 | 4;
+export type CommandMenuColumns = 'auto' | 1 | 2 | 3 | 4;
+export type ColonCommandColumns = CommandMenuColumns;
 
-export interface ColonCommandProps {
+export interface CommandMenuProps {
   items?: CommandNode[];
   collection?: TreeCollection<CommandNode>;
   open?: boolean;
@@ -132,16 +135,20 @@ export interface ColonCommandProps {
   emptyText?: string;
   /** Displayed in the UI when no commands are registered in the tree. @default 'No commands registered.' */
   noCommandsText?: string;
-  /** Number of completion columns above the colon prompt bar. @default 'auto' */
-  columns?: ColonCommandColumns;
+  /** Number of completion columns above the prompt bar. @default 'auto' */
+  columns?: CommandMenuColumns;
   /** Whether to display keyboard shortcut badges next to completion items. @default false */
   showShortcuts?: boolean;
   /** Compactness variant for the completion grid and prompt bar. @default 'md' */
   size?: 'sm' | 'md' | 'lg';
   /** Render inline inside a container instead of a modal Dialog (useful for docs previews). */
   inline?: boolean;
+  /** Global keyboard shortcut to open the command menu (e.g. ':'), or false to disable. @default ':' */
+  hotkey?: string | false;
   className?: string;
 }
+
+export type ColonCommandProps = CommandMenuProps;
 
 export interface CommandContextProps {
   items?: CommandNode[];
@@ -164,6 +171,7 @@ export interface CommandContextValue {
   style: CommandStyle;
   setStyle: (style: CommandStyle) => void;
   openPalette: () => void;
+  openMenu: () => void;
   openColon: () => void;
   close: () => void;
   toggle: () => void;

@@ -2051,8 +2051,11 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       targetEl &&
       isHTMLElementLike(targetEl) &&
       typeof targetEl.closest === 'function' &&
-      (targetEl.closest('[data-command-palette][data-modal="true"], [data-colon-command][data-modal="true"]') ||
-        (isTextEntryElement(targetEl) && targetEl.closest('[data-command-palette], [data-colon-command]')))
+      (targetEl.closest(
+        '[data-command-palette][data-modal="true"], [data-command-menu][data-modal="true"], [data-colon-command][data-modal="true"]',
+      ) ||
+        (isTextEntryElement(targetEl) &&
+          targetEl.closest('[data-command-palette], [data-command-menu], [data-colon-command]')))
     ) {
       return false;
     }
@@ -2381,7 +2384,9 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
       if (
         isTextEntryElement(targetNode) &&
-        !targetNode.closest('[data-which-key-explorer], [data-command-palette], [data-colon-command]') &&
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette], [data-command-menu], [data-colon-command]',
+        ) &&
         (mode === 'normal' || mode === 'select')
       ) {
         setMode('insert');
@@ -2433,7 +2438,9 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       if (
         isTextEntryElement(targetNode) &&
         !getModalEditor(targetNode) &&
-        !targetNode.closest('[data-which-key-explorer], [data-command-palette], [data-colon-command]')
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette], [data-command-menu], [data-colon-command]',
+        )
       ) {
         if (mode === 'normal' || mode === 'select') {
           setMode('insert');

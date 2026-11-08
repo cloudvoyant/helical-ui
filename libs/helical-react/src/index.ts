@@ -351,6 +351,13 @@ export {
 } from './toast';
 export { CommandPalette, type CommandPaletteProps } from './command-palette';
 export {
+  CommandMenu,
+  CommandMenuError,
+  CommandMenuItem,
+  CommandMenuList,
+  CommandMenuPromptBar,
+  CommandMenuContext,
+  useCommandMenuContext,
   ColonCommand,
   ColonCommandError,
   ColonCommandItem,
@@ -358,18 +365,26 @@ export {
   ColonCommandPromptBar,
   ColonCommandContext,
   useColonCommandContext,
+  type CommandMenuProps,
+  type CommandMenuErrorProps,
+  type CommandMenuItemProps,
+  type CommandMenuListProps,
+  type CommandMenuPromptBarProps,
+  type CommandMenuContextValue,
   type ColonCommandProps,
   type ColonCommandErrorProps,
   type ColonCommandItemProps,
   type ColonCommandListProps,
   type ColonCommandPromptBarProps,
   type ColonCommandContextValue,
-} from './colon-command';
+} from './command-menu';
 export { CommandProvider, useCommand, useOptionalCommand, type CommandProviderProps } from './command';
 export type {
   CommandContextProps,
   CommandContextValue,
   CommandFlatItem,
+  CommandMenuColumns,
+  ColonCommandColumns,
   CommandNode,
   CommandSelectContext,
   CommandStyle,

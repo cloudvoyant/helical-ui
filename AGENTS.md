@@ -100,6 +100,8 @@ export const badgeVariants = cva('inline-flex items-center', {
 ### React and Svelte
 
 - Keep wrappers thin, maintain prop parity across React and Svelte 5 runes (`$props`, `$derived`, `$state`), and compose layouts with helical-ui primitives (`Container`, `Row`, `Col`, `Stack`, `HStack`, `VStack`, `Center`):
+- [Proposed] Support uncontrolled usage (internal state fallback when `open` or `value` is omitted) on interactive overlay and menu components so consumers do not have to wire external state for basic usage.
+- Keep documentation examples in `apps/docs/src/components/examples/` self-contained with hardcoded sample data and minimal UI; omit `data-testid` attributes, docs-shell state subscriptions, status readouts used only to prove effects, and explanatory prose that belongs in the surrounding MDX page.
 
 ```tsx
 // React (libs/helical-react/src/<component>/Root.tsx)
@@ -127,7 +129,7 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 | Unit (`vitest`) | `libs/*/tests/*.test.ts` | Variant output, helpers, and pure state logic |
 | E2E (`playwright`) | `apps/docs/e2e/<component>.spec.ts` | ARIA state, keyboard navigation, and parity across React & Svelte islands |
 
-- Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`), and focused outcome assertions for `Then` (`test('Then ...')`).
+- Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`) with shared setup/actions in `test.beforeEach`, and focused outcome assertions in `test('it ...')`.
 - Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):

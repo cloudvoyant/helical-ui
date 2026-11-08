@@ -42,7 +42,7 @@ export const commandPaletteItemBase =
 export const commandPaletteFooterBase =
   'flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground';
 
-export const colonCommandVariants = cva(
+export const commandMenuVariants = cva(
   'flex w-full flex-col overflow-hidden border border-border bg-popover font-mono text-popover-foreground shadow-2xl outline-none',
   {
     variants: {
@@ -58,14 +58,14 @@ export const colonCommandVariants = cva(
   },
 );
 
-export type ColonCommandVariants = VariantProps<typeof colonCommandVariants>;
+export type CommandMenuVariants = VariantProps<typeof commandMenuVariants>;
 
-export const colonCommandPositionerBase = 'items-end justify-stretch p-0!';
+export const commandMenuPositionerBase = 'items-end justify-stretch p-0!';
 
-export const colonCommandDialogContentBase =
+export const commandMenuDialogContentBase =
   'fixed inset-x-0 bottom-0 top-auto my-0 w-full max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-x-0 border-b-0 border-t border-border p-0 shadow-2xl sm:max-w-none sm:rounded-none';
 
-export const colonCommandListVariants = cva('overflow-y-auto border-b border-border bg-popover/95 outline-none', {
+export const commandMenuListVariants = cva('overflow-y-auto border-b border-border bg-popover/95 outline-none', {
   variants: {
     columns: {
       auto: 'grid! grid-flow-col!',
@@ -86,7 +86,7 @@ export const colonCommandListVariants = cva('overflow-y-auto border-b border-bor
   },
 });
 
-export const colonCommandItemVariants = cva(
+export const commandMenuItemVariants = cva(
   'group relative flex min-w-0 w-full cursor-pointer select-none items-center justify-between gap-2 rounded-md font-mono outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
   {
     variants: {
@@ -102,7 +102,7 @@ export const colonCommandItemVariants = cva(
   },
 );
 
-export const colonCommandPromptBarVariants = cva(
+export const commandMenuPromptBarVariants = cva(
   'flex w-full items-center border-t border-border/60 bg-muted/50 font-mono',
   {
     variants: {
@@ -118,9 +118,9 @@ export const colonCommandPromptBarVariants = cva(
   },
 );
 
-export const colonCommandPrefixBase = 'select-none font-mono font-bold text-primary';
+export const commandMenuPrefixBase = 'select-none font-mono font-bold text-primary';
 
-export const colonCommandInputVariants = cva(
+export const commandMenuInputVariants = cva(
   'flex-1 border-0 bg-transparent font-mono text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-0',
   {
     variants: {
@@ -136,5 +136,16 @@ export const colonCommandInputVariants = cva(
   },
 );
 
-export const colonCommandErrorBase =
+export const commandMenuErrorBase =
   'flex items-center justify-between gap-2 border-t border-destructive/30 bg-destructive/10 px-3 py-1.5 font-mono text-xs text-destructive';
+
+export const colonCommandVariants = commandMenuVariants;
+export type ColonCommandVariants = CommandMenuVariants;
+export const colonCommandPositionerBase = commandMenuPositionerBase;
+export const colonCommandDialogContentBase = commandMenuDialogContentBase;
+export const colonCommandListVariants = commandMenuListVariants;
+export const colonCommandItemVariants = commandMenuItemVariants;
+export const colonCommandPromptBarVariants = commandMenuPromptBarVariants;
+export const colonCommandPrefixBase = commandMenuPrefixBase;
+export const colonCommandInputVariants = commandMenuInputVariants;
+export const colonCommandErrorBase = commandMenuErrorBase;

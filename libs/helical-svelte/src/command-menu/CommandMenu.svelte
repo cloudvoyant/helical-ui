@@ -1,38 +1,45 @@
-<!-- libs/helical-svelte/src/colon-command/ColonCommand.svelte -->
+<!-- libs/helical-svelte/src/command-menu/CommandMenu.svelte -->
 <script lang="ts">
   // 1. Imports
+  import type { Snippet } from 'svelte';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import {
     announceCommandMessage,
     cn,
-    colonCommandDialogContentBase,
-    colonCommandPositionerBase,
-    colonCommandVariants,
+    commandMenuDialogContentBase,
+    commandMenuPositionerBase,
+    commandMenuVariants,
     createCommandTree,
-    formatColonCompletionInput,
-    resolveColonCommandGridNavigation,
-    resolveColonCommandState,
-    type ColonCommandProps as CoreColonCommandProps,
+    formatCommandMenuCompletionInput,
+    matchesCommandHotkey,
+    resolveCommandMenuGridNavigation,
+    resolveCommandMenuState,
+    shouldHandleCommandHotkey,
     type CommandFlatItem,
+    type CommandMenuProps as CoreCommandMenuProps,
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
+  import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';
   import {
     Dialog,
     DialogBackdrop,
     DialogContent,
     DialogTitle,
+    DialogTrigger,
   } from '../dialog';
+  import Kbd from '../Kbd.svelte';
   import { Listbox } from '../listbox';
-  import ColonCommandError from './ColonCommandError.svelte';
-  import ColonCommandList from './ColonCommandList.svelte';
-  import ColonCommandPromptBar from './ColonCommandPromptBar.svelte';
-  import { setColonCommandContext } from './context.svelte';
+  import CommandMenuError from './CommandMenuError.svelte';
+  import CommandMenuList from './CommandMenuList.svelte';
+  import CommandMenuPromptBar from './CommandMenuPromptBar.svelte';
+  import { setCommandMenuContext } from './context.svelte';
 
   // 2. Module constants & types
-  type Props = Omit<CoreColonCommandProps, 'className'> & {
+  type Props = Omit<CoreCommandMenuProps, 'className'> & {
     class?: string;
     className?: string;
+    children?: Snippet;
   };
 
   // --- State ---
@@ -52,8 +59,10 @@
     showShortcuts = false,
     size = 'md',
     inline = false,
+    hotkey = ':',
     class: className = '',
     className: reactClassName = '',
+    children,
   }: Props = $props();
 
   const sharedCommand = getOptionalCommandContext();
@@ -65,17 +74,25 @@
   let highlightedValue = $state<string | null>(null);
   let submittedError = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
+  let anchorEl = $state<HTMLSpanElement | null>(null);
 
+  const isStandalone = $derived(
+    itemsProp !== undefined || externalCollectionProp !== undefined,
+  );
   const items = $derived(itemsProp ?? sharedCommand?.items);
   const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
   const sharedOpen = $derived(
-    sharedCommand && sharedCommand.style === 'colon' ? sharedCommand.open : undefined,
+    !isStandalone &&
+      sharedCommand &&
+      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+      ? sharedCommand.open
+      : undefined,
   );
   const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
   const currentInput = $derived(controlledInputValue ?? uncontrolledInput);
   const tree = $derived(createCommandTree(externalCollection ?? items ?? []));
   const effectiveResolutionInput = $derived(tabBaseInput ?? currentInput);
-  const resolution = $derived(resolveColonCommandState(tree, effectiveResolutionInput));
+  const resolution = $derived(resolveCommandMenuState(tree, effectiveResolutionInput));
   const enabledSuggestions = $derived(
     resolution.suggestions.filter((item) => !item.disabled),
   );
@@ -103,8 +120,27 @@
   );
 
   const activeError = $derived(submittedError ?? resolution.error);
+  const showTrigger = $derived(
+    children !== undefined || (controlledOpen === undefined && sharedOpen === undefined),
+  );
 
   // --- Effects ---
+  $effect(() => {
+    if (inline || !hotkey || typeof window === 'undefined') return;
+    const onWindowKeyDown = (event: KeyboardEvent) => {
+      if (!matchesCommandHotkey(event, hotkey)) return;
+      if (!shouldHandleCommandHotkey(anchorEl, '[data-command-menu-anchor="true"]')) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      handleOpenChange(true);
+    };
+    window.addEventListener('keydown', onWindowKeyDown, true);
+    return () => window.removeEventListener('keydown', onWindowKeyDown, true);
+  });
+
   $effect(() => {
     if (!isOpen || inline || typeof document === 'undefined') return;
     const focusInput = () => {
@@ -133,7 +169,11 @@
     } else {
       uncontrolledOpen = nextOpen;
     }
-    if (sharedCommand && sharedCommand.style === 'colon') {
+    if (
+      !isStandalone &&
+      sharedCommand &&
+      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+    ) {
       sharedCommand.setOpen(nextOpen);
     }
     if (!nextOpen) {
@@ -146,7 +186,7 @@
   function executeOrDrillItem(item: CommandFlatItem) {
     if (item.disabled) return;
     if (item.isBranch) {
-      const nextInput = formatColonCompletionInput(
+      const nextInput = formatCommandMenuCompletionInput(
         resolution.completedTokens,
         item,
       );
@@ -167,7 +207,9 @@
     };
     item.node.onSelect?.(ctx);
     onSelectCommandProp?.(ctx);
-    sharedCommand?.onSelectCommand?.(ctx);
+    if (!isStandalone) {
+      sharedCommand?.onSelectCommand?.(ctx);
+    }
     announceCommandMessage(`Executed ${item.fullCommand}`);
 
     if (!inline && item.node.closeOnSelect !== false) {
@@ -207,7 +249,7 @@
         currentTarget.isBranch &&
         resolution.partialToken.length > 0
       ) {
-        const completed = formatColonCompletionInput(
+        const completed = formatCommandMenuCompletionInput(
           resolution.completedTokens,
           currentTarget,
           true,
@@ -236,7 +278,7 @@
         nextTarget = enabledSuggestions[nextIdx]!;
       }
 
-      const completed = formatColonCompletionInput(
+      const completed = formatCommandMenuCompletionInput(
         resolution.completedTokens,
         nextTarget,
         false,
@@ -264,7 +306,7 @@
       const currentIdx = enabledSuggestions.findIndex(
         (item) => item.value === effectiveHighlightedValue,
       );
-      const nextIdx = resolveColonCommandGridNavigation(
+      const nextIdx = resolveCommandMenuGridNavigation(
         columns,
         enabledSuggestions.length,
         currentIdx,
@@ -272,7 +314,7 @@
       );
       const nextTarget = enabledSuggestions[nextIdx]!;
       if (tabBaseInput !== null) {
-        const completed = formatColonCompletionInput(
+        const completed = formatCommandMenuCompletionInput(
           resolution.completedTokens,
           nextTarget,
           false,
@@ -315,7 +357,7 @@
   // --- Helpers ---
   function getInputElement(): HTMLInputElement | null {
     if (rootEl) {
-      return rootEl.querySelector<HTMLInputElement>('[data-testid="colon-command-input"]');
+      return rootEl.querySelector<HTMLInputElement>('[data-testid="command-menu-input"]');
     }
     return null;
   }
@@ -336,7 +378,7 @@
     });
   }
 
-  setColonCommandContext({
+  setCommandMenuContext({
     get resolution() {
       return resolution;
     },
@@ -383,17 +425,17 @@
   });
 </script>
 
-{#snippet colonSurface()}
+{#snippet menuSurface()}
   <div
     bind:this={rootEl}
-    data-colon-command="true"
+    data-command-menu="true"
     data-modal={inline ? 'false' : undefined}
     data-size={size}
-    data-colon-columns={String(columns)}
-    data-colon-command-inline={inline ? 'true' : undefined}
-    data-testid={inline ? 'colon-command' : 'colon-command-surface'}
+    data-command-menu-columns={String(columns)}
+    data-command-menu-inline={inline ? 'true' : undefined}
+    data-testid={inline ? 'command-menu' : 'command-menu-surface'}
     class={cn(
-      colonCommandVariants({ size }),
+      commandMenuVariants({ size }),
       inline ? cn('rounded-lg border', className, reactClassName) : 'max-w-none border-0 shadow-none',
     )}
   >
@@ -408,40 +450,51 @@
       }}
       class="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
     >
-      <ColonCommandList />
-      <ColonCommandPromptBar />
-      <ColonCommandError />
+      <CommandMenuList />
+      <CommandMenuPromptBar />
+      <CommandMenuError />
     </Listbox>
   </div>
 {/snippet}
 
 {#if inline}
-  {@render colonSurface()}
+  {@render menuSurface()}
 {:else}
-  <Dialog
-    open={isOpen}
-    lazyMount
-    unmountOnExit
-    initialFocusEl={() => getInputElement()}
-    onOpenChange={(details) => handleOpenChange(details.open)}
-  >
-    <DialogBackdrop class="bg-black/20" />
-    <DialogContent
-      positionerClass={colonCommandPositionerBase}
-      data-colon-command="true"
-      data-modal="true"
-      data-size={size}
-      data-colon-columns={String(columns)}
-      data-testid="colon-command"
-      class={cn(
-        colonCommandDialogContentBase,
-        colonCommandVariants({ size }),
-        className,
-        reactClassName,
-      )}
+  <span bind:this={anchorEl} data-command-menu-anchor="true" class="inline-flex">
+    <Dialog
+      open={isOpen}
+      lazyMount
+      unmountOnExit
+      initialFocusEl={() => getInputElement()}
+      onOpenChange={(details) => handleOpenChange(details.open)}
     >
-      <DialogTitle class="sr-only">Colon Command Prompt</DialogTitle>
-      {@render colonSurface()}
-    </DialogContent>
-  </Dialog>
+      {#if showTrigger}
+        {#if children}
+          <DialogTrigger asChild={children} />
+        {:else}
+          <Button variant="outline" onclick={() => handleOpenChange(true)}>
+            Open Command Menu {#if hotkey}<Kbd size="sm">{hotkey}</Kbd>{/if}
+          </Button>
+        {/if}
+      {/if}
+      <DialogBackdrop class="bg-black/20" />
+      <DialogContent
+        positionerClass={commandMenuPositionerBase}
+        data-command-menu="true"
+        data-modal="true"
+        data-size={size}
+        data-command-menu-columns={String(columns)}
+        data-testid="command-menu"
+        class={cn(
+          commandMenuDialogContentBase,
+          commandMenuVariants({ size }),
+          className,
+          reactClassName,
+        )}
+      >
+        <DialogTitle class="sr-only">Command Menu</DialogTitle>
+        {@render menuSurface()}
+      </DialogContent>
+    </Dialog>
+  </span>
 {/if}

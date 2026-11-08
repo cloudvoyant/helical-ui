@@ -1,23 +1,13 @@
 // apps/docs/src/components/examples/which-key/panes/react.tsx
-import { Badge, HStack, Kbd, Pane, VStack, WhichKey, WhichKeyProvider, useWhichKey } from '@cloudvoyant/helical-react';
 
-function PanesSurface() {
-  const { activePaneId } = useWhichKey();
+// 1. Imports
+import { Pane, WhichKey, WhichKeyProvider } from '@cloudvoyant/helical-react';
 
+// 4. Exported component
+export default function ReactWhichKeyPanes() {
+  // --- Render ---
   return (
-    <VStack className="w-full gap-3">
-      <HStack className="flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground">
-          Use <Kbd size="sm" hotkey={['Space', 'w', 'l']} /> / <Kbd size="sm" hotkey={['Space', 'w', 'h']} /> (or{' '}
-          <Kbd size="sm" hotkey="Control+w" />
-          ), <Kbd size="sm" hotkey={['Space', '1']} />–<Kbd size="sm">3</Kbd>, and <Kbd size="sm" hotkey="Control+o" />{' '}
-          / <Kbd size="sm" hotkey="Control+i" /> Jumplist.
-        </span>
-        <Badge variant="subtle" color="primary">
-          Active: {activePaneId ?? 'pane-nav'}
-        </Badge>
-      </HStack>
-
+    <WhichKeyProvider preset="helix">
       <div className="grid grid-cols-3 gap-3">
         <Pane
           paneId="pane-nav"
@@ -82,14 +72,6 @@ function PanesSurface() {
           </button>
         </Pane>
       </div>
-    </VStack>
-  );
-}
-
-export default function ReactWhichKeyPanes() {
-  return (
-    <WhichKeyProvider preset="helix">
-      <PanesSurface />
       <WhichKey />
     </WhichKeyProvider>
   );

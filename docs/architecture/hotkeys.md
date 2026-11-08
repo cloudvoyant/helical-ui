@@ -18,7 +18,7 @@ The `helical-ui` hotkey and modal editing system provides framework-agnostic mul
 
 - **NFR1 — Zero Framework Leakage in Core:** `libs/helical-ui/src/which-key/` must remain pure TypeScript with zero `react`, `svelte`, `@ark-ui/*`, or `@tiptap/*` runtime imports in the controller.
 - **NFR2 — Scoped & Document Controller Coexistence:** Multiple scoped `WhichKeyProvider` instances (such as interactive documentation demos) must coexist with a document-level `WhichKeyProvider` without duplicate command execution.
-- **NFR3 — Input & Overlay Safety:** Typing in native `<input>`, `<textarea>`, `contenteditable`, or open modal overlays (`CommandPalette`, `ColonCommand`, `WhichKeyExplorer`) must never trigger normal-mode single-key bindings.
+- **NFR3 — Input & Overlay Safety:** Typing in native `<input>`, `<textarea>`, `contenteditable`, or open modal overlays (`CommandPalette`, `CommandMenu`, `WhichKeyExplorer`) must never trigger normal-mode single-key bindings.
 
 ## Design
 
@@ -105,5 +105,5 @@ When multiple `WhichKeyProvider` instances are mounted on the same document (for
 ## References
 
 - [WhichKey Component Architecture (`components/which-key.md`)](components/which-key.md)
-- [CommandPalette and ColonCommand Architecture (`components/commands.md`)](components/commands.md)
+- [CommandPalette and CommandMenu Architecture (`components/commands.md`)](components/commands.md)
 - [Monorepo Architecture (`index.md`)](index.md)

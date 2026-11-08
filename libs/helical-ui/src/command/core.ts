@@ -7,12 +7,12 @@ import { createFilter } from '@zag-js/i18n-utils';
 import { createLiveRegion, type LiveRegion } from '@zag-js/live-region';
 import { Fzf, byLengthAsc } from 'fzf';
 import type {
-  ColonCommandColumns,
-  ColonCommandResolution,
   CommandBreadcrumb,
   CommandFlatItem,
   CommandHighlightSegment,
   CommandLevelResolution,
+  CommandMenuColumns,
+  CommandMenuResolution,
   CommandNode,
 } from './types';
 
@@ -27,6 +27,18 @@ let sharedLiveRegion: LiveRegion | null = null;
 // 3. Local helpers
 function getNodeCommandToken(node: CommandNode): string {
   return (node.command ?? node.value).trim();
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== 'object') return false;
+  const el = target as HTMLElement;
+  if (el.isContentEditable) return true;
+  const tag = el.tagName?.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+  if (typeof el.closest === 'function' && el.closest('[contenteditable="true"], .ProseMirror')) {
+    return true;
+  }
+  return false;
 }
 
 function toFlatItem(
@@ -284,10 +296,10 @@ export function resolveCommandLevel(
   };
 }
 
-export function resolveColonCommandState(
+export function resolveCommandMenuState(
   tree: TreeCollection<CommandNode>,
   rawInput: string = '',
-): ColonCommandResolution {
+): CommandMenuResolution {
   const rootChildren = tree.getNodeChildren(tree.rootNode);
   const hasCommands = rootChildren.length > 0;
   const withoutColon = rawInput.startsWith(':') ? rawInput.slice(1) : rawInput;
@@ -467,7 +479,9 @@ export function resolveColonCommandState(
   };
 }
 
-export function formatColonCompletionInput(
+export const resolveColonCommandState = resolveCommandMenuState;
+
+export function formatCommandMenuCompletionInput(
   completedTokens: string[],
   item: CommandFlatItem,
   appendBranchSpace = true,
@@ -475,6 +489,8 @@ export function formatColonCompletionInput(
   const nextTokens = [...completedTokens, item.command].join(' ');
   return item.isBranch && appendBranchSpace ? `:${nextTokens} ` : `:${nextTokens}`;
 }
+
+export const formatColonCompletionInput = formatCommandMenuCompletionInput;
 
 export function splitHighlightSegments(text: string, matchPositions?: number[]): CommandHighlightSegment[] {
   if (!text) return [];
@@ -519,6 +535,11 @@ export function announceCommandMessage(message: string): void {
 
 export function matchesCommandHotkey(event: KeyboardEvent, hotkey: string): boolean {
   if (!hotkey) return false;
+  const trimmed = hotkey.trim();
+  if (trimmed === ':') {
+    if (isEditableTarget(event.target)) return false;
+    return !event.metaKey && !event.ctrlKey && !event.altKey && event.key === ':';
+  }
   try {
     if (matchesKeyboardEvent(event, hotkey as HotkeyChord)) {
       return true;
@@ -526,15 +547,42 @@ export function matchesCommandHotkey(event: KeyboardEvent, hotkey: string): bool
   } catch {
     // Fallback below
   }
-  const normalized = hotkey.trim().toLowerCase();
+  const normalized = trimmed.toLowerCase();
   if (normalized === 'mod+k' || normalized === 'cmd+k' || normalized === 'ctrl+k') {
     return (event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k';
   }
   return false;
 }
 
-export function resolveColonCommandGridStyle(
-  columns: ColonCommandColumns = 'auto',
+function isHotkeyAnchorVisible(el: HTMLElement): boolean {
+  if (el.closest('[hidden]')) return false;
+  const fwWrapper = el.closest<HTMLElement>('[data-fw]');
+  const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
+  if (fwWrapper && activeFw && fwWrapper.getAttribute('data-fw') !== activeFw) {
+    return false;
+  }
+  return true;
+}
+
+export function shouldHandleCommandHotkey(anchorEl: HTMLElement | null, selector: string): boolean {
+  if (!anchorEl || typeof document === 'undefined') return true;
+  if (!isHotkeyAnchorVisible(anchorEl)) return false;
+  const myPreview = anchorEl.closest('[data-example-preview]');
+  const activePreview = document.activeElement?.closest?.('[data-example-preview]') ?? null;
+  if (activePreview) {
+    return myPreview === activePreview;
+  }
+  if (myPreview) {
+    const previewAnchors = Array.from(
+      document.querySelectorAll<HTMLElement>(`[data-example-preview] ${selector}`),
+    ).filter(isHotkeyAnchorVisible);
+    return previewAnchors[0] === anchorEl;
+  }
+  return true;
+}
+
+export function resolveCommandMenuGridStyle(
+  columns: CommandMenuColumns = 'auto',
   itemCount: number,
 ):
   | {
@@ -558,8 +606,10 @@ export function resolveColonCommandGridStyle(
   };
 }
 
-export function resolveColonCommandGridNavigation(
-  columns: ColonCommandColumns = 'auto',
+export const resolveColonCommandGridStyle = resolveCommandMenuGridStyle;
+
+export function resolveCommandMenuGridNavigation(
+  columns: CommandMenuColumns = 'auto',
   itemCount: number,
   currentIdx: number,
   key: 'ArrowDown' | 'ArrowUp' | 'ArrowRight' | 'ArrowLeft',
@@ -584,3 +634,5 @@ export function resolveColonCommandGridNavigation(
   const nextCol = key === 'ArrowRight' ? (col + 1) % totalCols : (col - 1 + totalCols) % totalCols;
   return Math.min(nextCol * rowCount + row, itemCount - 1);
 }
+
+export const resolveColonCommandGridNavigation = resolveCommandMenuGridNavigation;
