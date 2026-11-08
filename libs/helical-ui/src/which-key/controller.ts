@@ -607,16 +607,28 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       const order = !Number.isNaN(parsedOrder) ? parsedOrder : (existing?.order ?? panes.size + 1);
       const disabled = el.getAttribute('data-pane-disabled') === 'true';
 
+      const activeEl = doc.activeElement instanceof HTMLElement ? doc.activeElement : null;
+      const containsActiveElement = Boolean(activeEl && activeEl !== doc.body && el.contains(activeEl));
+
       panes.set(id, {
         id,
         title,
         element: el,
         disabled,
         order,
-        lastFocusedElement: existing?.lastFocusedElement ?? null,
+        lastFocusedElement: containsActiveElement ? activeEl : (existing?.lastFocusedElement ?? null),
       });
-      if (!disabled && (!activePaneId || (id === 'docs-main' && activePaneId === 'docs-sidebar'))) {
-        activePaneId = id;
+      if (!disabled) {
+        if (containsActiveElement) {
+          activePaneId = id;
+        } else if (
+          !activePaneId ||
+          (id === 'docs-main' &&
+            activePaneId === 'docs-sidebar' &&
+            (!activeEl || !panes.get('docs-sidebar')?.element?.contains(activeEl)))
+        ) {
+          activePaneId = id;
+        }
       }
     }
     syncPaneActiveAttributes();

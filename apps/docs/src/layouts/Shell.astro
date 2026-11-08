@@ -148,10 +148,97 @@ const groups = NAV_GROUPS.map((g) => {
             paneOrder={1}
             className="top-16 hidden h-[calc(100svh-4rem)] lg:block lg:w-56 lg:p-0"
           >
-            <div class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pl-4 lg:pl-8">
+            <div
+              data-sidebar-scroll
+              class="scroll-fade scroll-fade-20 no-scrollbar h-full w-full overflow-y-auto py-10 pl-4 lg:pl-8"
+            >
               <Sidebar currentPath={currentPath} />
             </div>
           </PageGutter>
+          <script is:inline>
+            (function () {
+              var STORAGE_KEY = 'vortex:sidebar-state';
+              var scroller = document.querySelector('[data-sidebar-scroll]');
+              if (!scroller) return;
+
+              var normalize = function (href) {
+                try {
+                  return new URL(href, location.origin).pathname.replace(/\/+$/, '');
+                } catch (e) {
+                  return href;
+                }
+              };
+
+              try {
+                var raw = sessionStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                  var saved = JSON.parse(raw);
+                  if (typeof saved.scrollTop === 'number') {
+                    scroller.scrollTop = saved.scrollTop;
+                  }
+                  if (saved.restoreFocus && typeof saved.focusedHref === 'string') {
+                    sessionStorage.setItem(
+                      STORAGE_KEY,
+                      JSON.stringify({ scrollTop: scroller.scrollTop, focusedHref: null, restoreFocus: false }),
+                    );
+                    var links = scroller.querySelectorAll('a[data-sidebar-link]');
+                    var targetPath = normalize(saved.focusedHref);
+                    for (var i = 0; i < links.length; i++) {
+                      if (normalize(links[i].getAttribute('href') || '') === targetPath) {
+                        var linkEl = links[i];
+                        var sidebarPane = document.querySelector('[data-pane-id="docs-sidebar"]');
+                        var mainPane = document.querySelector('[data-pane-id="docs-main"]');
+                        if (sidebarPane) sidebarPane.setAttribute('data-pane-active', 'true');
+                        if (mainPane) mainPane.setAttribute('data-pane-active', 'false');
+                        linkEl.focus({ preventScroll: true });
+                        requestAnimationFrame(function () {
+                          if (document.activeElement !== linkEl) {
+                            linkEl.focus({ preventScroll: true });
+                          }
+                        });
+                        break;
+                      }
+                    }
+                  }
+                }
+              } catch (e) {}
+
+              var saveScroll = function () {
+                try {
+                  var prev = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+                  sessionStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify({
+                      scrollTop: scroller.scrollTop,
+                      focusedHref: prev.focusedHref || null,
+                      restoreFocus: Boolean(prev.restoreFocus),
+                    }),
+                  );
+                } catch (e) {}
+              };
+
+              scroller.addEventListener('scroll', saveScroll, { passive: true });
+              scroller.addEventListener(
+                'click',
+                function (e) {
+                  var link = e.target && e.target.closest ? e.target.closest('a[data-sidebar-link]') : null;
+                  if (!link) return;
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                  try {
+                    sessionStorage.setItem(
+                      STORAGE_KEY,
+                      JSON.stringify({
+                        scrollTop: scroller.scrollTop,
+                        focusedHref: link.getAttribute('href'),
+                        restoreFocus: true,
+                      }),
+                    );
+                  } catch (err) {}
+                },
+                true,
+              );
+            })();
+          </script>
           <PageContent
             paneId="docs-main"
             paneTitle="Main Content"
