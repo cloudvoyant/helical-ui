@@ -2,14 +2,94 @@
 
 ## Overview
 
-`WhichKey` is a Helix-inspired floating chord discovery panel that displays active multi-key prefix chords (`Space`, `g`, `z`, `m`, `Ctrl-w`) and their available child bindings in `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte`. It is decoupled from keyboard mode concerns: keyboard mode and chord execution live in `WhichKeyController` (and are optionally surfaced via `<WhichKeyMode />`), whereas `<WhichKey />` is a purely visual chord menu and jump-label overlay.
+`WhichKey` is a Helix-inspired chord discovery menu and scoped hotkey system for `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte`.
 
-- **`WhichKey`**: Portaled floating chord menu (`variant="helix" | "modern" | "classic"`), plus the 2D `JumpOverlay` when `mode === 'jump'`. Supports `leaderOnly` so consumers or users can choose whether the popup appears on all chord prefixes (`Space`, `g`, `z`, `m`) or only when the chord starts with `leaderKey` (`Space`).
-- **`WhichKeyExplorer`**: Searchable `<leader>?` (`?`) modal (`Dialog` + `Listbox` + `Highlight`) listing all active bindings grouped by category with `<Kbd>` chord sequences.
-- **`WhichKeyMode`**: Standalone status badge displaying the active modal state (`normal`, `select`, `insert`, `jump`, or `·lock`).
-- **`Kbd`**: Semantic `<kbd>` keycap and multi-step sequence primitive powered by `formatKeycap` and `formatHotkeySequence`.
+- **`WhichKey`**: Floating chord popup (`variant="helix" | "modern" | "classic"`) and 2D `JumpOverlay`.
+- **`WhichKeyExplorer`**: Searchable `?` / `Space ?` modal listing all active keybindings by category.
+- **`WhichKeyMode`**: Status badge showing the active mode (`normal`, `select`, `insert`, `jump`, or `·lock`).
+- **`Kbd`**: Semantic `<kbd>` keycap and chord sequence renderer.
 
 ## Design
+
+### Components and Wiring
+
+`WhichKeyProvider` owns a `WhichKeyController` instance, registers it on `document` so portaled components can find it without prop drilling, and coordinates UI components, scoped `useKeymap` hooks, `@tanstack/*-hotkeys`, and optional ProseMirror modal editors.
+
+```mermaid
+flowchart TD
+  subgraph TanStack["@tanstack/hotkeys"]
+    TH["@tanstack/hotkeys\n@tanstack/react-hotkeys\n@tanstack/svelte-hotkeys"]
+  end
+
+  subgraph Core["@cloudvoyant/helical-ui"]
+    Ctrl["WhichKeyController\n(mode state, priority layers, chord tree, jump labels)"]
+    DocReg["Document Registry\n(getDocumentWhichKeyController)"]
+    Presets["Modal Presets\n(helix / vim / kakoune)"]
+  end
+
+  subgraph Hooks["Framework Context & Hooks"]
+    Provider["WhichKeyProvider\n(attaches controller to window/document)"]
+    OptCtrl["useOptionalWhichKeyController\n(context first -> document fallback)"]
+    Keymap["useKeymap / useKeymapScope / useKeymapCommand\n(scoped priority layers & commands)"]
+    PaneHook["Pane / useRegisterPane\n(spatial pane registry)"]
+  end
+
+  subgraph Subcomponents["Visual Subcomponents"]
+    WK["WhichKey\n(portaled chord menu + JumpOverlay)"]
+    Exp["WhichKeyExplorer\n(searchable Dialog + Listbox)"]
+    Mode["WhichKeyMode\n(mode badge)"]
+    KbdComp["Kbd\n(keycap & sequence UI)"]
+  end
+
+  subgraph Editor["Modal Editing Seam"]
+    Target["ModalEditorTarget\n(registerModalEditor / ProseMirror view)"]
+  end
+
+  TH -. "re-exported for direct one-off hotkeys" .-> Keymap
+  Presets --> Ctrl
+  Provider --> Ctrl
+  Provider --> DocReg
+  Ctrl --> OptCtrl
+  DocReg --> OptCtrl
+  OptCtrl --> Keymap
+  OptCtrl --> WK
+  OptCtrl --> Exp
+  OptCtrl --> Mode
+  Ctrl <--> PaneHook
+  Ctrl <--> Target
+  WK --> KbdComp
+  Exp --> KbdComp
+```
+
+| Part | Role |
+| :--- | :--- |
+| `WhichKeyController` | Holds modal state (`normal`, `select`, `insert`, `jump`), merges preset and registered keymap layers, and dispatches `keydown` events. |
+| `WhichKeyProvider` | Creates or binds a controller, attaches `keydown` listeners, and registers the controller on `document`. |
+| `useOptionalWhichKeyController` | Reads the nearest `WhichKeyProvider` controller or falls back to `getDocumentWhichKeyController(document)` for portaled overlays. |
+| `useKeymap` / `useKeymapScope` | Registers a scoped keymap layer with a priority tier, optional DOM `element` boundary, reactive `enabled` flag, and `when` predicates. |
+| `useKeymapCommand` | Binds a command handler ID (`'editor.save'`) invoked by leaf nodes in the keymap tree. |
+| `@tanstack/*-hotkeys` | Re-exported alongside `WhichKey` so simple component hotkeys (`useHotkey`, `createHotkey`) work without a separate hotkey library. |
+| `registerModalEditor` | Connects a rich-text editor (`ModalEditorTarget`) so `normal`/`select` motions, operators, and `insert` entry/exit drive editor selection and focus. |
+| `Pane` / `useRegisterPane` | Registers focusable workspace panes for spatial navigation (`Space w h/j/k/l`) and 2-character jump labels (`gw`). |
+| `WhichKey` / `WhichKeyExplorer` / `WhichKeyMode` | Purely visual subscribers that render the active chord submenu, searchable keybinding dialog, and current mode badge. |
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle: activePath = [] (isOpen = false)
+  Idle --> NonLeaderPrefix: Press 'g' / 'z' / 'm'
+  NonLeaderPrefix --> PopupOpen: leaderOnly === false
+  NonLeaderPrefix --> SilentChord: leaderOnly === true (isOpen = false)
+  Idle --> PopupOpen: Press leaderKey ('Space')
+
+  state PopupOpen {
+    [*] --> RootPrefix
+    RootPrefix --> NestedSubmenu: Press group key ('w', 'g')
+    NestedSubmenu --> RootPrefix: Backspace / Click [⌫]
+  }
+
+  SilentChord --> Idle: Press leaf key ('g' -> gg) / Escape
+  PopupOpen --> Idle: Press leaf key / Escape / Click [Esc]
+```
 
 ### Layout
 
@@ -21,8 +101,6 @@ WhichKey (variant="helix", bottom-right floating panel):
 | Focus Left          [h]   | Focus Down                [j] |
 | Focus Up            [k]   | Focus Right               [l] |
 | Go to >             [g]   | Window >                  [w] |
-|-----------------------------------------------------------|
-|               (scroll-fade bottom edge)                   |
 +-----------------------------------------------------------+
 
 WhichKeyExplorer (? / Space ? modal):
@@ -33,91 +111,73 @@ WhichKeyExplorer (? / Space ? modal):
 | GOTO                                                      |
 |   Go to top                                       [g] [g] |
 |   Go to bottom                                    [g] [e] |
-|   Jump to 2-char label                            [g] [w] |
 +-----------------------------------------------------------+
-```
-
-```mermaid
-flowchart TD
-  subgraph Core["@cloudvoyant/helical-ui (Framework-Agnostic)"]
-    Ctrl["createWhichKeyController\n(Priority-ordered layers, DOM containment, when/action fallthrough, insert-mode layers)"]
-    Fmt["formatWhichKeyLabel / formatHotkeySequence\n(Clean submenu labels & platform keycap glyphs)"]
-    Variants["whichKeyVariants / kbdVariants\n(cva orthogonal layout & size axes)"]
-    Hotkeys["@tanstack/hotkeys re-exports"]
-  end
-
-  subgraph UI["@cloudvoyant/helical-react & @cloudvoyant/helical-svelte"]
-    WK["WhichKey\n(Portal + Presence + Scroll fade + ChevronRight submenus + JumpOverlay)"]
-    Exp["WhichKeyExplorer\n(Dialog + Listbox + Highlight + Kbd)"]
-    Mode["WhichKeyMode\n(Standalone mode/preset badge)"]
-    KbdComp["Kbd\n(<kbd> keycap & sequence renderer)"]
-    Hooks["useKeymap / useKeymapScope / useKeymapCommand\n(Context + getDocumentWhichKeyController fallback + @tanstack/*-hotkeys)"]
-  end
-
-  Ctrl --> WK
-  Ctrl --> Exp
-  Ctrl --> Mode
-  Ctrl --> Hooks
-  Fmt --> WK
-  Fmt --> KbdComp
-  Variants --> WK
-  Variants --> KbdComp
-  Hotkeys --> Hooks
 ```
 
 ### Behavior
 
-- **Default:** `<WhichKey />` stays unmounted (`<Presence present={effectiveOpen} lazyMount unmountOnExit>`) while `activePath` is empty. When a prefix key with child bindings is pressed, `WhichKey` mounts in a `<Portal>` without stealing DOM focus.
-- **Scoped Priority Layer Resolution & Conditional Fallthrough:**
-  - `controller.registerKeymap(id, nodes, options)`, `useKeymap(nodes, options)`, and `useKeymapScope(scopeId, nodes, enabledOrOptions)` accept reactive `nodes` (`Record<string, WhichKeyNode> | (() => Record<string, WhichKeyNode>)`), reactive `enabled` (`boolean | (() => boolean)`), `priority` (`'overlay' | 'widget' | 'extension' | 'editor' | 'pane' | 'global'`), `element` (`HTMLElement | null | (() => HTMLElement | null)`), and `matchesTarget`.
-  - On `keydown`, active layers are ordered by:
-    1. `priority === 'overlay'` first (so portaled menus/popovers intercept keys while an editor holds focus)
-    2. Innermost containing DOM `element` depth (`event.target` / `document.activeElement`)
-    3. Priority tier (`overlay > widget > extension > editor > pane > global`)
-    4. Registration recency (most recently registered layer wins ties)
-    5. Base preset trie (`helix` / `vim` / `kakoune`) last
-  - `event.preventDefault()` and `event.stopPropagation()` are called **only after** `node.when?.(ctx)` returns `true` and `node.action(ctx)` (or `executeCommand`) returns `!== false`. When `when` or `action` returns `false`, resolution falls through to the next matching layer (instead of clobbering lower layers in `mergeKeymapTrees` or swallowing the event) and finally to the editor or browser.
-- **Insert-Mode Layer Evaluation:** Inside `mode === 'insert'`, before the default `Escape → setMode('normal')` transition and `return false`, `handleKeyDown` evaluates active registered keymap layers whose node `mode` explicitly includes `'insert'` (`nodeExplicitlyIncludesMode(node, 'insert')`). This allows editor overlays (`SlashMenu`, `MentionList`, popovers) and editor extensions to handle `Enter`, `Tab`, `ArrowUp`, `ArrowDown`, and `Escape` in `insert` mode without exiting `insert` mode until the overlay declines or closes.
-- **Leader-Only Mode (`leaderOnly`):** When `leaderOnly` is `true` (via `WhichKeyProvider`, `controller.setLeaderOnly(true)`, or `<WhichKey leaderOnly />`), pressing non-leader prefixes such as `g`, `z`, or `m` keeps `isOpen` false so the popup does not appear, while `activePath` still advances and executes multi-key chords (`gg`, `ge`, `gw`, `zt`, `zz`). Pressing `leaderKey` (`Space`) opens the `WhichKey` popup as usual.
-- **Interaction:** Submenu items render a clean label (`Go to`, `Window`, `View`, `Match`) followed by a `<ChevronRight />` icon (`data-group="true"`). Clicking an item or pressing its key advances `activePath` (for submenus) or invokes the leaf command and closes the prefix. Clicking `<Kbd>⌫</Kbd>` or pressing `Backspace` pops one prefix level (`stepBackPrefix()`); clicking `<Kbd>Esc</Kbd>` in the top-right header or pressing `Escape` closes the popup (`closePrefix()`).
-- **Loading, empty, and error:** If a chord path has no matching items for the current mode, `isOpen` evaluates to `false` and the popup closes cleanly. In `WhichKeyExplorer`, unmatched queries render `<ListboxEmpty>` (`No keybindings found.`).
-- **Accessibility:** `WhichKey` renders `role="region"` with `aria-label={title || 'WhichKey commands'}` and registers with `@zag-js/dismissable` (`trackDismissableBranch`) so pressing `Escape` dismisses `WhichKey` first without closing an underlying modal `Dialog`. State transitions are announced via a polite `@zag-js/live-region`.
+- **Lazy mount:** `<WhichKey />` mounts in a `<Portal>` only while a chord prefix is open, without stealing DOM focus.
+- **Leader-only option (`leaderOnly`):** When `leaderOnly` is `true`, non-leader prefixes (`g`, `z`, `m`) run silently while `Space` opens the popup.
+- **Layered keymaps and fallthrough:** Higher-priority and deeper DOM layers run first; if a binding's `when` check or `action` returns `false`, the key press falls through to the next layer or the browser.
+- **Mode-aware keys:** `normal` and `select` modes run modal commands and multi-key chords, while `insert` mode evaluates only `overlay` layers and bindings that include `'insert'` before falling back to `Escape`.
+- **Submenu navigation:** Clicking or pressing a group key opens its submenu, `Backspace` (`⌫`) steps back one level, and `Escape` (`Esc`) closes the popup.
+- **Accessibility:** `WhichKey` renders `role="region"`, announces changes via `@zag-js/live-region`, and tracks `@zag-js/dismissable` branches so `Escape` closes `WhichKey` before parent dialogs.
 
 ## Implementation
 
 ### Public API
 
-- **`@cloudvoyant/helical-ui`**: `createWhichKeyController`, `getDocumentWhichKeyController`, `subscribeDocumentWhichKeyController`, `nodeMatchesMode`, `nodeExplicitlyIncludesMode`, `whichKeyVariants`, `whichKeyBodyVariants`, `whichKeyHeaderBase`, `whichKeyTitleBase`, `whichKeyBreadcrumbBase`, `whichKeyItemBase`, `whichKeyItemLabelBase`, `whichKeyFooterBase`, `formatWhichKeyLabel`, `kbdVariants`, `kbdSequenceBase`, `formatKeycap`, `formatHotkeySequence`, `KeymapPriority`, `KeymapNodesInput`, `RegisterKeymapOptions`, `WhichKeyNode`, `WhichKeyProps`, `WhichKeyModeProps`, `WhichKeyExplorerProps`, `KbdProps`, plus `@tanstack/hotkeys` re-exports.
-- **`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`**: `WhichKey`, `WhichKeyExplorer`, `WhichKeyMode`, `WhichKeyProvider`, `Pane`, `Kbd`, `useWhichKey`, `useWhichKeyController`, `useOptionalWhichKeyController`, `useKeymap`, `useKeymapScope`, `useKeymapCommand`, `useRegisterPane`, plus `@tanstack/react-hotkeys` and `@tanstack/svelte-hotkeys` re-exports.
+| Package | Public Exports |
+| :--- | :--- |
+| `@cloudvoyant/helical-ui` | `createWhichKeyController`, `getDocumentWhichKeyController`, `whichKeyVariants`, `kbdVariants`, `formatKeycap`, `formatHotkeySequence`, `WhichKeyNode`, `RegisterKeymapOptions`, `KeymapPriority`, `ModalEditorTarget`, and `@tanstack/hotkeys` re-exports |
+| `@cloudvoyant/helical-react` | `WhichKeyProvider`, `WhichKey`, `WhichKeyExplorer`, `WhichKeyMode`, `Pane`, `Kbd`, `useWhichKey`, `useWhichKeyController`, `useOptionalWhichKeyController`, `useKeymap`, `useKeymapScope`, `useKeymapCommand`, `useRegisterPane`, and `@tanstack/react-hotkeys` re-exports |
+| `@cloudvoyant/helical-svelte` | `WhichKeyProvider`, `WhichKey`, `WhichKeyExplorer`, `WhichKeyMode`, `Pane`, `Kbd`, `useWhichKey`, `useWhichKeyController`, `useOptionalWhichKeyController`, `useKeymap`, `useKeymapScope`, `useKeymapCommand`, `useRegisterPane`, and `@tanstack/svelte-hotkeys` re-exports |
 
-### State and Data Flow
+### Priority Layer Resolution and Fallthrough
+
+Each `registerKeymap` or `useKeymap` call registers an independent layer. On `keydown`, `WhichKeyController` sorts active layers from most specific to least specific and only consumes the DOM event when a matching node's `when(ctx)` predicate passes and its `action(ctx)` (or command handler) returns `!== false`.
 
 ```mermaid
-stateDiagram-v2
-  [*] --> Idle: activePath = [] (isOpen = false)
-  Idle --> NonLeaderPrefix: Press 'g' / 'z' / 'm'
-  NonLeaderPrefix -->PopupOpen: leaderOnly === false
-  NonLeaderPrefix --> SilentChord: leaderOnly === true (isOpen = false)
-  Idle --> PopupOpen: Press leaderKey ('Space')
-
-  state PopupOpen {
-    [*] --> RootPrefix
-    RootPrefix --> NestedSubmenu: Press group key ('w', 'g')
-    NestedSubmenu --> RootPrefix: Backspace / Click [⌫]
-  }
-
-  SilentChord --> Idle: Press leaf key ('g' -> gg, 'e' -> ge) / Escape
-  PopupOpen --> Idle: Press leaf key / Escape / Click [Esc]
+flowchart TD
+  KeyDown["keydown event\n(chord candidates: e.g. 'Shift+Tab', 'Shift-Tab')"] --> Filter["Filter active layers:\n1. enabled() !== false\n2. element contains target/activeElement\n3. matchesTarget(target, event)"]
+  Filter --> Sort["Sort active layers:\n1. priority === 'overlay' first\n2. Deepest DOM element depth\n3. Tier: overlay > widget > extension > editor > pane > global\n4. Most recently registered\n5. Base preset (helix / vim / kakoune)"]
+  Sort --> NextLayer{"Next matching\nlayer node?"}
+  NextLayer -- "No more layers" --> Unhandled["Return false\n(browser / editor handles event)"]
+  NextLayer -- "Found node" --> CheckMode{"Matches current\nmode & when(ctx)?"}
+  CheckMode -- "No" --> NextLayer
+  CheckMode -- "Yes (group node)" --> OpenPrefix["preventDefault + stopPropagation\nAdvance activePath (open WhichKey)"]
+  CheckMode -- "Yes (leaf node)" --> RunAction["Execute node.action(ctx) or command"]
+  RunAction --> ActionResult{"Returned !== false?"}
+  ActionResult -- "false (declined)" --> NextLayer
+  ActionResult -- "true / void (handled)" --> Consume["preventDefault + stopPropagation\nClose prefix & return true"]
 ```
 
-### Styling and Responsiveness
+### Mode Evaluation and Modal Editing Seam
 
-- Uses semantic tokens (`--popover`, `--popover-foreground`, `--primary`, `--muted`, `--accent`, `--border`) from `libs/helical-ui/src/theme.css`.
-- Body uses `<Scroll viewportClassName="scroll-fade scroll-fade-12 no-scrollbar max-h-72">` with an empty `h-2` footer spacer (`whichKeyFooterBase`) for a subtle bottom scroll fade.
-- Automatically disables keyboard interception on coarse-pointer / mobile viewports (`disableOnMobile = true` by default).
+`WhichKeyController.handleKeyDown` checks the active mode before dispatching chords or built-in editor commands. In `insert` mode, normal single-letter chords are bypassed so typing flows into the input or editor, while `overlay` layers (such as slash or mention menus) and explicit `mode: ['insert']` bindings still run first.
 
-### Maintainer Notes
+```mermaid
+flowchart TD
+  Start["handleKeyDown(event)"] --> Explorer{"explorerOpen?"}
+  Explorer -- "Escape" --> CloseExp["closeExplorer() -> handled"]
+  Explorer -- "Other keys" --> PassExp["Return false (Dialog handles input)"]
+  Explorer -- "No" --> ModeCheck{"Current mode?"}
 
-- **Separation of concerns:** `WhichKey` never renders mode badges or preset names; keyboard mode belongs to the hotkey controller and `<WhichKeyMode />`.
-- **Portaled overlay discovery without prop-drilling:** `useKeymap`, `useKeymapScope`, `useKeymapCommand`, and `useOptionalWhichKeyController` fall back to `getDocumentWhichKeyController(document)` (which resolves the root controller or the active scoped `WhichKeyProvider` entry on the document) when called outside component context.
-- **Dismissable layering:** Both the `WhichKey` panel and the `JumpOverlay` register with `controller.trackBranchElement` (`@zag-js/dismissable`) while visible so nested `Escape` handling respects open Ark `Dialog` layers.
+  ModeCheck -- "insert" --> InsertLayers["Evaluate layers matching insert mode:\n• priority === 'overlay' (unless excluded)\n• node.mode explicitly includes 'insert'"]
+  InsertLayers -- "Handled" --> Done["Event consumed"]
+  InsertLayers -- "Unhandled & key === Escape" --> ExitInsert["Blur text input or exit ModalEditorTarget\nsetMode('normal')"]
+  InsertLayers -- "Unhandled & other key" --> NativeInput["Return false (native typing in editor/input)"]
+
+  ModeCheck -- "jump" --> JumpMode["Consume a-z label chars\nFocus target pane/element on match"]
+
+  ModeCheck -- "normal / select" --> HasPrefix{"activePath\nnon-empty?"}
+  HasPrefix -- "Yes" --> Submenu["Resolve key at activePath across layers\n(Backspace steps back, Escape closes)"]
+  HasPrefix -- "No" --> RootEval["Evaluate root layers (with optional numeric count)"]
+  RootEval --> BuiltIn["Execute leaf action or built-in command\n(Pane focus, scroll, or ModalEditorTarget motion/operator)"]
+```
+
+### Styling and Maintainer Notes
+
+- **Theme tokens:** Uses semantic CSS variables (`--popover`, `--popover-foreground`, `--primary`, `--muted`, `--accent`, `--border`) from `libs/helical-ui/src/theme.css`.
+- **Responsive touch guard:** Disables keyboard interception on coarse-pointer mobile viewports (`disableOnMobile = true` by default).
+- **Dismissable branch tracking:** Both `WhichKey` and `JumpOverlay` register with `controller.trackBranchElement` (`@zag-js/dismissable`) while visible so nested `Escape` presses close `WhichKey` before any underlying `Dialog`.
