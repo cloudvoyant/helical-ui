@@ -12,6 +12,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: 'Layouts', section: 'components', group: 'layouts' },
   { label: 'Navigation', section: 'components', group: 'navigation' },
   { label: 'Buttons', section: 'components', group: 'buttons' },
+  { label: 'Keybindings', section: 'components', group: 'keyboard' },
   { label: 'Misc', section: 'components', group: 'misc' },
   { label: 'Forms', section: 'components', group: 'forms' },
   { label: 'Overlays', section: 'components', group: 'overlays' },

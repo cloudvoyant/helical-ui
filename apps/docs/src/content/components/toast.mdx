@@ -1,0 +1,67 @@
+---
+title: Toast
+description: Brief, non-blocking notification overlays for action feedback, for React and Svelte.
+order: 24
+group: overlays
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`Toast` displays brief, non-blocking notification overlays. Mount `<Toaster />` once in your root layout, and trigger notifications anywhere using the `useToast()` hook or the `toast` service (`toast.create({ title, description, type, action })`).
+
+<Demo component="toast" example="default" />
+
+## Examples
+
+<Examples component="toast" exclude="default" />
+
+## API Reference
+
+### Toaster
+
+#### Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `toaster` | `CreateToasterReturn` | `toast` | Toast store created by `createToaster({ placement, overlap, max })`. |
+| `children` | `(toast: ToastOptions) => ReactNode` / `Snippet<[() => ToastOptions]>` | `<ToastItem />` | Optional custom renderer for each toast item. |
+
+Accepts all [Ark `ToasterProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastItem
+
+#### Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `toast` | `ToastOptions` | — | Toast item data (`title`, `description`, `type`, `action`, `closable`). |
+
+Accepts all [Ark `ToastRootProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastRoot
+
+Accepts all [Ark `ToastRootProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastTitle
+
+Accepts all [Ark `ToastTitleProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastDescription
+
+Accepts all [Ark `ToastDescriptionProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastActionTrigger
+
+Accepts all [Ark `ToastActionTriggerProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`.
+
+### ToastCloseTrigger / ToastDismiss
+
+Accepts all [Ark `ToastCloseTriggerProps`](https://ark-ui.com/docs/components/toast) plus `className`/`class`. Ships with `aria-label="Close"`.
+
+### Store & Hooks
+
+- `useToast(toaster?)` — Returns the active toast service (`toast` by default) for triggering notifications (`toast.create`, `toast.success`, `toast.error`, `toast.info`, `toast.warning`, `toast.dismiss`).
+- `toast` — Shared singleton toast service (`placement: 'bottom-end'`, `overlap: true`, `max: 5`) wired to `<Toaster />`.
+- `createToaster(props)` — Creates a custom isolated toast store (`placement`, `overlap`, `max`, `gap`, `offsets`).
+- `useToastContext()` — Reads the current individual `<ToastRoot>` item state from context.

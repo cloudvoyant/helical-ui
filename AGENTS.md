@@ -12,6 +12,7 @@
 ## Organization
 
 - [Proposed] Keep component-specific core logic and state machines in `libs/helical-ui` rather than `libs/utils`; reserve `libs/utils` for generic, domain-independent helpers.
+- Split multi-concern component modules in `libs/helical-ui/src/` into a `<component>/` directory with separate `types.ts`, `core.ts`, `styles.ts`, and `index.ts` files rather than a single monolithic file.
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
 
@@ -51,13 +52,11 @@ flowchart LR
 
 ### File layout
 
-Order every component file from top to bottom:
+Order every component file from top to bottom, and use explicit section headers inside stateful components (`// --- State ---`, `// --- Effects ---`, `// --- Methods ---`, `// --- Helpers ---`, `// --- Render ---`) in that exact order (only include `// Source:` when the file is a near-direct copy of an upstream reference):
 
 ```tsx
-// Source: https://ui.shadcn.com/docs/components/radix/<component>
-
 // 1. Imports
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { cn, widgetVariants, type WidgetVariantProps } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
@@ -67,7 +66,13 @@ export interface WidgetProps extends WidgetVariantProps { ... }
 function resolveState(...) { ... }
 
 // 4. Exported component
-export const Widget = forwardRef<HTMLDivElement, WidgetProps>(...);
+export const Widget = forwardRef<HTMLDivElement, WidgetProps>((props, ref) => {
+  // --- State ---
+  // --- Effects ---
+  // --- Methods ---
+  // --- Helpers ---
+  // --- Render ---
+});
 ```
 
 - Start every script in `mise-tasks/` with `set -euo pipefail` and `source "${MISE_PROJECT_ROOT}/mise-tasks/utils"`.
@@ -95,6 +100,8 @@ export const badgeVariants = cva('inline-flex items-center', {
 ### React and Svelte
 
 - Keep wrappers thin, maintain prop parity across React and Svelte 5 runes (`$props`, `$derived`, `$state`), and compose layouts with helical-ui primitives (`Container`, `Row`, `Col`, `Stack`, `HStack`, `VStack`, `Center`):
+- [Proposed] Support uncontrolled usage (internal state fallback when `open` or `value` is omitted) on interactive overlay and menu components so consumers do not have to wire external state for basic usage.
+- Keep documentation examples in `apps/docs/src/components/examples/` self-contained with hardcoded sample data and minimal UI; omit `data-testid` attributes, docs-shell state subscriptions, status readouts used only to prove effects, and explanatory prose that belongs in the surrounding MDX page.
 
 ```tsx
 // React (libs/helical-react/src/<component>/Root.tsx)
@@ -121,6 +128,9 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 | :--- | :--- | :--- |
 | Unit (`vitest`) | `libs/*/tests/*.test.ts` | Variant output, helpers, and pure state logic |
 | E2E (`playwright`) | `apps/docs/e2e/<component>.spec.ts` | ARIA state, keyboard navigation, and parity across React & Svelte islands |
+
+- Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`) with shared setup/actions in `test.beforeEach`, and focused outcome assertions in `test('it ...')`.
+- Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):
 

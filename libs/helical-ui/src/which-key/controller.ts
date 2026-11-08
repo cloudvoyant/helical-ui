@@ -198,11 +198,15 @@ function getTopMostModalDialog(doc: Document): HTMLElement | null {
   return dialogs[dialogs.length - 1] ?? null;
 }
 
-function getPaneFocusableItems(container: HTMLElement, ownScope?: HTMLElement | null): HTMLElement[] {
+function getPaneFocusableItems(
+  container: HTMLElement,
+  ownScope?: HTMLElement | null,
+  ignoreEnteredExample = false,
+): HTMLElement[] {
   const doc = container.ownerDocument;
   const activeEl = doc?.activeElement instanceof HTMLElement ? doc.activeElement : null;
   const enteredExample =
-    !ownScope && activeEl && !activeEl.hasAttribute('data-example')
+    !ignoreEnteredExample && !ownScope && activeEl && !activeEl.hasAttribute('data-example')
       ? activeEl.closest<HTMLElement>('[data-example]')
       : null;
   const searchRoot =
@@ -213,7 +217,12 @@ function getPaneFocusableItems(container: HTMLElement, ownScope?: HTMLElement | 
   const raw = getFocusables(searchRoot, { includeContainer: false });
   return raw.filter((el) => {
     if (!(el instanceof HTMLElement)) return false;
-    if (el.closest('[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay]')) {
+    if (el.tabIndex < 0 && el.getAttribute('role') !== 'tab') return false;
+    if (
+      el.closest(
+        '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="toast"]',
+      )
+    ) {
       return false;
     }
     const fwEl = el.closest('[data-fw]');
@@ -249,7 +258,12 @@ function getJumpableItems(container: HTMLElement, ownScope?: HTMLElement | null)
   for (const el of [...rawFocusables, ...rawTabs]) {
     if (!(el instanceof HTMLElement) || seen.has(el)) continue;
     seen.add(el);
-    if (el.closest('[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay]')) {
+    if (el.tabIndex < 0 && el.getAttribute('role') !== 'tab') continue;
+    if (
+      el.closest(
+        '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="toast"]',
+      )
+    ) {
       continue;
     }
     const fwEl = el.closest('[data-fw]');
@@ -464,9 +478,35 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     }
   }
 
+  function readStoredLeaderOnly(): boolean | null {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(`${storageKey}:leader-only`);
+      if (raw === 'true') return true;
+      if (raw === 'false') return false;
+    } catch {
+      // Ignore storage errors
+    }
+    return null;
+  }
+
+  function writeStoredLeaderOnly(next: boolean): void {
+    const doc = resolveDoc();
+    if (doc?.documentElement && !options.getScopeElement?.()) {
+      doc.documentElement.dataset.whichKeyLeaderOnly = String(next);
+    }
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(`${storageKey}:leader-only`, String(next));
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
   let preset: KeybindingPreset = options.preset ?? readStoredPreset() ?? 'helix';
   let mode: KeymapMode = options.defaultMode ?? 'normal';
   const leaderKey = options.leaderKey ?? 'Space';
+  let leaderOnly: boolean = options.leaderOnly ?? readStoredLeaderOnly() ?? false;
   let jumpAction: JumpAction = options.jumpAction ?? readStoredJumpAction() ?? 'activate';
   const jumpAlphabet = options.jumpAlphabet ?? DEFAULT_JUMP_ALPHABET;
 
@@ -575,7 +615,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         order,
         lastFocusedElement: existing?.lastFocusedElement ?? null,
       });
-      if (!activePaneId && !disabled) {
+      if (!disabled && (!activePaneId || (id === 'docs-main' && activePaneId === 'docs-sidebar'))) {
         activePaneId = id;
       }
     }
@@ -619,11 +659,12 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       preset,
       mode,
       leaderKey,
+      leaderOnly,
       activePath: [...activePath],
       breadcrumb: tree.breadcrumb,
       title: tree.title,
       items: tree.items,
-      isOpen: activePath.length > 0 && tree.items.length > 0,
+      isOpen: activePath.length > 0 && tree.items.length > 0 && (!leaderOnly || activePath[0] === leaderKey),
       sticky: sticky || tree.sticky,
       countBuffer,
       explorerOpen,
@@ -721,6 +762,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     notifyAllModalEditors({ mode, preset: nextPreset });
     options.onPresetChange?.(nextPreset);
     announce(`Switched to ${nextPreset} preset`);
+    emit();
+  }
+
+  function setLeaderOnly(nextLeaderOnly: boolean): void {
+    if (leaderOnly === nextLeaderOnly) return;
+    leaderOnly = nextLeaderOnly;
+    writeStoredLeaderOnly(nextLeaderOnly);
+    options.onLeaderOnlyChange?.(nextLeaderOnly);
     emit();
   }
 
@@ -891,19 +940,25 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   function jumpToBoundary(boundary: 'start' | 'end' | 'first-in-group' | 'last-in-group'): boolean {
     const container = getActiveContainer();
     if (!container) return false;
-    const items = getPaneFocusableItems(container, options.getScopeElement?.());
-    if (items.length === 0) return false;
+    const ownScope = options.getScopeElement?.() ?? null;
+    const ignoreEnteredExample = boundary === 'start' || boundary === 'end';
+    const items = getPaneFocusableItems(container, ownScope, ignoreEnteredExample);
 
     const doc = resolveDoc();
     const win = doc?.defaultView ?? null;
+    if (items.length === 0 && boundary !== 'start' && boundary !== 'end') {
+      return false;
+    }
     recordCurrentLocation();
 
     if (boundary === 'start' || boundary === 'first-in-group') {
-      const target = items[0]!;
-      focusElementInActivePane(target);
+      const target = items[0];
+      if (target) {
+        focusElementInActivePane(target);
+      }
       if (boundary === 'start') {
         container.scrollTop = 0;
-        if (win && !isScrollableContainer(container, doc)) {
+        if (win && !ownScope && !isScrollableContainer(container, doc)) {
           try {
             win.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
           } catch {
@@ -916,11 +971,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       return true;
     }
 
-    const target = items[items.length - 1]!;
-    focusElementInActivePane(target);
+    const target = items[items.length - 1];
+    if (target) {
+      focusElementInActivePane(target);
+    }
     if (boundary === 'end') {
       container.scrollTop = container.scrollHeight;
-      if (win && !isScrollableContainer(container, doc)) {
+      if (win && !ownScope && !isScrollableContainer(container, doc)) {
         const scrollMax = Math.max(
           doc?.documentElement?.scrollHeight ?? 0,
           doc?.body?.scrollHeight ?? 0,
@@ -1990,6 +2047,18 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     const doc = resolveDoc();
     const targetEl = (isElementLike(event.target) ? event.target : null) ?? doc?.activeElement ?? null;
+    if (
+      targetEl &&
+      isHTMLElementLike(targetEl) &&
+      typeof targetEl.closest === 'function' &&
+      (targetEl.closest(
+        '[data-command-palette][data-modal="true"], [data-command-menu][data-modal="true"], [data-colon-command][data-modal="true"]',
+      ) ||
+        (isTextEntryElement(targetEl) &&
+          targetEl.closest('[data-command-palette], [data-command-menu], [data-colon-command]')))
+    ) {
+      return false;
+    }
     const editorTarget = getModalEditor(targetEl);
     const inEditable = isTextEntryElement(targetEl);
 
@@ -2262,9 +2331,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       if (storedJump && !options.jumpAction) {
         jumpAction = storedJump;
       }
+      const storedLeaderOnly = readStoredLeaderOnly();
+      if (storedLeaderOnly !== null && options.leaderOnly === undefined) {
+        leaderOnly = storedLeaderOnly;
+      }
       if (doc.documentElement) {
         doc.documentElement.dataset.keymapPreset = preset;
         doc.documentElement.dataset.jumpAction = jumpAction;
+        doc.documentElement.dataset.whichKeyLeaderOnly = String(leaderOnly);
       }
       rootControllerByDoc.set(doc, controllerApi);
       notifyRootControllerListeners(doc);
@@ -2308,7 +2382,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         }
       }
 
-      if (isTextEntryElement(targetNode) && (mode === 'normal' || mode === 'select')) {
+      if (
+        isTextEntryElement(targetNode) &&
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette], [data-command-menu], [data-colon-command]',
+        ) &&
+        (mode === 'normal' || mode === 'select')
+      ) {
         setMode('insert');
       }
     };
@@ -2325,8 +2405,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         )
       ) {
         const focusedScope = (targetNode.closest('[data-which-key-scope]') as HTMLElement | null) ?? null;
-        if (!focusedScope || isScopeElementActive(focusedScope, doc)) {
+        if (focusedScope && isScopeElementActive(focusedScope, doc)) {
           lastInteractedScopeByDoc.set(doc, focusedScope);
+        } else if (!focusedScope) {
+          const currentRemembered = lastInteractedScopeByDoc.get(doc) ?? null;
+          if (!currentRemembered || !targetNode.contains(currentRemembered)) {
+            lastInteractedScopeByDoc.set(doc, null);
+          }
         }
       }
 
@@ -2350,7 +2435,13 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
       // When focusing a ProseMirror modal editor via keyboard navigation in normal/select mode,
       // keep normal/select mode active so modal motions (h/j/k/l, w/b/e, v, x, d, c, y, i) work immediately.
-      if (isTextEntryElement(targetNode) && !getModalEditor(targetNode)) {
+      if (
+        isTextEntryElement(targetNode) &&
+        !getModalEditor(targetNode) &&
+        !targetNode.closest(
+          '[data-which-key-explorer], [data-command-palette], [data-command-menu], [data-colon-command]',
+        )
+      ) {
         if (mode === 'normal' || mode === 'select') {
           setMode('insert');
         }
@@ -2467,6 +2558,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     handleKeyDown,
     setPreset,
     setMode,
+    setLeaderOnly,
     setJumpAction,
     openPrefix,
     closePrefix,

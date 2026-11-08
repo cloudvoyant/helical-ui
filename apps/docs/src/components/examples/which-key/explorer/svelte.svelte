@@ -1,25 +1,21 @@
 <!-- apps/docs/src/components/examples/which-key/explorer/svelte.svelte -->
 <script lang="ts">
+  // 1. Imports
   import {
-    Badge,
     Button,
-    HStack,
     Kbd,
     Pane,
-    VStack,
     WhichKey,
     WhichKeyProvider,
     useWhichKey,
-    type KeymapHandler,
     type WhichKeyNode,
   } from '@cloudvoyant/helical-svelte';
 
-  let lastExecuted = $state('none');
-
-  const customKeymap: Record<string, WhichKeyNode> = {
+  // 2. Module constants & types
+  const CUSTOM_KEYMAP: Record<string, WhichKeyNode> = {
     Space: {
       key: 'Space',
-      label: '+leader',
+      label: 'Leader',
       group: 'Leader',
       children: {
         p: {
@@ -39,57 +35,20 @@
       },
     },
   };
-
-  const commands: Record<string, KeymapHandler> = {
-    'demo.formatDocument': () => {
-      lastExecuted = 'demo.formatDocument';
-    },
-    'demo.syncWorkspace': () => {
-      lastExecuted = 'demo.syncWorkspace';
-    },
-  };
 </script>
 
-<WhichKeyProvider
-  preset="helix"
-  keymap={customKeymap}
-  {commands}
-  onCommand={(cmdId) => {
-    lastExecuted = cmdId;
-  }}
->
+<WhichKeyProvider preset="helix" keymap={CUSTOM_KEYMAP}>
   {#snippet children()}
     {@const wk = useWhichKey()}
-    <VStack class="w-full gap-3">
-      <Pane
-        paneId="wk-explorer-pane"
-        paneTitle="Explorer Demo"
-        data-testid="wk-explorer-surface"
-        class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
-      >
-        <HStack class="flex-wrap items-center justify-between gap-2">
-          <HStack class="items-center gap-2">
-            <span class="text-xs font-medium text-muted-foreground">Executed Command:</span>
-            <Badge variant="subtle" color="primary" data-testid="wk-explorer-executed">
-              {lastExecuted}
-            </Badge>
-          </HStack>
-          <Button
-            size="sm"
-            variant="outline"
-            data-testid="wk-explorer-trigger"
-            onclick={() => wk.openExplorer()}
-          >
-            Open Explorer <Kbd size="sm" hotkey="?" />
-          </Button>
-        </HStack>
-        <p class="text-xs text-muted-foreground">
-          Press <Kbd size="sm" hotkey="?" /> or <Kbd size="sm" hotkey={['Space', '?']} /> (or click the
-          button) to open the searchable Keybinding Exploration Menu, filter by keyword, and press
-          <Kbd size="sm">Enter</Kbd> to run a command.
-        </p>
-      </Pane>
-      <WhichKey />
-    </VStack>
+    <Pane
+      paneId="wk-explorer-pane"
+      paneTitle="Explorer Demo"
+      class="flex items-center justify-center rounded-lg border border-border bg-card p-4"
+    >
+      <Button size="sm" variant="outline" onclick={() => wk.openExplorer()}>
+        Open Explorer <Kbd size="sm" hotkey="?" />
+      </Button>
+    </Pane>
+    <WhichKey />
   {/snippet}
 </WhichKeyProvider>

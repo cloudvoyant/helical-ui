@@ -9,7 +9,7 @@ function createTextObjectChildren(): {
   return {
     i: {
       key: 'i',
-      label: '+inner',
+      label: 'Inner',
       group: 'Inner Text Object',
       category: 'Match / Text Objects',
       mode: ['normal', 'select'],
@@ -53,7 +53,7 @@ function createTextObjectChildren(): {
     },
     a: {
       key: 'a',
-      label: '+around',
+      label: 'Around',
       group: 'Around Text Object',
       category: 'Match / Text Objects',
       mode: ['normal', 'select'],
@@ -101,7 +101,7 @@ function createTextObjectChildren(): {
 function createWindowMenu(): WhichKeyNode {
   return {
     key: 'Control+w',
-    label: '+window',
+    label: 'Window',
     group: 'Window / Pane',
     category: 'Window / Pane',
     mode: ['normal', 'select'],
@@ -178,7 +178,7 @@ function createWindowMenu(): WhichKeyNode {
       },
       s: {
         key: 's',
-        label: '+sticky window',
+        label: 'Sticky Window',
         group: 'Sticky Window Mode',
         description: 'Keep Window menu open until Escape',
         category: 'Window / Pane',
@@ -205,7 +205,7 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
 
   return {
     key: leaderKey,
-    label: '+leader',
+    label: 'Leader',
     group: 'Leader',
     category: 'Leader',
     mode: ['normal', 'select'],
@@ -219,7 +219,7 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
       },
       w: {
         key: 'w',
-        label: '+window',
+        label: 'Window',
         group: 'Window / Pane',
         description: 'Spatial and indexed pane navigation',
         category: 'Window / Pane',
@@ -234,15 +234,15 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
       },
       g: {
         key: 'g',
-        label: '+goto',
-        group: 'Goto',
+        label: 'Go to',
+        group: 'Go to',
         description: 'Go to locations and boundaries',
         category: 'Goto',
         proxy: ['g'],
       },
       v: {
         key: 'v',
-        label: '+view',
+        label: 'View',
         group: 'View / Scroll',
         description: 'Scroll and align viewport',
         category: 'View',
@@ -250,7 +250,7 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
       },
       k: {
         key: 'k',
-        label: '+preset',
+        label: 'Preset',
         group: 'Keybinding Preset',
         description: 'Switch modal grammar (Helix / Vim / Kakoune)',
         category: 'Space',
@@ -286,7 +286,7 @@ function createSpaceMenu(leaderKey = 'Space', viewKey = 'z'): WhichKeyNode {
 function createViewMenu(key: string, centerKey: string): WhichKeyNode {
   return {
     key,
-    label: '+view',
+    label: 'View',
     group: 'View',
     category: 'View',
     mode: ['normal', 'select'],
@@ -341,7 +341,7 @@ function createUnimpairedMenus(): { '[': WhichKeyNode; ']': WhichKeyNode } {
   return {
     '[': {
       key: '[',
-      label: '+prev',
+      label: 'Previous',
       group: 'Previous (Unimpaired)',
       category: 'Unimpaired',
       mode: ['normal', 'select'],
@@ -385,7 +385,7 @@ function createUnimpairedMenus(): { '[': WhichKeyNode; ']': WhichKeyNode } {
     },
     ']': {
       key: ']',
-      label: '+next',
+      label: 'Next',
       group: 'Next (Unimpaired)',
       category: 'Unimpaired',
       mode: ['normal', 'select'],
@@ -641,8 +641,8 @@ export function createHelixPreset(leaderKey = 'Space'): Record<string, WhichKeyN
     'Control+w': createWindowMenu(),
     g: {
       key: 'g',
-      label: '+goto',
-      group: 'Goto',
+      label: 'Go to',
+      group: 'Go to',
       category: 'Goto',
       mode: ['normal', 'select'],
       children: {
@@ -728,7 +728,7 @@ export function createHelixPreset(leaderKey = 'Space'): Record<string, WhichKeyN
     z: createViewMenu('z', 'z'),
     Z: {
       key: 'Z',
-      label: '+sticky view',
+      label: 'Sticky View',
       group: 'View (Sticky)',
       description: 'Lock View menu open until Escape',
       category: 'View',
@@ -739,7 +739,7 @@ export function createHelixPreset(leaderKey = 'Space'): Record<string, WhichKeyN
     },
     m: {
       key: 'm',
-      label: '+match',
+      label: 'Match',
       group: 'Match / Text Objects',
       category: 'Match / Text Objects',
       mode: ['normal', 'select'],
@@ -824,8 +824,8 @@ export function createVimPreset(leaderKey = 'Space'): Record<string, WhichKeyNod
     'Control+w': createWindowMenu(),
     g: {
       key: 'g',
-      label: '+goto',
-      group: 'Goto',
+      label: 'Go to',
+      group: 'Go to',
       category: 'Goto',
       mode: ['normal', 'select'],
       children: {
@@ -936,7 +936,7 @@ export function createVimPreset(leaderKey = 'Space'): Record<string, WhichKeyNod
     z: createViewMenu('z', 'z'),
     m: {
       key: 'm',
-      label: '+text-objects',
+      label: 'Text Objects',
       group: 'Text Objects',
       category: 'Match / Text Objects',
       mode: ['normal', 'select'],
@@ -964,8 +964,8 @@ export function createKakounePreset(leaderKey = 'Space'): Record<string, WhichKe
     'Control+w': createWindowMenu(),
     g: {
       key: 'g',
-      label: '+goto',
-      group: 'Goto',
+      label: 'Go to',
+      group: 'Go to',
       category: 'Goto',
       mode: ['normal', 'select'],
       children: {
@@ -1072,7 +1072,7 @@ export function createKakounePreset(leaderKey = 'Space'): Record<string, WhichKe
     v: createViewMenu('v', 'v'),
     V: {
       key: 'V',
-      label: '+lock view',
+      label: 'Lock View',
       group: 'View (Lock)',
       description: 'Lock Kakoune View mode open until Escape (V)',
       category: 'View',
@@ -1083,7 +1083,7 @@ export function createKakounePreset(leaderKey = 'Space'): Record<string, WhichKe
     },
     m: {
       key: 'm',
-      label: '+object',
+      label: 'Object',
       group: 'Object / Match',
       category: 'Match / Text Objects',
       mode: ['normal', 'select'],

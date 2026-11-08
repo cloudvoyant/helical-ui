@@ -36,6 +36,7 @@ for (const framework of FRAMEWORKS) {
       await page.keyboard.press('ArrowDown');
       const listbox = page.locator('[role="listbox"]:visible').first();
       await expect(listbox).toBeVisible();
+      await expect(listbox).toBeFocused();
       await page.keyboard.press('ArrowDown');
       await page.keyboard.press('Enter');
       await expect(trigger).toContainText('Banana');

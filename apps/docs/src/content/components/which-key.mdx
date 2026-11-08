@@ -1,31 +1,71 @@
 ---
 title: WhichKey
-description: Helix-inspired modal keybinding popup, <leader>? exploration menu, pane focus manager, and ProseMirror modal editing for React and Svelte.
-order: 11
-group: navigation
+description: Floating multi-key chord popup, searchable keybinding explorer, modal presets (Helix, Vim, Kakoune), spatial pane navigation, and 2D jump labels.
+order: 2
+group: keyboard
 ---
 
 import Demo from '../../components/Demo.astro';
-import Examples from '../../components/Examples.astro';
 
-`WhichKey` provides a Helix-inspired floating command popup, a searchable `?` (`<leader>?` / `Space ?`) Keybinding Exploration Menu (`WhichKeyExplorer`), selectable modal keybinding presets (`helix` default, `vim`, `kakoune`), 2D spatial and indexed pane navigation (`Ctrl-w` / `Space w`, `Space 1..9`), forward jump-label navigation (`gw` / `s`), Jumplist traversal (`Ctrl-o` / `Ctrl-i`), and selection-first modal editing inside the rich-text `Editor`.
+`WhichKey` displays active multi-key chord prefixes and available next keys as you type. Click inside the workspace below and press `Space` for the leader menu, `g` for Goto, `z` for View, or `?` to search all bindings.
 
 <Demo component="which-key" example="default" />
 
 ## Examples
 
-<Examples component="which-key" exclude="default" />
+### Leader Only
+
+Set `leaderOnly` on `WhichKeyProvider` or `WhichKey` so the popup only appears for leader chords (`Space`) while non-leader chords (`gg`, `ge`, `gw`, `zt`) execute silently.
+
+<Demo component="which-key" example="leader-only" />
+
+### Modal Interaction
+
+Pressing `Escape` when `WhichKey` is open inside an active `Dialog` closes only the `WhichKey` popup while keeping the underlying `Dialog` open.
+
+<Demo component="which-key" example="modal-interaction" />
+
+### Explorer
+
+Press `?` or `Space ?` to open the searchable Keybinding Explorer modal, filter bindings by keyword, and press `Enter` to execute.
+
+<Demo component="which-key" example="explorer" />
+
+### Presets
+
+Switch between Helix (`g e` to end, `Z` sticky View lock), Vim (`G` to end, `0` to start), and Kakoune (`V` sticky View lock) modal presets.
+
+<Demo component="which-key" example="presets" />
+
+### Panes
+
+Move focus spatially across registered `Pane`s with `Space w h/j/k/l`, jump by index with `Space 1–3`, and traverse focus history with `Ctrl+o` and `Ctrl+i`.
+
+<Demo component="which-key" example="panes" />
+
+### Forms
+
+Step across form controls with `j`/`k` in normal mode without typing into inputs, press `i` or `Enter` to enter insert mode, and press `Esc` to return to normal mode.
+
+<Demo component="which-key" example="forms" />
+
+### Jump Labels
+
+Trigger 2D jump labels with `g w` to either focus or activate any visible interactive element.
+
+<Demo component="which-key" example="jump-labels" />
 
 ## API Reference
 
 ### WhichKeyProvider
 
 | Prop | Type | Default | Description |
-| --- | --- | --- | --- |
+| :--- | :--- | :--- | :--- |
 | `preset` | `'helix' \| 'vim' \| 'kakoune'` | `'helix'` | Active modal keybinding preset. |
 | `defaultMode` | `'normal' \| 'select' \| 'insert' \| 'jump'` | `'normal'` | Initial modal state. |
 | `leaderKey` | `string` | `'Space'` | Primary leader key (`<leader>?` opens `WhichKeyExplorer`). |
-| `jumpAction` | `'focus' \| 'activate'` | `'focus'` | Whether forward jump labels (`gw` / `s`) focus or click the matched element. |
+| `leaderOnly` | `boolean` | `false` | When `true`, only opens the `WhichKey` popup when the chord starts with `leaderKey` (e.g. `Space`), while non-leader chords (`gg`, `ge`, `gw`, `zt`) still execute silently. |
+| `jumpAction` | `'focus' \| 'activate'` | `'activate'` | Whether forward jump labels (`gw` / `s`) focus or click the matched element. |
 | `keymap` | `Record<string, WhichKeyNode>` | — | Additional prefix-trie keybindings merged into the active preset. |
 | `commands` | `Record<string, KeymapHandler>` | — | Command handlers keyed by `commandId`. |
 | `scoped` | `boolean` | `true` | Scopes keybinding handling to this provider's DOM subtree when multiple providers are mounted. |
@@ -33,15 +73,15 @@ import Examples from '../../components/Examples.astro';
 ### WhichKey
 
 | Prop | Type | Default | Description |
-| --- | --- | --- | --- |
+| :--- | :--- | :--- | :--- |
 | `variant` | `'helix' \| 'modern' \| 'classic'` | `'helix'` | Floating panel layout style (`helix` bottom-right popup, `modern` centered card, `classic` bottom status bar). |
-| `showModeBadge` | `boolean` | `true` | Displays the current mode badge (`normal`, `select`, `insert`, `jump`, or `·lock`). |
+| `leaderOnly` | `boolean` | — | Optional per-panel override for `leaderOnly`; defaults to the active `WhichKeyProvider` setting. |
 | `showExplorer` | `boolean` | `true` | Automatically mounts the `<leader>?` `WhichKeyExplorer` modal. |
 
 ### WhichKeyMode
 
 | Prop | Type | Default | Description |
-| --- | --- | --- | --- |
+| :--- | :--- | :--- | :--- |
 | `mode` | `'normal' \| 'select' \| 'insert' \| 'jump'` | — | Optional mode override; defaults to the active `WhichKeyProvider` or document controller mode. |
 | `sticky` | `boolean` | — | Optional sticky-lock override (`·lock` suffix); defaults to the active controller's sticky state. |
 | `showPreset` | `boolean` | `false` | Prepends the active preset name (`helix · normal`). |
@@ -50,7 +90,7 @@ import Examples from '../../components/Examples.astro';
 ### WhichKeyExplorer
 
 | Prop | Type | Default | Description |
-| --- | --- | --- | --- |
+| :--- | :--- | :--- | :--- |
 | `open` | `boolean` | — | Optional controlled open state. |
 | `onOpenChange` | `(open: boolean) => void` | — | Callback fired when the explorer Dialog opens or closes. |
-| `placeholder` | `string` | `'Search keybindings...'` | Placeholder text for the `ListboxInput` filter field. |
+| `placeholder` | `string` | `'Search keybindings...'` | Placeholder text for the filter input. |

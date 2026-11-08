@@ -42,6 +42,7 @@ export function WhichKeyProvider({
   preset,
   defaultMode = 'normal',
   leaderKey = 'Space',
+  leaderOnly,
   jumpAction,
   jumpAlphabet,
   storageKey,
@@ -52,6 +53,7 @@ export function WhichKeyProvider({
   scoped = true,
   onPresetChange,
   onModeChange,
+  onLeaderOnlyChange,
   onJumpActionChange,
   onCommand,
   onYank,
@@ -66,6 +68,7 @@ export function WhichKeyProvider({
       preset,
       defaultMode,
       leaderKey,
+      leaderOnly,
       jumpAction,
       jumpAlphabet,
       storageKey,
@@ -77,6 +80,7 @@ export function WhichKeyProvider({
       getScopeElement: () => (scoped ? scopeRef.current : null),
       onPresetChange,
       onModeChange,
+      onLeaderOnlyChange,
       onJumpActionChange,
       onCommand,
       onYank,
@@ -90,6 +94,12 @@ export function WhichKeyProvider({
       controller.setPreset(preset);
     }
   }, [controller, preset]);
+
+  useEffect(() => {
+    if (leaderOnly !== undefined) {
+      controller.setLeaderOnly(leaderOnly);
+    }
+  }, [controller, leaderOnly]);
 
   useEffect(() => {
     if (jumpAction !== undefined) {
@@ -165,6 +175,7 @@ export interface UseWhichKeyReturn extends WhichKeyState {
   controller: WhichKeyController;
   setPreset: (preset: KeybindingPreset) => void;
   setMode: (mode: KeymapMode) => void;
+  setLeaderOnly: (leaderOnly: boolean) => void;
   setJumpAction: (action: JumpAction) => void;
   openExplorer: () => void;
   closeExplorer: () => void;
@@ -197,6 +208,7 @@ export function useWhichKey(): UseWhichKeyReturn {
     controller,
     setPreset: controller.setPreset,
     setMode: controller.setMode,
+    setLeaderOnly: controller.setLeaderOnly,
     setJumpAction: controller.setJumpAction,
     openExplorer: controller.openExplorer,
     closeExplorer: controller.closeExplorer,

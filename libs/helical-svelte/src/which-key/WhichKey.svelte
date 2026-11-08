@@ -1,9 +1,12 @@
 <!-- libs/helical-svelte/src/which-key/WhichKey.svelte -->
 <script lang="ts">
+  // 1. Imports
   import { Portal } from '@ark-ui/svelte/portal';
   import { Presence } from '@ark-ui/svelte/presence';
+  import { ChevronRight } from 'lucide-svelte';
   import {
     cn,
+    formatWhichKeyLabel,
     jumpBadgeMatchedPrefixBase,
     jumpBadgeVariants,
     jumpOverlayRootBase,
@@ -15,6 +18,7 @@
     whichKeyItemLabelBase,
     whichKeyTitleBase,
     whichKeyVariants,
+    type KbdHotkey,
     type WhichKeyProps as CoreWhichKeyProps,
   } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
@@ -22,16 +26,17 @@
   import Scroll from '../Scroll.svelte';
   import { getOptionalWhichKeyContext } from './context.svelte';
   import WhichKeyExplorer from './WhichKeyExplorer.svelte';
-  import WhichKeyMode from './WhichKeyMode.svelte';
 
+  // 2. Module constants & types
   type Props = Omit<CoreWhichKeyProps, 'className'> & {
     class?: string;
     className?: string;
   };
 
+  // --- State ---
   let {
     variant = 'helix',
-    showModeBadge = true,
+    leaderOnly: leaderOnlyProp,
     showExplorer = true,
     class: className = '',
     className: reactClassName = '',
@@ -42,8 +47,20 @@
   let panelRef: HTMLDivElement | null = $state(null);
   let jumpOverlayRef: HTMLDivElement | null = $state(null);
 
+  const effectiveLeaderOnly = $derived(leaderOnlyProp ?? Boolean(ctx?.state.leaderOnly));
+  const effectiveOpen = $derived(
+    ctx
+      ? leaderOnlyProp !== undefined
+        ? ctx.state.activePath.length > 0 &&
+          ctx.state.items.length > 0 &&
+          (!leaderOnlyProp || ctx.state.activePath[0] === ctx.state.leaderKey)
+        : ctx.state.isOpen
+      : false,
+  );
+
+  // --- Effects ---
   $effect(() => {
-    if (!ctx?.state.isOpen) return;
+    if (!effectiveOpen || !ctx) return;
     return ctx.controller.trackBranchElement(() => panelRef);
   });
 
@@ -55,7 +72,7 @@
 
 {#if ctx}
   <Portal>
-    <Presence present={ctx.state.isOpen} lazyMount unmountOnExit>
+    <Presence present={effectiveOpen} lazyMount unmountOnExit>
       <div
         bind:this={panelRef}
         role="region"
@@ -63,19 +80,21 @@
         data-which-key-root="true"
         data-testid="which-key-panel"
         data-variant={variant}
-        data-preset={ctx.state.preset}
-        data-mode={ctx.state.mode}
+        data-leader-only={effectiveLeaderOnly ? 'true' : 'false'}
         data-sticky={ctx.state.sticky ? 'true' : 'false'}
         class={cn(whichKeyVariants({ variant }), className, reactClassName)}
       >
         <div class={whichKeyHeaderBase}>
           <div class={whichKeyTitleBase}>
-            {#if showModeBadge}
-              <WhichKeyMode mode={ctx.state.mode} sticky={ctx.state.sticky} />
-            {/if}
             <span data-testid="which-key-title">
-              {ctx.state.title === 'Space' ? 'Leader' : ctx.state.title}
+              {ctx.state.title === 'Space' ? 'Leader' : formatWhichKeyLabel(ctx.state.title)}
             </span>
+            <div
+              data-testid="which-key-breadcrumb"
+              class={whichKeyBreadcrumbBase}
+            >
+              <span>{ctx.state.breadcrumb.join(' » ')}</span>
+            </div>
             {#if ctx.state.countBuffer}
               <span
                 data-testid="which-key-count"
@@ -85,15 +104,33 @@
               </span>
             {/if}
           </div>
-          <div
-            data-testid="which-key-breadcrumb"
-            class={whichKeyBreadcrumbBase}
-          >
-            <span>{ctx.state.breadcrumb.join(' » ')}</span>
-          </div>
+          <Row class="shrink-0 items-center gap-1.5 text-muted-foreground">
+            {#if ctx.state.breadcrumb.length > 1}
+              <button
+                type="button"
+                aria-label="Back"
+                onclick={() => ctx.controller.stepBackPrefix()}
+                class="inline-flex items-center gap-1 hover:text-foreground"
+              >
+                <Kbd size="sm">⌫</Kbd>
+              </button>
+            {/if}
+            <button
+              type="button"
+              aria-label="Close"
+              data-testid="which-key-close"
+              onclick={() => ctx.controller.closePrefix()}
+              class="inline-flex items-center gap-1 hover:text-foreground"
+            >
+              <Kbd size="sm">Esc</Kbd>
+            </button>
+          </Row>
         </div>
 
-        <Scroll class="max-h-72" viewportClass="max-h-72">
+        <Scroll
+          class="max-h-72"
+          viewportClass="scroll-fade scroll-fade-12 no-scrollbar max-h-72"
+        >
           <div
             data-testid="which-key-items"
             class={whichKeyBodyVariants({ variant })}
@@ -118,43 +155,29 @@
                   data-group={isGroup ? 'true' : 'false'}
                   class={whichKeyItemLabelBase}
                 >
-                  {node.label}
+                  <span class="truncate">{formatWhichKeyLabel(node.label)}</span>
+                  {#if isGroup}
+                    <ChevronRight
+                      class="size-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                  {/if}
                 </span>
                 <Kbd
                   size="sm"
                   variant={isGroup ? 'subtle' : 'outline'}
-                  hotkey={node.key}
+                  hotkey={node.key as KbdHotkey}
                 />
               </button>
             {/each}
           </div>
         </Scroll>
 
-        <div class={whichKeyFooterBase}>
-          <Row class="items-center gap-2">
-            {#if ctx.state.breadcrumb.length > 1}
-              <button
-                type="button"
-                onclick={() => ctx.controller.stepBackPrefix()}
-                class="inline-flex items-center gap-1 hover:text-foreground"
-              >
-                <Kbd size="sm">⌫</Kbd>
-                <span>Back</span>
-              </button>
-            {/if}
-            <button
-              type="button"
-              onclick={() => ctx.controller.closePrefix()}
-              class="inline-flex items-center gap-1 hover:text-foreground"
-            >
-              <Kbd size="sm">Esc</Kbd>
-              <span>Close</span>
-            </button>
-          </Row>
-          <span class="font-mono uppercase opacity-75">
-            {ctx.state.preset}
-          </span>
-        </div>
+        <div
+          data-testid="which-key-footer"
+          class={whichKeyFooterBase}
+          aria-hidden="true"
+        ></div>
       </div>
     </Presence>
   </Portal>

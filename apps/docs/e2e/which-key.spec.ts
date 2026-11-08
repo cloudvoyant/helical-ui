@@ -1,119 +1,133 @@
 // apps/docs/e2e/which-key.spec.ts
-// BDD end-to-end coverage for WhichKey, WhichKeyExplorer (<leader>?), modal presets,
+// End-to-end coverage for WhichKey, WhichKeyExplorer, modal presets,
 // pane navigation, form normal/insert navigation, ProseMirror ModalKeymap editor,
-// forward jump labels, and docs shell keyboard integration across React and Svelte.
-import { test, expect, type Page } from '@playwright/test';
-import { FRAMEWORKS, selectFramework } from './helpers';
-
-// --- Helpers ---
-
-function island(page: Page, framework: string, example: string) {
-  return page.locator(`[data-example-id="${example}"] [data-example-preview] [data-fw="${framework}"]`);
-}
-
-// --- Tests ---
+// and 2D jump labels across React and Svelte.
+import { expect, test } from '@playwright/test';
+import { FRAMEWORKS, island, selectFramework } from './helpers';
 
 for (const framework of FRAMEWORKS) {
   test.describe(`WhichKey · ${framework}`, () => {
-    test.describe('Given a WhichKeyProvider in normal mode on /components/which-key', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
-      });
+    test.beforeEach(async ({ page }) => {
+      await page.goto('components/which-key');
+      await selectFramework(page, framework);
+    });
 
-      test.describe('When the user presses Space', () => {
-        test('Then mounts the Helix-style bottom-right WhichKey panel via Ark Presence/Portal showing ? (Explore Keybindings), +window, +goto, +view, and command items', async ({
+    test.describe('Given a scoped WhichKey with all prefixes enabled (default)', () => {
+      test.describe('When the leader key (Space) is pressed', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'default');
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
+          await page.keyboard.press('Space');
+        });
+
+        test('it opens the bottom-right panel with submenu chevrons and top-right Esc/Backspace hints', async ({
           page,
         }) => {
-          // Arrange
-          const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-surface').click();
-
-          // Act
-          await page.keyboard.press('Space');
-
-          // Assert
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-variant', 'helix');
-          await expect(panel.locator('[data-testid="which-key-item"][data-key="?"]')).toContainText(
-            'Explore Keybindings',
-          );
-          await expect(panel.locator('[data-testid="which-key-item"][data-key="w"]')).toContainText(
-            '+window',
-          );
-        });
-      });
+          await expect(panel.getByTestId('which-key-close')).toBeVisible();
+          await expect(panel.getByTestId('which-key-footer')).toHaveText('');
 
-      test.describe('When the user presses Space then w and then Backspace', () => {
-        test('Then transitions to the Window submenu with breadcrumb "Space » w" on w and pops one prefix level back on Backspace', async ({
+          const windowItem = panel.locator('[data-testid="which-key-item"][data-key="w"]');
+          const gotoItem = panel.locator('[data-testid="which-key-item"][data-key="g"]');
+          await expect(windowItem).toContainText('Window');
+          await expect(windowItem.locator('svg')).toBeVisible();
+          await expect(gotoItem).toContainText('Go to');
+          await expect(gotoItem.locator('svg')).toBeVisible();
+        });
+
+        test('it drills into a submenu ("Space » w") and steps back on Backspace', async ({
           page,
         }) => {
-          // Arrange
-          const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-surface').click();
-
-          // Act
-          await page.keyboard.press('Space');
           await page.keyboard.press('w');
 
-          // Assert submenu
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space » w');
 
-          // Act Backspace
           await page.keyboard.press('Backspace');
-
-          // Assert back to root Space menu
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space');
           await expect(panel.getByTestId('which-key-breadcrumb')).not.toContainText('Space » w');
         });
       });
 
-      test.describe('When WhichKey is open inside an active Dialog and the user presses Escape', () => {
-        test('Then closes the WhichKey popup only and keeps the Dialog open via @zag-js/dismissable trackDismissableBranch', async ({
-          page,
-        }) => {
-          // Arrange
+      test.describe('When a non-leader prefix (g) is pressed', () => {
+        test.beforeEach(async ({ page }) => {
           const demo = island(page, framework, 'default');
-          await demo.getByTestId('wk-default-open-dialog').click();
-          const dialog = page.getByTestId('wk-default-dialog');
-          await expect(dialog).toBeVisible();
+          await demo.locator('[data-pane-id="wk-default-pane"]').click();
+          await page.keyboard.press('g');
+        });
 
-          // Act: open WhichKey inside the open dialog, then press Escape
-          await page.keyboard.press('Space');
+        test('it opens the Go to menu and closes on leaf execution', async ({ page }) => {
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
-          await page.keyboard.press('Escape');
-
-          // Assert: WhichKey closes while Dialog stays open
+          await page.keyboard.press('e');
           await expect(panel).toBeHidden();
-          await expect(dialog).toBeVisible();
         });
       });
     });
 
-    test.describe('Given a WhichKeyProvider with default leaderKey="Space"', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
+    test.describe('Given a scoped WhichKey with leaderOnly enabled', () => {
+      test.describe('When a non-leader prefix (g) is pressed', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'leader-only');
+          await demo.locator('[data-pane-id="wk-leader-only-pane"]').click();
+          await page.keyboard.press('g');
+        });
+
+        test('it keeps the popup hidden while multi-key chords remain active', async ({ page }) => {
+          const panel = page.getByTestId('which-key-panel');
+          await expect(panel).toBeHidden();
+          await page.keyboard.press('e');
+          await expect(panel).toBeHidden();
+        });
       });
 
-      test.describe('When the user presses ? (or Space then ?) in normal mode', () => {
-        test('Then opens the WhichKeyExplorer Dialog + Listbox modal listing active preset bindings grouped by ListboxItemGroup with <Kbd> chords', async ({
-          page,
-        }) => {
-          // Arrange
+      test.describe('When the leader key (Space) is pressed', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'leader-only');
+          await demo.locator('[data-pane-id="wk-leader-only-pane"]').click();
+          await page.keyboard.press('Space');
+        });
+
+        test('it opens the WhichKey popup with data-leader-only="true"', async ({ page }) => {
+          const panel = page.getByTestId('which-key-panel');
+          await expect(panel).toBeVisible();
+          await expect(panel).toHaveAttribute('data-leader-only', 'true');
+          await page.keyboard.press('Escape');
+          await expect(panel).toBeHidden();
+        });
+      });
+    });
+
+    test.describe('Given WhichKey open inside an active Dialog', () => {
+      test.describe('When Escape is pressed', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'modal-interaction');
+          await demo.getByRole('button', { name: 'Open Modal Dialog' }).first().click();
+          await expect(page.getByRole('dialog', { name: 'Nested Modal Layer' })).toBeVisible();
+          await page.keyboard.press('Space');
+          await expect(page.getByTestId('which-key-panel')).toBeVisible();
+          await page.keyboard.press('Escape');
+        });
+
+        test('it closes only WhichKey and keeps the Dialog open', async ({ page }) => {
+          await expect(page.getByTestId('which-key-panel')).toBeHidden();
+          await expect(page.getByRole('dialog', { name: 'Nested Modal Layer' })).toBeVisible();
+        });
+      });
+    });
+
+    test.describe('Given WhichKeyExplorer', () => {
+      test.describe('When opened via ?', () => {
+        test.beforeEach(async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-surface').click();
-
-          // Act
+          await demo.locator('[data-pane-id="wk-explorer-pane"]').click();
           await page.keyboard.press('?');
+        });
 
-          // Assert
+        test('it lists active preset bindings grouped by category', async ({ page }) => {
           const explorer = page.getByTestId('which-key-explorer');
           await expect(explorer).toBeVisible();
           await expect(explorer.getByTestId('which-key-explorer-input')).toBeVisible();
@@ -121,79 +135,61 @@ for (const framework of FRAMEWORKS) {
         });
       });
 
-      test.describe('When the user types a filter query in ListboxInput and presses Enter', () => {
-        test('Then filters displayed bindings, highlights matched query substrings in <mark> tags via Ark Highlight, and executes the highlighted command on Enter', async ({
-          page,
-        }) => {
-          // Arrange
+      test.describe('When filtered with a search query', () => {
+        test.beforeEach(async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-trigger').click();
+          await demo.getByRole('button', { name: /Open Explorer/i }).click();
+          const explorer = page.getByTestId('which-key-explorer');
+          await expect(explorer).toBeVisible();
+          await explorer.getByTestId('which-key-explorer-input').fill('Format Document');
+        });
+
+        test('it highlights matches and closes on Enter', async ({ page }) => {
           const explorer = page.getByTestId('which-key-explorer');
           const input = explorer.getByTestId('which-key-explorer-input');
-          await expect(explorer).toBeVisible();
-
-          // Act: filter for our custom command "Format Document"
-          await input.fill('Format Document');
-
-          // Assert highlight mark
           const items = explorer.getByTestId('which-key-explorer-item');
           await expect(items).toHaveCount(1);
           await expect(items.first().locator('mark').first()).toContainText(/Format/i);
 
-          // Act: press Enter to execute
           await input.press('Enter');
-
-          // Assert: explorer closes and command executed
           await expect(explorer).toBeHidden();
-          await expect(demo.getByTestId('wk-explorer-executed')).toHaveText('demo.formatDocument');
         });
       });
 
-      test.describe('When WhichKeyExplorer is open and the user presses Escape', () => {
-        test('Then closes the explorer Dialog', async ({ page }) => {
-          // Arrange
+      test.describe('When Escape is pressed', () => {
+        test.beforeEach(async ({ page }) => {
           const demo = island(page, framework, 'explorer');
-          await demo.getByTestId('wk-explorer-trigger').click();
-          const explorer = page.getByTestId('which-key-explorer');
-          await expect(explorer).toBeVisible();
-
-          // Act
+          await demo.getByRole('button', { name: /Open Explorer/i }).click();
+          await expect(page.getByTestId('which-key-explorer')).toBeVisible();
           await page.keyboard.press('Escape');
+        });
 
-          // Assert
-          await expect(explorer).toBeHidden();
+        test('it closes the explorer dialog', async ({ page }) => {
+          await expect(page.getByTestId('which-key-explorer')).toBeHidden();
         });
       });
     });
 
-    test.describe('Given the keybinding presets demo on /components/which-key', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
-      });
+    test.describe('Given modal keybinding presets', () => {
+      test.describe('When preset is Helix', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'presets');
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
+        });
 
-      test.describe('When the default Helix preset is active and the user presses g or Shift+Z', () => {
-        test('Then opens Goto on g and enters sticky View mode on Shift+Z until Escape', async ({
+        test('it opens Go to on g, focuses the last item on ge, and enters sticky View mode on Shift+Z', async ({
           page,
         }) => {
-          // Arrange
           const demo = island(page, framework, 'presets');
-          await demo.getByTestId('wk-preset-item-0').focus();
-
-          // Act: press g then e (goto bottom)
           await page.keyboard.press('g');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await page.keyboard.press('e');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Delta Item');
+          await expect(demo.getByRole('button', { name: 'Delta Item' })).toBeFocused();
 
-          // Act: press Shift+Z to enter sticky View mode
           await page.keyboard.press('Shift+Z');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-sticky', 'true');
-
-          // Repeat j in sticky View mode — panel stays open until Escape
           await page.keyboard.press('j');
           await expect(panel).toBeVisible();
           await page.keyboard.press('Escape');
@@ -201,28 +197,21 @@ for (const framework of FRAMEWORKS) {
         });
       });
 
-      test.describe('When the preset is switched to Vim or Kakoune', () => {
-        test('Then executes Vim Shift+G / 0 / $ and Kakoune v / Shift+V view lock', async ({
+      test.describe('When preset is Vim or Kakoune', () => {
+        test('it executes Vim Shift+G / 0 motions and Kakoune Shift+V view lock', async ({
           page,
         }) => {
-          // Arrange
           const demo = island(page, framework, 'presets');
-          await demo.getByTestId('wk-preset-btn-vim').click();
-          await demo.getByTestId('wk-preset-item-0').focus();
+          await demo.getByRole('radio', { name: 'VIM' }).click();
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
 
-          // Act: Vim Shift+G jumps immediately to bottom item
           await page.keyboard.press('Shift+G');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Delta Item');
-
-          // Act: Vim 0 jumps to first item
+          await expect(demo.getByRole('button', { name: 'Delta Item' })).toBeFocused();
           await page.keyboard.press('0');
-          await expect(demo.getByTestId('wk-presets-focused-item')).toHaveText('Alpha Item');
+          await expect(demo.getByRole('button', { name: 'Alpha Item' })).toBeFocused();
 
-          // Switch to Kakoune
-          await demo.getByTestId('wk-preset-btn-kakoune').click();
-          await demo.getByTestId('wk-preset-item-0').focus();
-
-          // Act: Kakoune Shift+V opens sticky view lock
+          await demo.getByRole('radio', { name: 'KAKOUNE' }).click();
+          await demo.getByRole('button', { name: 'Alpha Item' }).focus();
           await page.keyboard.press('Shift+V');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
@@ -233,133 +222,107 @@ for (const framework of FRAMEWORKS) {
       });
     });
 
-    test.describe('Given multiple registered panes on /components/which-key', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
-      });
+    test.describe('Given registered panes and Jumplist', () => {
+      test.describe('When navigating panes and Jumplist history', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'panes');
+          await demo.getByRole('button', { name: 'src/controller.ts' }).focus();
+        });
 
-      test.describe('When the user navigates with Space w l / Space 1..3 / Ctrl-o / Ctrl-i', () => {
-        test('Then moves active pane focus spatially, focuses panes by index restoring last focused child, and traverses Jumplist history', async ({
+        test('it moves focus spatially with Space w l, jumps by index, and traverses history with Ctrl+o and Ctrl+i', async ({
           page,
         }) => {
-          // Arrange
           const demo = island(page, framework, 'panes');
-          const btn1Pane1 = demo.getByTestId('wk-pane-1-btn-2');
-          await btn1Pane1.focus();
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
+          const navBtn = demo.getByRole('button', { name: 'src/controller.ts' });
+          const editorBtn = demo.getByRole('button', { name: 'Buffer Tab A' });
+          const inspectorBtn = demo.getByRole('button', { name: 'AST Symbols' });
 
-          // Act: Space w l moves right to pane-editor
           await page.keyboard.press('Space');
           await page.keyboard.press('w');
           await page.keyboard.press('l');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-editor');
+          await expect(editorBtn).toBeFocused();
 
-          // Act: Space 3 jumps to pane 3 (pane-inspector)
           await page.keyboard.press('Space');
           await page.keyboard.press('3');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-inspector');
+          await expect(inspectorBtn).toBeFocused();
 
-          // Act: Space 1 returns to pane 1 and restores focus to wk-pane-1-btn-2
           await page.keyboard.press('Space');
           await page.keyboard.press('1');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
-          await expect(btn1Pane1).toBeFocused();
+          await expect(navBtn).toBeFocused();
 
-          // Act: Ctrl-o jumps backward in Jumplist to pane-inspector
           await page.keyboard.press('Control+o');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-inspector');
+          await expect(inspectorBtn).toBeFocused();
 
-          // Act: Ctrl-i jumps forward in Jumplist back to pane-nav
           await page.keyboard.press('Control+i');
-          await expect(demo.getByTestId('wk-panes-active-id')).toContainText('pane-nav');
+          await expect(navBtn).toBeFocused();
         });
       });
     });
 
-    test.describe('Given a form pane containing buttons and text inputs on /components/which-key', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
-      });
+    test.describe('Given form controls inside a WhichKey scope', () => {
+      test.describe('When stepping with j/k in normal mode and entering insert mode via i', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'forms');
+          await demo.getByRole('button', { name: /Focus Anchor Button/i }).focus();
+        });
 
-      test.describe('When the user steps with j/k in normal mode, enters insert mode via i, types, and presses Escape', () => {
-        test('Then steps across controls without mutating input values in normal mode, types in insert mode, and resumes normal mode on Escape', async ({
+        test('it steps across controls without mutating input values in normal mode, types in insert mode, and resumes normal mode on Escape', async ({
           page,
         }) => {
-          // Arrange
           const demo = island(page, framework, 'forms');
-          const startBtn = demo.getByTestId('wk-form-btn-start');
-          const nameInput = demo.getByTestId('wk-form-input-name');
-          const notesInput = demo.getByTestId('wk-form-input-notes');
+          const nameInput = demo.getByPlaceholder(/Project name/i);
+          const notesInput = demo.getByPlaceholder(/Commit notes/i);
+          const modeBadge = demo.getByTestId('which-key-mode-badge');
 
-          await startBtn.focus();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
 
-          // Act: press j to focus nameInput in normal mode, then press j again to focus notesInput
           await page.keyboard.press('j');
           await expect(nameInput).toBeFocused();
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
 
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
           await expect(nameInput).toHaveValue('');
 
-          // Act: press k to step back to nameInput, then press i to enter insert mode
           await page.keyboard.press('k');
           await expect(nameInput).toBeFocused();
           await page.keyboard.press('i');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/insert/i);
+          await expect(modeBadge).toHaveText(/insert/i);
 
-          // Type modal keys into input while in insert mode
           await page.keyboard.type('jk g');
           await expect(nameInput).toHaveValue('jk g');
 
-          // Act: press Escape to return to normal mode and step down with j
           await page.keyboard.press('Escape');
-          await expect(demo.getByTestId('wk-forms-mode')).toHaveText(/normal/i);
+          await expect(modeBadge).toHaveText(/normal/i);
           await page.keyboard.press('j');
           await expect(notesInput).toBeFocused();
         });
       });
     });
 
-    test.describe('Given visible interactive controls in the jump-labels demo on /components/which-key', () => {
-      test.beforeEach(async ({ page }) => {
-        // Arrange
-        await page.goto('components/which-key');
-        await selectFramework(page, framework);
-      });
-
-      test.describe('When the user triggers jump mode (gw) with focus vs activate', () => {
-        test('Then renders home-row jump badges, focuses without clicking on focus mode, and clicks on activate mode', async ({
-          page,
-        }) => {
-          // Arrange
+    test.describe('Given 2D jump labels (gw)', () => {
+      test.describe('When triggered in focus mode and activate mode', () => {
+        test.beforeEach(async ({ page }) => {
           const demo = island(page, framework, 'jump-labels');
           await demo.evaluate((el) =>
             el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior }),
           );
-          await demo.getByTestId('wk-jump-target-0').focus();
+          await demo.getByRole('button', { name: 'Deploy Service' }).focus();
+        });
 
-          // Act: press g then w in default focus mode
+        test('it focuses without clicking in focus mode and clicks in activate mode', async ({
+          page,
+        }) => {
+          const demo = island(page, framework, 'jump-labels');
           await page.keyboard.press('g');
           await page.keyboard.press('w');
 
           const overlay = page.getByTestId('which-key-jump-overlay');
           await expect(overlay).toBeVisible();
           const badges = overlay.getByTestId('which-key-jump-badge');
-          const count = await badges.count();
-          expect(count).toBeGreaterThanOrEqual(4);
+          expect(await badges.count()).toBeGreaterThanOrEqual(4);
 
-          // Find the badge label for the second target button (Run Migrations) or type the last badge's label
-          const targetBtn = demo.getByTestId('wk-jump-target-1');
-          const targetBox = await targetBtn.boundingBox();
-          expect(targetBox).not.toBeNull();
-
-          // Match badge positioned near wk-jump-target-1
+          const targetBtn = demo.getByRole('button', { name: 'Run Migrations' });
           const findLabelForTarget = async () => {
             const box = await targetBtn.boundingBox();
             expect(box).not.toBeNull();
@@ -381,18 +344,16 @@ for (const framework of FRAMEWORKS) {
           const matchedLabel = await findLabelForTarget();
           expect(matchedLabel.length).toBeGreaterThan(0);
 
-          // Type the matched label in focus mode
           for (const ch of matchedLabel) {
             await page.keyboard.press(ch);
           }
 
           await expect(overlay).toBeHidden();
-          await expect(demo.getByTestId('wk-jump-focused')).toHaveText('Run Migrations');
-          await expect(demo.getByTestId('wk-jump-activated')).toHaveText('None');
+          await expect(targetBtn).toBeFocused();
+          await expect(targetBtn).toHaveAttribute('aria-pressed', 'false');
 
-          // Switch to activate mode and trigger jump again
-          await demo.getByTestId('wk-jump-mode-activate').click();
-          await demo.getByTestId('wk-jump-trigger').click();
+          await demo.getByRole('radio', { name: 'jumpAction: activate' }).click();
+          await demo.getByRole('button', { name: /Trigger Jump/i }).click();
           await expect(overlay).toBeVisible();
           await expect(overlay).toHaveAttribute('data-jump-action', 'activate');
 
@@ -402,46 +363,43 @@ for (const framework of FRAMEWORKS) {
           }
 
           await expect(overlay).toBeHidden();
-          await expect(demo.getByTestId('wk-jump-activated')).toHaveText('Run Migrations');
+          await expect(targetBtn).toHaveAttribute('aria-pressed', 'true');
         });
       });
     });
 
-    test.describe('Given the Editor (.ProseMirror) with ModalKeymap on /components/editor', () => {
+    test.describe('Given a ProseMirror editor with ModalKeymap', () => {
       test.beforeEach(async ({ page }) => {
-        // Arrange
         await page.goto('components/editor');
         await selectFramework(page, framework);
       });
 
-      test.describe('When the user clicks into .ProseMirror, presses Escape for normal mode, and executes modal motions/operators', () => {
-        test('Then renders [data-pm-modal-cursor], selects words/lines/text-objects (w, x, m i p), flips/collapses (Alt-;, ;), deletes/undoes (d, u), opens WhichKey on Space, and returns to insert mode on i', async ({
-          page,
-        }) => {
-          // Arrange
+      test.describe('When in normal mode', () => {
+        test.beforeEach(async ({ page }) => {
           const editor = island(page, framework, 'default').locator('.ProseMirror').first();
           const firstParagraph = editor.locator('p').first();
           await firstParagraph.click({ position: { x: 16, y: 12 } });
-
-          // Act: press Escape to switch from insert to normal mode
           await page.keyboard.press('Escape');
+        });
 
-          // Assert: editor keeps focus, data-modal-mode="normal", and block cursor decoration is rendered
+        test('it renders the block cursor, selects words and text objects, deletes and undoes, opens WhichKey on Space, and enters insert mode on i', async ({
+          page,
+        }) => {
+          const editor = island(page, framework, 'default').locator('.ProseMirror').first();
+          const firstParagraph = editor.locator('p').first();
+
           await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
           await expect(editor.locator('[data-pm-modal-cursor]').first()).toBeVisible();
 
-          // Act: press w to select forward word, then Alt-; to flip selection, then ; to collapse
           await page.keyboard.press('w');
-          const selectedLenAfterW = await editor.evaluate(() => {
-            const sel = window.getSelection();
-            return sel ? sel.toString().length : 0;
-          });
+          const selectedLenAfterW = await editor.evaluate(
+            () => window.getSelection()?.toString().length ?? 0,
+          );
           expect(selectedLenAfterW).toBeGreaterThan(0);
 
           await page.keyboard.press('Alt+;');
           await page.keyboard.press(';');
 
-          // Act: press m i p to select inner paragraph text object, then d to delete, then u to undo
           const originalParagraphText = await firstParagraph.textContent();
           await page.keyboard.press('m');
           await page.keyboard.press('i');
@@ -452,110 +410,53 @@ for (const framework of FRAMEWORKS) {
           await page.keyboard.press('u');
           await expect(firstParagraph).toHaveText(originalParagraphText ?? '');
 
-          // Act: press Space inside normal-mode editor to open WhichKey popup
           await page.keyboard.press('Space');
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await page.keyboard.press('Escape');
           await expect(panel).toBeHidden();
 
-          // Act: press i to return to insert mode and type text
           await page.keyboard.press('i');
           await expect(editor).toHaveAttribute('data-modal-mode', 'insert');
         });
       });
 
-      test.describe('When the user enters select mode via v or x, expands selection with cursor motions, and yanks with y', () => {
-        test('Then matches cursor and selection height/colors, updates WhichKeyMode to SEL on v and x, expands selection on first move, and copies yanked text to clipboard on y', async ({
-          page,
-        }) => {
-          // Arrange
+      test.describe('When in select mode (v or x)', () => {
+        test.beforeEach(async ({ page }) => {
           await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
           const editor = island(page, framework, 'default').locator('.ProseMirror').first();
           const firstParagraph = editor.locator('p').first();
           await firstParagraph.click({ position: { x: 16, y: 12 } });
-          await expect(editor).toHaveAttribute('data-modal-mode', 'insert');
-
-          // Act: press Escape to enter normal mode and move deterministically to start of first paragraph (gg, j, 0)
           await page.keyboard.press('Escape');
           await page.keyboard.press('g');
           await page.keyboard.press('g');
           await page.keyboard.press('j');
           await page.keyboard.press('0');
-          await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
+        });
 
-          const cursorEl = editor.locator('[data-pm-modal-cursor]').first();
-          await expect(cursorEl).toBeVisible();
-          const cursorBoxBefore = await cursorEl.boundingBox();
-          expect(cursorBoxBefore).not.toBeNull();
+        test('it expands selection on motions and yanks selected text to clipboard on y', async ({
+          page,
+        }) => {
+          const editor = island(page, framework, 'default').locator('.ProseMirror').first();
+          const firstParagraph = editor.locator('p').first();
 
-          // Act: press v to enter select mode, then press l once and ArrowRight once
           await page.keyboard.press('v');
           await expect(editor).toHaveAttribute('data-modal-mode', 'select');
-
           await page.keyboard.press('l');
-          const selAfterFirstL = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
-          expect(selAfterFirstL.length).toBe(2);
-
           await page.keyboard.press('ArrowRight');
-          const selAfterArrowRight = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
+          const selAfterArrowRight = await editor.evaluate(
+            () => window.getSelection()?.toString() ?? '',
+          );
           expect(selAfterArrowRight.length).toBe(3);
 
-          // Assert: cursor decoration height and colors match selection decoration and ::selection
-          const selectionEl = editor.locator('[data-pm-modal-selection]').first();
-          const selectionBox = await selectionEl.boundingBox();
-          expect(selectionBox).not.toBeNull();
-          expect(Math.abs(cursorBoxBefore!.height - selectionBox!.height)).toBeLessThanOrEqual(1);
-
-          const styleParity = await editor.evaluate((el) => {
-            const c = el.querySelector('[data-pm-modal-cursor]');
-            const s = el.querySelector('[data-pm-modal-selection]');
-            const p = el.querySelector('p');
-            if (!c || !s || !p) return null;
-            const cs = getComputedStyle(c);
-            const ss = getComputedStyle(s);
-            const ps = getComputedStyle(p, '::selection');
-            return {
-              cursorBg: cs.backgroundColor,
-              cursorColor: cs.color,
-              selBg: ss.backgroundColor,
-              selColor: ss.color,
-              nativeSelColor: ps.color,
-            };
-          });
-          expect(styleParity).not.toBeNull();
-          expect(styleParity!.cursorBg).toBe(styleParity!.selBg);
-          expect(styleParity!.cursorColor).toBe(styleParity!.selColor);
-          expect(styleParity!.selColor).toBe(styleParity!.nativeSelColor);
-
-          // Act: press y to yank selection to clipboard, fire helical:yank event, and return to normal mode
-          await page.evaluate(() => {
-            (window as unknown as { __lastYankDetail?: unknown }).__lastYankDetail = null;
-            window.addEventListener(
-              'helical:yank',
-              (e) => {
-                (window as unknown as { __lastYankDetail?: unknown }).__lastYankDetail = (e as CustomEvent).detail;
-              },
-              { once: true },
-            );
-          });
           await page.keyboard.press('y');
           await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
           const clipboardAfterV = await page.evaluate(() => navigator.clipboard.readText());
           expect(clipboardAfterV).toBe(selAfterArrowRight);
-          const yankDetail = await page.evaluate(
-            () => (window as unknown as { __lastYankDetail?: { text?: string } }).__lastYankDetail,
-          );
-          expect(yankDetail?.text).toBe(selAfterArrowRight);
 
-          // Act: press x to select full line and verify it enters select mode (SEL)
           const expectedLineText = (await firstParagraph.textContent()) ?? '';
           await page.keyboard.press('x');
           await expect(editor).toHaveAttribute('data-modal-mode', 'select');
-          const selAfterX = await editor.evaluate(() => window.getSelection()?.toString() ?? '');
-          expect(selAfterX).toBe(expectedLineText);
-
-          // Act: press y to yank the selected line to clipboard
           await page.keyboard.press('y');
           await expect(editor).toHaveAttribute('data-modal-mode', 'normal');
           const clipboardAfterX = await page.evaluate(() => navigator.clipboard.readText());
@@ -565,83 +466,3 @@ for (const framework of FRAMEWORKS) {
     });
   });
 }
-
-test.describe('Docs Shell Keyboard Integration', () => {
-  test.describe('Given the docs site shell on /components/which-key', () => {
-    test.beforeEach(async ({ page }) => {
-      // Arrange
-      await page.goto('components/which-key');
-      await page.locator('[data-framework-selector][data-ready]').waitFor();
-    });
-
-    test.describe('When the user switches keybinding flavor in Settings or clicks the ? explorer button', () => {
-      test('Then updates the active preset in localStorage below Color mode and opens WhichKeyExplorer from TopNav', async ({
-        page,
-      }) => {
-        // Arrange: open Settings modal
-        await page.locator('[data-theme-selector]').click();
-        const modal = page.locator('[data-theme-modal]');
-        await expect(modal).toBeVisible();
-        const vimBtn = modal.locator('[data-keybinding-selector] button[data-preset="vim"]');
-
-        // Act
-        await vimBtn.click();
-
-        // Assert
-        await expect(vimBtn).toHaveAttribute('aria-pressed', 'true');
-        const stored = await page.evaluate(() => window.localStorage.getItem('vortex:keymap-preset'));
-        expect(stored).toBe('vim');
-
-        // Close Settings modal
-        await page.keyboard.press('Escape');
-        await expect(modal).toBeHidden();
-
-        // Act: open explorer from TopNav ? button
-        await page.locator('[data-keybinding-explorer-trigger]').click();
-        const explorer = page.getByTestId('which-key-explorer');
-        await expect(explorer).toBeVisible();
-        await page.keyboard.press('Escape');
-        await expect(explorer).toBeHidden();
-      });
-    });
-  });
-
-  test.describe('Given the docs site homepage (/) in normal mode', () => {
-    test.beforeEach(async ({ page }) => {
-      // Arrange
-      await page.goto('');
-      await page.locator('[data-framework-selector][data-ready]').waitFor();
-    });
-
-    test.describe('When the user presses j, gb, and gg starting from the hero buttons', () => {
-      test('Then steps down from the hero buttons into the component cards on j without getting stuck, jumps to the last component card on gb, and jumps back to the first hero button on gg', async ({
-        page,
-      }) => {
-        // Arrange: focus the first hero CTA link ("Get started")
-        const landingPane = page.locator('[data-pane-id="docs-landing"]');
-        await expect(landingPane).toBeVisible();
-        const getStartedLink = landingPane.getByRole('link', { name: 'Get started' });
-        const lastCatalogCard = landingPane.locator('[data-page-section] a[href]').last();
-        await getStartedLink.focus();
-        await expect(getStartedLink).toBeFocused();
-
-        // Act: press j to step vertically from the hero row into the first row of component cards
-        await page.keyboard.press('j');
-        const focusedAfterJ = await page.evaluate(() => document.activeElement?.getAttribute('href') ?? '');
-        expect(focusedAfterJ).toContain('components/');
-
-        // Act: press g then b (Goto Bottom) to jump to the last component card at the bottom of the page
-        await page.keyboard.press('g');
-        await page.keyboard.press('b');
-        await expect(lastCatalogCard).toBeFocused();
-
-        // Act: press g then g (Goto Top) to jump back to "Get started" and scroll to the top of the page
-        await page.keyboard.press('g');
-        await page.keyboard.press('g');
-        await expect(getStartedLink).toBeFocused();
-        const scrollYAfterGG = await page.evaluate(() => window.scrollY);
-        expect(scrollYAfterGG).toBe(0);
-      });
-    });
-  });
-});

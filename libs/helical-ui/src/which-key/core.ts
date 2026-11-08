@@ -150,6 +150,15 @@ export function isGroupNode(node: WhichKeyNode, rootTrie: Record<string, WhichKe
   return Object.keys(children).length > 0;
 }
 
+export function formatWhichKeyLabel(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed.startsWith('+')) return trimmed;
+  const withoutPlus = trimmed.slice(1).trim();
+  if (!withoutPlus) return trimmed;
+  if (withoutPlus.toLowerCase() === 'goto') return 'Go to';
+  return withoutPlus.charAt(0).toUpperCase() + withoutPlus.slice(1);
+}
+
 export function buildWhichKeyTree(
   rootTrie: Record<string, WhichKeyNode>,
   activePath: string[],

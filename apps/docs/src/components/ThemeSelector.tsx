@@ -6,8 +6,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
-import { THEMES, type JumpAction, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
+import { THEMES, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
 import { useWhichKey } from '@cloudvoyant/helical-react';
+import { APPEARANCE_CHANGE_EVENT, OPEN_SETTINGS_MODAL_EVENT } from '../lib/commands';
 import {
   applyColorMode,
   getInitialColorMode,
@@ -29,78 +30,12 @@ const KEYBINDING_PRESETS: { value: KeybindingPreset; label: string }[] = [
   { value: 'kakoune', label: 'Kakoune' },
 ];
 
-const JUMP_ACTIONS: { value: JumpAction; label: string }[] = [
-  { value: 'activate', label: 'Click' },
-  { value: 'focus', label: 'Focus' },
-];
-
-/**
- * Light/Dark/System segmented button group. Owns the color-mode state and drives
- * it through applyColorMode; reports the resolved dark/light back up so the
- * theme previews can mirror it.
- */
-function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDark: boolean) => void }) {
-  const [mode, setMode] = useState<ColorMode>(() => getInitialColorMode());
-
-  function selectMode(m: ColorMode) {
-    applyColorMode(m);
-    setMode(m);
-  }
-
-  useEffect(() => {
-    onResolvedDarkChange(resolveColorMode(mode) === 'dark');
-    if (mode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return;
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => onResolvedDarkChange(resolveColorMode('system') === 'dark');
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, [mode, onResolvedDarkChange]);
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="text-xs font-medium text-muted-foreground">Color mode</div>
-      <div role="group" className="flex w-full items-stretch" aria-label="Color mode">
-        {MODES.map((m, i) => {
-          const active = mode === m.value;
-          return (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => selectMode(m.value)}
-              aria-pressed={active}
-              data-color-mode={m.value}
-              className={[
-                'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
-                i === 0 && 'rounded-l-md',
-                i === MODES.length - 1 && 'rounded-r-md',
-                i > 0 && '-ml-px',
-                active
-                  ? 'z-10 border-foreground text-foreground'
-                  : 'border-border text-muted-foreground hover:border-muted-foreground',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
-              <m.Icon className="size-3.5" aria-hidden />
-              <span>{m.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Helix/Vim/Kakoune segmented button group for selecting the site-wide modal keybinding preset.
- */
 function KeybindingPresetToggle() {
   const { preset, setPreset } = useWhichKey();
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-xs font-medium text-muted-foreground">Keybinding flavor</div>
+      <div className="text-xs font-medium text-muted-foreground">Keybinding mode</div>
       <div
         role="group"
         className="flex w-full items-stretch"
@@ -140,34 +75,54 @@ function KeybindingPresetToggle() {
 }
 
 /**
- * Click/Focus segmented button group for selecting whether `g w` jump labels click or focus the target.
+ * Light/Dark/System segmented button group. Owns the color-mode state and drives
+ * it through applyColorMode; reports the resolved dark/light back up so the
+ * theme previews can mirror it.
  */
-function JumpActionToggle() {
-  const { jumpAction, setJumpAction } = useWhichKey();
+function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDark: boolean) => void }) {
+  const [mode, setMode] = useState<ColorMode>(() => getInitialColorMode());
+
+  function selectMode(m: ColorMode) {
+    applyColorMode(m);
+    setMode(m);
+  }
+
+  useEffect(() => {
+    const onAppearanceChange = () => {
+      const next = getInitialColorMode();
+      setMode(next);
+      onResolvedDarkChange(resolveColorMode(next) === 'dark');
+    };
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+    return () => window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+  }, [onResolvedDarkChange]);
+
+  useEffect(() => {
+    onResolvedDarkChange(resolveColorMode(mode) === 'dark');
+    if (mode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return;
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => onResolvedDarkChange(resolveColorMode('system') === 'dark');
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, [mode, onResolvedDarkChange]);
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-xs font-medium text-muted-foreground">Jump behavior (gw)</div>
-      <div
-        role="group"
-        className="flex w-full items-stretch"
-        aria-label="Jump behavior"
-        data-jump-action-selector
-        data-ready="true"
-      >
-        {JUMP_ACTIONS.map((item, i) => {
-          const active = jumpAction === item.value;
+      <div className="text-xs font-medium text-muted-foreground">Color mode</div>
+      <div role="group" className="flex w-full items-stretch" aria-label="Color mode">
+        {MODES.map((m, i) => {
+          const active = mode === m.value;
           return (
             <button
-              key={item.value}
+              key={m.value}
               type="button"
-              onClick={() => setJumpAction(item.value)}
+              onClick={() => selectMode(m.value)}
               aria-pressed={active}
-              data-jump-action={item.value}
+              data-color-mode={m.value}
               className={[
                 'relative flex flex-1 items-center justify-center gap-1.5 border bg-card px-3 py-2 text-xs transition-colors',
                 i === 0 && 'rounded-l-md',
-                i === JUMP_ACTIONS.length - 1 && 'rounded-r-md',
+                i === MODES.length - 1 && 'rounded-r-md',
                 i > 0 && '-ml-px',
                 active
                   ? 'z-10 border-foreground text-foreground'
@@ -177,7 +132,8 @@ function JumpActionToggle() {
                 .join(' ')}
             >
               {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
-              <span>{item.label}</span>
+              <m.Icon className="size-3.5" aria-hidden />
+              <span>{m.label}</span>
             </button>
           );
         })}
@@ -238,6 +194,14 @@ function ThemeSwatch({
 function ThemeGrid({ isDark }: { isDark: boolean }) {
   const [theme, setTheme] = useState<string>(() => getInitialTheme());
 
+  useEffect(() => {
+    const onAppearanceChange = () => {
+      setTheme(getInitialTheme());
+    };
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+    return () => window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+  }, []);
+
   function selectTheme(name: string) {
     applyTheme(name);
     setTheme(name);
@@ -276,6 +240,12 @@ export default function ThemeSelector() {
   const [isDark, setIsDark] = useState(() => resolveColorMode(getInitialColorMode()) === 'dark');
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const onOpenSettings = () => setOpen(true);
+    window.addEventListener(OPEN_SETTINGS_MODAL_EVENT, onOpenSettings);
+    return () => window.removeEventListener(OPEN_SETTINGS_MODAL_EVENT, onOpenSettings);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -358,9 +328,8 @@ export default function ThemeSelector() {
                 </button>
               </div>
 
-              <ColorModeToggle onResolvedDarkChange={setIsDark} />
               <KeybindingPresetToggle />
-              <JumpActionToggle />
+              <ColorModeToggle onResolvedDarkChange={setIsDark} />
               <ThemeGrid isDark={isDark} />
             </div>
           </div>,

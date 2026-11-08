@@ -1,58 +1,81 @@
 // libs/helical-react/src/kbd.tsx
-// Thin React wrapper for semantic <kbd> keycaps and multi-chord sequences.
+
+// 1. Imports
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
 import {
   cn,
-  formatKeyChord,
-  formatKeySequence,
+  isChordCommandString,
   kbdGroupBase,
   kbdVariants,
+  resolveKbdSteps,
   type KbdProps as CoreKbdProps,
 } from '@cloudvoyant/helical-ui';
 
+// 2. Module constants & types
 export type KbdProps = HTMLArkProps<'kbd'> & CoreKbdProps;
 
+// 4. Exported component
 export function Kbd({
   variant = 'outline',
   size = 'md',
   hotkey,
-  platform,
   useSymbols = true,
   className,
   children,
   ...props
 }: KbdProps) {
-  if (hotkey && !children) {
-    if (Array.isArray(hotkey) || (typeof hotkey === 'string' && /\s+/.test(hotkey.trim()))) {
-      const steps = formatKeySequence(hotkey, { platform, useSymbols });
+  // --- Helpers ---
+  const rawHotkey: string | ReadonlyArray<string> | undefined =
+    hotkey !== undefined
+      ? hotkey
+      : typeof children === 'string' && isChordCommandString(children)
+        ? children
+        : undefined;
+
+  const resolved = rawHotkey !== undefined ? resolveKbdSteps(rawHotkey, { useSymbols }) : null;
+
+  // --- Render ---
+  if (resolved) {
+    if (resolved.steps.length > 1) {
       return (
-        <span data-slot="kbd-sequence" className={cn(kbdGroupBase, className)}>
-          {steps.map((step, idx) => (
+        <span
+          data-slot="kbd-sequence"
+          data-invalid={!resolved.valid ? 'true' : undefined}
+          title={!resolved.valid ? resolved.message : undefined}
+          className={cn(kbdGroupBase, className)}
+        >
+          {resolved.steps.map((step, idx) => (
             <ark.kbd
-              key={`${step}-${idx}`}
+              key={`${step.raw}-${idx}`}
               data-slot="kbd"
               data-variant={variant}
               data-size={size}
-              className={cn(kbdVariants({ variant, size }))}
+              data-invalid={!step.valid ? 'true' : undefined}
+              aria-invalid={!step.valid ? 'true' : undefined}
+              title={!step.valid ? [...step.errors, ...step.warnings].join('; ') : undefined}
+              className={cn(kbdVariants({ variant, size, invalid: !step.valid }))}
               {...props}
             >
-              {step}
+              {step.label}
             </ark.kbd>
           ))}
         </span>
       );
     }
 
-    const formatted = formatKeyChord(hotkey, { platform, useSymbols });
+    const single = resolved.steps[0]!;
     return (
       <ark.kbd
         data-slot="kbd"
         data-variant={variant}
         data-size={size}
-        className={cn(kbdVariants({ variant, size }), className)}
+        data-invalid={!single.valid ? 'true' : undefined}
+        aria-invalid={!single.valid ? 'true' : undefined}
+        title={!single.valid ? resolved.message : undefined}
+        className={cn(kbdVariants({ variant, size, invalid: !single.valid }), className)}
         {...props}
       >
-        {formatted}
+        {single.label}
       </ark.kbd>
     );
   }

@@ -43,6 +43,7 @@ export interface UseWhichKeyReturn extends WhichKeyState {
   readonly controller: WhichKeyController;
   setPreset: (preset: KeybindingPreset) => void;
   setMode: (mode: KeymapMode) => void;
+  setLeaderOnly: (leaderOnly: boolean) => void;
   setJumpAction: (action: JumpAction) => void;
   openExplorer: () => void;
   closeExplorer: () => void;
@@ -77,6 +78,9 @@ export function useWhichKey(): UseWhichKeyReturn {
     },
     get leaderKey() {
       return ctx.state.leaderKey;
+    },
+    get leaderOnly() {
+      return ctx.state.leaderOnly;
     },
     get activePath() {
       return ctx.state.activePath;
@@ -131,6 +135,7 @@ export function useWhichKey(): UseWhichKeyReturn {
     },
     setPreset: controller.setPreset,
     setMode: controller.setMode,
+    setLeaderOnly: controller.setLeaderOnly,
     setJumpAction: controller.setJumpAction,
     openExplorer: controller.openExplorer,
     closeExplorer: controller.closeExplorer,
