@@ -206,11 +206,18 @@ function isHTMLElementLike(value: unknown): value is HTMLElement {
 
 function isTextEntryElement(el: Element | null): boolean {
   if (!el || !isHTMLElementLike(el)) return false;
-  if (getModalEditor(el)) return true;
+  if (el.closest?.('[data-modal-ignore-pointer]')) return false;
+  const tag = typeof el.tagName === 'string' ? el.tagName.toLowerCase() : '';
+  if (getModalEditor(el)) {
+    const nonEditableIsland = el.closest?.('[contenteditable="false"]');
+    if (nonEditableIsland) {
+      return tag === 'input' || tag === 'textarea';
+    }
+    return true;
+  }
   if (el.isContentEditable || el.getAttribute?.('contenteditable') === 'true') {
     return true;
   }
-  const tag = typeof el.tagName === 'string' ? el.tagName.toLowerCase() : '';
   if (tag === 'textarea') {
     return !(el as HTMLTextAreaElement).disabled && !(el as HTMLTextAreaElement).readOnly;
   }
@@ -236,6 +243,25 @@ function isTextEntryElement(el: Element | null): boolean {
   } catch {
     return false;
   }
+}
+
+function expandChordCandidateAliases(candidates: string[]): string[] {
+  const result: string[] = [];
+  const pushUnique = (val: string) => {
+    if (val && !result.includes(val)) {
+      result.push(val);
+    }
+  };
+  for (const candidate of candidates) {
+    pushUnique(candidate);
+    if (candidate.includes('+') && candidate.length > 1) {
+      pushUnique(candidate.replace(/\b(Control|Ctrl|Alt|Shift|Meta|Mod)\+/g, '$1-'));
+    }
+    if (candidate.includes('-') && candidate.length > 1) {
+      pushUnique(candidate.replace(/\b(Control|Ctrl|Alt|Shift|Meta|Mod)-/g, '$1+'));
+    }
+  }
+  return result;
 }
 
 export function eventToChordKeys(event: KeyboardEvent): string[] {
@@ -304,7 +330,7 @@ export function eventToChordKeys(event: KeyboardEvent): string[] {
     } catch {
       // Fallback to direct candidates above
     }
-    return candidates;
+    return expandChordCandidateAliases(candidates);
   }
 
   // No Ctrl/Alt/Meta: preserve exact case for single characters ('g' vs 'G', 'z' vs 'Z', '?' etc.)
@@ -322,7 +348,7 @@ export function eventToChordKeys(event: KeyboardEvent): string[] {
   } else if (baseKey.length > 1 && normalizedName !== baseKey) {
     candidates.push(normalizedName);
   }
-  return candidates;
+  return expandChordCandidateAliases(candidates);
 }
 
 function getTopMostModalDialog(doc: Document): HTMLElement | null {
@@ -342,6 +368,63 @@ function getTopMostModalDialog(doc: Document): HTMLElement | null {
   return dialogs[dialogs.length - 1] ?? null;
 }
 
+function getVisibleTreeItems(root: HTMLElement): HTMLElement[] {
+  if (typeof root.querySelectorAll !== 'function') return [];
+  const candidates = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      '[data-part="branch-control"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+        '[role="treeitem"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+        '[data-which-key-target]:not([disabled]):not([data-disabled]):not([aria-disabled="true"])',
+    ),
+  );
+  return candidates.filter((el) => {
+    // When a branch wrapper ([data-part="branch"][role="treeitem"]) has an inner [data-part="branch-control"],
+    // target the branch-control row rather than the outer branch wrapper.
+    if (
+      el.getAttribute('role') === 'treeitem' &&
+      el.getAttribute('data-part') === 'branch' &&
+      el.querySelector('[data-part="branch-control"]')
+    ) {
+      return false;
+    }
+    if (el.closest('[hidden], [data-part="branch-content"][data-state="closed"]')) {
+      return false;
+    }
+    const closedBranch = el.closest('[role="treeitem"][aria-expanded="false"]');
+    if (closedBranch && closedBranch !== el) {
+      const isControlForClosedBranch =
+        el.getAttribute('data-part') === 'branch-control' && el.closest('[data-part="branch"]') === closedBranch;
+      if (!isControlForClosedBranch) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function mergeElementsInDomOrder(lists: HTMLElement[][]): HTMLElement[] {
+  const seen = new Set<HTMLElement>();
+  const combined: HTMLElement[] = [];
+  for (const list of lists) {
+    for (const el of list) {
+      if (el instanceof HTMLElement && !seen.has(el)) {
+        seen.add(el);
+        combined.push(el);
+      }
+    }
+  }
+  if (combined.length > 1 && typeof combined[0]!.compareDocumentPosition === 'function') {
+    combined.sort((a, b) => {
+      if (a === b) return 0;
+      const pos = a.compareDocumentPosition(b);
+      if (pos & 4) return -1;
+      if (pos & 2) return 1;
+      return 0;
+    });
+  }
+  return combined;
+}
+
 function getPaneFocusableItems(
   container: HTMLElement,
   ownScope?: HTMLElement | null,
@@ -358,10 +441,21 @@ function getPaneFocusableItems(
       ? (enteredExample.querySelector<HTMLElement>('[data-example-preview]') ?? enteredExample)
       : container;
 
-  const raw = getFocusables(searchRoot, { includeContainer: false });
+  const raw = mergeElementsInDomOrder([
+    getFocusables(searchRoot, { includeContainer: false }) as HTMLElement[],
+    getVisibleTreeItems(searchRoot),
+  ]);
   return raw.filter((el) => {
     if (!(el instanceof HTMLElement)) return false;
-    if (el.tabIndex < 0 && el.getAttribute('role') !== 'tab') return false;
+    if (
+      el.tabIndex < 0 &&
+      el.getAttribute('role') !== 'tab' &&
+      el.getAttribute('role') !== 'treeitem' &&
+      el.getAttribute('data-part') !== 'branch-control' &&
+      !el.hasAttribute('data-which-key-target')
+    ) {
+      return false;
+    }
     if (
       el.closest(
         '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="toast"]',
@@ -391,18 +485,26 @@ function getPaneFocusableItems(
 
 function getJumpableItems(container: HTMLElement, ownScope?: HTMLElement | null): HTMLElement[] {
   const doc = container.ownerDocument;
-  const rawFocusables = getFocusables(container, { includeContainer: false });
+  const rawFocusables = getFocusables(container, { includeContainer: false }) as HTMLElement[];
   const rawTabs = Array.from(
     container.querySelectorAll<HTMLElement>(
       '[role="tab"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"])',
     ),
   );
+  const rawTreeItems = getVisibleTreeItems(container);
+  const merged = mergeElementsInDomOrder([rawFocusables, rawTabs, rawTreeItems]);
   const combined: HTMLElement[] = [];
-  const seen = new Set<HTMLElement>();
-  for (const el of [...rawFocusables, ...rawTabs]) {
-    if (!(el instanceof HTMLElement) || seen.has(el)) continue;
-    seen.add(el);
-    if (el.tabIndex < 0 && el.getAttribute('role') !== 'tab') continue;
+  for (const el of merged) {
+    if (!(el instanceof HTMLElement)) continue;
+    if (
+      el.tabIndex < 0 &&
+      el.getAttribute('role') !== 'tab' &&
+      el.getAttribute('role') !== 'treeitem' &&
+      el.getAttribute('data-part') !== 'branch-control' &&
+      !el.hasAttribute('data-which-key-target')
+    ) {
+      continue;
+    }
     if (
       el.closest(
         '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="toast"]',
@@ -1303,13 +1405,34 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     activePaneId = targetPane.id;
 
     const ownScope = options.getScopeElement?.() ?? null;
+    const hasTree =
+      typeof targetPane.element.querySelector === 'function' &&
+      Boolean(targetPane.element.querySelector('[role="tree"]'));
     const remembered =
       targetPane.lastFocusedElement &&
       targetPane.element.contains(targetPane.lastFocusedElement) &&
+      (!hasTree || Boolean(targetPane.lastFocusedElement.closest('[role="tree"]'))) &&
       (ownScope || !targetPane.lastFocusedElement.closest('[data-which-key-scope]'))
         ? targetPane.lastFocusedElement
         : null;
-    const firstFocusable = remembered ?? getPaneFocusableItems(targetPane.element, ownScope)[0] ?? null;
+
+    const preferredTarget =
+      !remembered && typeof targetPane.element.querySelector === 'function'
+        ? (targetPane.element.querySelector<HTMLElement>(
+            '[data-pane-focus-target]:not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+              '[role="treeitem"][aria-selected="true"]:not([data-part="branch"]):not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+              '[data-part="branch"][aria-selected="true"] > [data-part="branch-control"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+              '[data-part="branch-control"][tabindex="0"]:not([disabled]):not([data-disabled]):not([aria-disabled="true"]), ' +
+              '[role="treeitem"][tabindex="0"]:not([data-part="branch"]):not([disabled]):not([data-disabled]):not([aria-disabled="true"])',
+          ) ??
+          getVisibleTreeItems(targetPane.element)[0] ??
+          targetPane.element.querySelector<HTMLElement>(
+            '[data-modal-editor="true"], .ProseMirror[contenteditable="true"]',
+          ))
+        : null;
+
+    const firstFocusable =
+      remembered ?? preferredTarget ?? getPaneFocusableItems(targetPane.element, ownScope)[0] ?? null;
 
     if (firstFocusable instanceof HTMLElement) {
       focusElementInActivePane(firstFocusable);
@@ -1879,6 +2002,102 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         return handled;
       }
 
+      const activeTree = activeEl?.closest<HTMLElement>('[role="tree"]');
+      if (
+        activeTree &&
+        (motion === 'down' ||
+          motion === 'up' ||
+          motion === 'left' ||
+          motion === 'right' ||
+          motion === 'docStart' ||
+          motion === 'docEnd')
+      ) {
+        const ariaKey =
+          motion === 'down'
+            ? 'ArrowDown'
+            : motion === 'up'
+              ? 'ArrowUp'
+              : motion === 'left'
+                ? 'ArrowLeft'
+                : motion === 'right'
+                  ? 'ArrowRight'
+                  : motion === 'docStart'
+                    ? 'Home'
+                    : 'End';
+        const steps = motion === 'docStart' || motion === 'docEnd' ? 1 : Math.max(1, ctx.count);
+        let movedOrHandled = false;
+        runProgrammaticFocus(() => {
+          for (let s = 0; s < steps; s += 1) {
+            const currentTreeEl =
+              (doc?.activeElement instanceof HTMLElement && activeTree.contains(doc.activeElement)
+                ? doc.activeElement
+                : activeEl) ?? null;
+            if (!currentTreeEl) break;
+
+            let prevented = false;
+            if (typeof KeyboardEvent === 'function' && typeof currentTreeEl.dispatchEvent === 'function') {
+              const synth = new KeyboardEvent('keydown', {
+                key: ariaKey,
+                code: ariaKey,
+                bubbles: true,
+                cancelable: true,
+              });
+              currentTreeEl.dispatchEvent(synth);
+              prevented = synth.defaultPrevented;
+            }
+
+            if (prevented || (doc?.activeElement && doc.activeElement !== currentTreeEl)) {
+              movedOrHandled = true;
+              continue;
+            }
+
+            const treeItems = getVisibleTreeItems(activeTree);
+            if (treeItems.length === 0) break;
+            const currentIdx = treeItems.findIndex((t) => t === currentTreeEl || t.contains(currentTreeEl));
+            if (motion === 'down' || motion === 'up') {
+              const delta = motion === 'down' ? 1 : -1;
+              const nextIdx =
+                currentIdx === -1
+                  ? delta > 0
+                    ? 0
+                    : treeItems.length - 1
+                  : Math.max(0, Math.min(treeItems.length - 1, currentIdx + delta));
+              const nextTarget = treeItems[nextIdx];
+              if (nextTarget) {
+                focusElementInActivePane(nextTarget);
+                movedOrHandled = true;
+              }
+            } else if (motion === 'docStart' || motion === 'docEnd') {
+              const nextTarget = motion === 'docStart' ? treeItems[0] : treeItems[treeItems.length - 1];
+              if (nextTarget) {
+                focusElementInActivePane(nextTarget);
+                movedOrHandled = true;
+              }
+            } else if (motion === 'right' || motion === 'left') {
+              const branchEl = currentTreeEl.closest<HTMLElement>('[role="treeitem"][aria-expanded]');
+              const isExpanded = branchEl?.getAttribute('aria-expanded') === 'true';
+              if (motion === 'right' && branchEl && !isExpanded) {
+                currentTreeEl.click();
+                movedOrHandled = true;
+              } else if (motion === 'left' && branchEl && isExpanded) {
+                currentTreeEl.click();
+                movedOrHandled = true;
+              }
+            }
+          }
+        });
+        if (movedOrHandled) {
+          if (activePaneId && doc?.activeElement instanceof HTMLElement) {
+            const pane = panes.get(activePaneId);
+            if (pane && pane.element?.contains(doc.activeElement)) {
+              pane.lastFocusedElement = doc.activeElement;
+            }
+          }
+          emit();
+          return true;
+        }
+      }
+
       const activeTab = activeEl?.closest<HTMLElement>('[role="tab"]');
       const activeTablist = activeTab?.closest<HTMLElement>('[role="tablist"]');
       if (activeTab && activeTablist) {
@@ -2187,16 +2406,19 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     const insertModeOnly = Boolean(evalOptions.insertModeOnly);
     const includePreset = evalOptions.includePreset ?? !insertModeOnly;
     const layers = getOrderedActiveLayers(event, includePreset);
+    const expandedCandidates = expandChordCandidateAliases(chordCandidates);
     let mergedTrieCache: Record<string, WhichKeyNode> | null = null;
     const getMerged = () => (mergedTrieCache ??= buildMergedTrie());
 
     for (const layer of layers) {
-      for (const candidate of chordCandidates) {
+      for (const candidate of expandedCandidates) {
         const node = layer.nodes[candidate];
         if (!node) continue;
 
         if (insertModeOnly) {
-          if (!nodeExplicitlyIncludesMode(node, 'insert')) continue;
+          const matchesInsert =
+            layer.priority === 'overlay' ? nodeMatchesMode(node, 'insert') : nodeExplicitlyIncludesMode(node, 'insert');
+          if (!matchesInsert) continue;
         } else if (!nodeMatchesMode(node, mode)) {
           continue;
         }
@@ -2414,14 +2636,38 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       }
 
       if (event.key === 'Escape') {
-        // If inside a ProseMirror editor with an open slash/mention suggestion popup, let ProseMirror close it first
+        // If inside a ProseMirror editor with an open slash/mention suggestion popup or floating surface, let it close first
         if (editorTarget?.hasActiveSuggestion?.()) {
+          return false;
+        }
+        const hasOpenInsertOverlay = Boolean(
+          doc?.querySelector(
+            '[data-editor-overlay], [data-slash-menu-surface], [data-mention-menu-surface], ' +
+              '[data-editor-slash-menu], [data-editor-mention-menu], ' +
+              '[data-scope="select"][data-state="open"], [data-scope="menu"][data-state="open"], ' +
+              '[data-scope="popover"][data-state="open"], [data-scope="combobox"][data-state="open"], ' +
+              '[role="alertdialog"]:not([data-state="closed"])',
+          ),
+        );
+        if (hasOpenInsertOverlay) {
+          return false;
+        }
+        if (isHTMLElementLike(targetEl) && targetEl.closest?.('[data-part="node-rename-input"]')) {
+          setMode('normal');
           return false;
         }
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation?.();
         setMode('normal');
+        if (isHTMLElementLike(targetEl) && editorTarget && targetEl.closest?.('[contenteditable="false"]')) {
+          const pmRoot = targetEl.closest?.('.ProseMirror') as HTMLElement | null;
+          if (pmRoot) {
+            runProgrammaticFocus(() => {
+              pmRoot.focus({ preventScroll: true });
+            });
+          }
+        }
         return true;
       }
       return false;

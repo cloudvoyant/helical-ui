@@ -3,11 +3,24 @@
 // 1. Imports
 import { Pane, WhichKey, WhichKeyProvider } from '@cloudvoyant/helical-react';
 
+// 2. Module constants & types
+const PANES_DEMO_KEYMAP = {
+  Space: {
+    key: 'Space',
+    label: 'Leader',
+    children: {
+      '1': { key: '1', label: 'Focus Pane 1', commandId: 'pane.focus.1' },
+      '2': { key: '2', label: 'Focus Pane 2', commandId: 'pane.focus.2' },
+      '3': { key: '3', label: 'Focus Pane 3', commandId: 'pane.focus.3' },
+    },
+  },
+};
+
 // 4. Exported component
 export default function ReactWhichKeyPanes() {
   // --- Render ---
   return (
-    <WhichKeyProvider preset="helix">
+    <WhichKeyProvider preset="helix" keymap={PANES_DEMO_KEYMAP}>
       <div className="grid grid-cols-3 gap-3">
         <Pane
           paneId="pane-nav"

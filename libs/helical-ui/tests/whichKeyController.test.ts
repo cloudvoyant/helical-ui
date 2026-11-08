@@ -75,6 +75,7 @@ describe('Given a controller initialized with the default "helix" preset', () =>
       expect(stateAfterDirectQuestion.explorerOpen).toBe(true);
       expect(stateAfterSpace.isOpen).toBe(true);
       expect(stateAfterSpace.activePath).toEqual(['Space']);
+      expect(stateAfterSpace.items.some((item) => item.commandId?.startsWith('pane.focus.'))).toBe(false);
       expect(stateAfterQuestion.explorerOpen).toBe(true);
       expect(stateAfterQuestion.activePath).toEqual([]);
       expect(stateAfterQuestion.explorerEntries.length).toBeGreaterThan(15);
@@ -789,7 +790,7 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
         { priority: 'global' },
       );
 
-      // Editor extension layer handling Tab in insert mode conditionally
+      // Editor extension layer handling Tab and Shift-Tab (hyphen-separated chord) in insert mode conditionally
       controller.registerKeymap(
         'editor-extension',
         () =>
@@ -804,18 +805,37 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
                 return true;
               },
             },
+            'Shift-Tab': {
+              key: 'Shift-Tab',
+              label: 'Outdent Code Block',
+              mode: ['insert'],
+              when: () => inCodeBlock,
+              action: () => {
+                calls.push('editor:shift-tab');
+                return true;
+              },
+            },
+            'Mod-Enter': {
+              key: 'Mod-Enter',
+              label: 'Exit Code Block',
+              mode: ['insert'],
+              when: () => inCodeBlock,
+              action: () => {
+                calls.push('editor:mod-enter');
+                return true;
+              },
+            },
           }) satisfies Record<string, WhichKeyNode>,
         { priority: 'extension' },
       );
 
-      // SlashMenu overlay handling ArrowDown, Enter, and Escape in insert mode
+      // SlashMenu overlay handling ArrowDown, Enter, and Escape in insert mode (even when mode is omitted on overlay nodes)
       controller.registerKeymap(
         'slash-menu-overlay',
         {
           ArrowDown: {
             key: 'ArrowDown',
             label: 'Next Item',
-            mode: 'insert',
             when: () => slashMenuOpen,
             action: () => {
               calls.push('slash:down');
@@ -825,7 +845,6 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
           ArrowUp: {
             key: 'ArrowUp',
             label: 'Prev Item',
-            mode: 'insert',
             when: () => slashMenuOpen,
             action: () => {
               calls.push('slash:up');
@@ -835,7 +854,6 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
           Enter: {
             key: 'Enter',
             label: 'Select Item',
-            mode: 'insert',
             when: () => slashMenuOpen,
             action: () => {
               calls.push('slash:enter');
@@ -845,7 +863,6 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
           Escape: {
             key: 'Escape',
             label: 'Close Slash Menu',
-            mode: 'insert',
             when: () => slashMenuOpen,
             action: () => {
               calls.push('slash:escape');
@@ -857,7 +874,7 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
         { priority: 'overlay' },
       );
 
-      // Act & Assert: ArrowDown, ArrowUp, Enter, and Tab are handled in insert mode
+      // Act & Assert: ArrowDown, ArrowUp, Enter, Tab, Shift-Tab, and Mod-Enter are handled in insert mode
       const downEv = createKeyEvent('ArrowDown', { code: 'ArrowDown' });
       expect(controller.handleKeyDown(downEv)).toBe(true);
       expect(downEv.defaultPrevented).toBe(true);
@@ -870,6 +887,12 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
 
       const tabEv = createKeyEvent('Tab', { code: 'Tab' });
       expect(controller.handleKeyDown(tabEv)).toBe(true);
+
+      const shiftTabEv = createKeyEvent('Tab', { code: 'Tab', shiftKey: true });
+      expect(controller.handleKeyDown(shiftTabEv)).toBe(true);
+
+      const modEnterEv = createKeyEvent('Enter', { code: 'Enter', metaKey: true });
+      expect(controller.handleKeyDown(modEnterEv)).toBe(true);
 
       // First Escape closes the slash menu AND keeps controller in insert mode
       const firstEsc = createKeyEvent('Escape', { code: 'Escape' });
@@ -894,7 +917,15 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
       expect(secondEsc.defaultPrevented).toBe(true);
       expect(controller.getState().mode).toBe('normal');
 
-      expect(calls).toEqual(['slash:down', 'slash:up', 'slash:enter', 'editor:tab', 'slash:escape']);
+      expect(calls).toEqual([
+        'slash:down',
+        'slash:up',
+        'slash:enter',
+        'editor:tab',
+        'editor:shift-tab',
+        'editor:mod-enter',
+        'slash:escape',
+      ]);
     });
   });
 
