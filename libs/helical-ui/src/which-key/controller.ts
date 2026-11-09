@@ -823,6 +823,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }> = [];
   let statusMessage = '';
   let programmaticFocusDepth = 0;
+  let lastEnterActivatedButton: Element | null = null;
   let liveRegion: LiveRegion | null = null;
   let detachCleanups: Array<() => void> = [];
 
@@ -2680,6 +2681,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     // 4. When a prefix menu (Space, g, z/v, m, Ctrl-w, [/]) is currently open:
     if (activePath.length > 0) {
+      lastEnterActivatedButton = null;
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
@@ -2702,8 +2704,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       if (handled) {
         return true;
       }
+      const wasSilentPrefix = leaderOnly && activePath[0] !== leaderKey;
       if (!sticky) {
         closePrefix();
+      }
+      if (wasSilentPrefix && chordCandidates.includes(leaderKey)) {
+        if (evaluateLayersAtRoot(chordCandidates, event, { insertModeOnly: false, includePreset: true })) {
+          return true;
+        }
       }
       if (!matchedAnyNode) {
         event.preventDefault();
@@ -2716,26 +2724,45 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     // 5. At root of normal / select mode:
     const chordCandidates = eventToChordKeys(event);
 
-    // Preserve native Space key toggling on focused checkboxes, switches, radios, and component demo buttons.
+    // Preserve native Space key toggling on focused checkboxes, switches, and buttons immediately following Enter activation.
     if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && targetEl) {
-      const role = targetEl.getAttribute('role');
+      const role = targetEl.getAttribute?.('role') ?? null;
       const isToggleControl =
-        (targetEl instanceof HTMLInputElement && (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
+        (typeof HTMLInputElement !== 'undefined' &&
+          targetEl instanceof HTMLInputElement &&
+          (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
         role === 'checkbox' ||
-        role === 'switch' ||
-        role === 'radio';
+        role === 'switch';
       if (isToggleControl) {
+        lastEnterActivatedButton = null;
         return false;
       }
 
       const isButtonControl = targetEl.tagName === 'BUTTON' || role === 'button';
-      if (isButtonControl) {
-        const previewAncestor = targetEl.closest('[data-example-preview]');
+      if (isButtonControl && lastEnterActivatedButton === targetEl) {
+        lastEnterActivatedButton = null;
+        const previewAncestor = targetEl.closest?.('[data-example-preview]') ?? null;
         const ownScope = options.getScopeElement?.() ?? null;
         if (previewAncestor && (!ownScope || !previewAncestor.contains(ownScope))) {
           return false;
         }
       }
+    }
+
+    if (
+      event.key === 'Enter' &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      targetEl &&
+      (targetEl.tagName === 'BUTTON' || targetEl.getAttribute?.('role') === 'button') &&
+      targetEl.getAttribute?.('data-part') !== 'trigger' &&
+      !targetEl.hasAttribute?.('aria-haspopup') &&
+      targetEl.closest?.('[data-example-preview]')
+    ) {
+      lastEnterActivatedButton = targetEl;
+    } else {
+      lastEnterActivatedButton = null;
     }
 
     // Evaluate numeric count prefix [1-9] (or 0 when countBuffer is non-empty) unless overridden by a registered layer
@@ -2792,8 +2819,8 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         return true;
       }
       const parentExample =
-        targetEl instanceof HTMLElement && !targetEl.hasAttribute('data-example')
-          ? targetEl.closest<HTMLElement>('[data-example]')
+        isHTMLElementLike(targetEl) && !targetEl.hasAttribute?.('data-example')
+          ? (targetEl.closest?.('[data-example]') as HTMLElement | null)
           : null;
       const hasOpenFloatingSurface = Boolean(
         doc?.querySelector(
@@ -2820,8 +2847,8 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       !event.ctrlKey &&
       !event.metaKey &&
       !event.altKey &&
-      targetEl instanceof HTMLElement &&
-      targetEl.hasAttribute('data-example')
+      isHTMLElementLike(targetEl) &&
+      targetEl.hasAttribute?.('data-example')
     ) {
       event.preventDefault();
       event.stopPropagation();
@@ -2969,17 +2996,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     const onPointerDown = (e: Event) => {
       if (!isControllerEnabled()) return;
+      lastEnterActivatedButton = null;
       const targetNode = e.target instanceof Element ? e.target : null;
       if (!targetNode) return;
 
-      if (
-        !targetNode.closest(
+      const isInsideOverlay = Boolean(
+        targetNode.closest(
           '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="dialog"]',
-        )
-      ) {
+        ),
+      );
+      if (!isInsideOverlay) {
         const clickedScope = (targetNode.closest('[data-which-key-scope]') as HTMLElement | null) ?? null;
         if (!clickedScope || isScopeElementActive(clickedScope, doc)) {
           lastInteractedScopeByDoc.set(doc, clickedScope);
+        }
+        if (activePath.length > 0 || countBuffer.length > 0) {
+          closePrefix();
         }
       }
 
@@ -3004,11 +3036,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         (mode === 'normal' || mode === 'select')
       ) {
         setMode('insert');
+      } else if (
+        mode === 'insert' &&
+        !isInsideOverlay &&
+        !isTextEntryElement(targetNode) &&
+        !getModalEditor(targetNode) &&
+        !targetNode.closest(
+          '[data-scope="editor"], [data-editor-toolbar], .ProseMirror, [data-editor-overlay], [data-slash-menu-surface], [data-mention-menu-surface], [data-editor-slash-menu], [data-editor-mention-menu], [data-scope="select"], [data-scope="menu"], [data-scope="popover"], [data-scope="combobox"]',
+        )
+      ) {
+        setMode('normal');
       }
     };
 
     const onFocusIn = (e: FocusEvent) => {
       if (!isControllerEnabled()) return;
+      lastEnterActivatedButton = null;
       const targetNode = e.target instanceof HTMLElement ? e.target : null;
       if (!targetNode) return;
 

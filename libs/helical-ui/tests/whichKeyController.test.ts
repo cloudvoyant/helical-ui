@@ -955,4 +955,92 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
       expect(resolvedAfterDetach).toBeNull();
     });
   });
+
+  describe('When pressing Space on demo buttons, toggle-group radios, or after a silent prefix', () => {
+    it('Then opens the Space leader menu on buttons and toggle-group radios unless immediately preceded by Enter on a non-trigger demo button', () => {
+      // Arrange
+      const previewEl = {
+        nodeType: 1,
+        tagName: 'DIV',
+        parentElement: null,
+        hasAttribute: (attr: string) => attr === 'data-example-preview',
+        getAttribute: () => null,
+        contains(other: unknown) {
+          let cur = other as { parentElement?: unknown } | null;
+          while (cur) {
+            if (cur === this) return true;
+            cur = (cur.parentElement as { parentElement?: unknown } | null) ?? null;
+          }
+          return false;
+        },
+        closest(selector: string) {
+          return selector.includes('[data-example-preview]') ? this : null;
+        },
+      } as unknown as HTMLElement;
+
+      const demoButton = {
+        nodeType: 1,
+        tagName: 'BUTTON',
+        parentElement: previewEl,
+        hasAttribute: () => false,
+        getAttribute: () => null,
+        contains(other: unknown) {
+          return other === this;
+        },
+        closest(selector: string) {
+          return selector.includes('[data-example-preview]') ? previewEl : null;
+        },
+      } as unknown as HTMLElement;
+
+      const toggleRadio = {
+        nodeType: 1,
+        tagName: 'BUTTON',
+        parentElement: previewEl,
+        hasAttribute: (attr: string) => attr === 'role',
+        getAttribute: (attr: string) => (attr === 'role' ? 'radio' : null),
+        contains(other: unknown) {
+          return other === this;
+        },
+        closest(selector: string) {
+          return selector.includes('[data-example-preview]') ? previewEl : null;
+        },
+      } as unknown as HTMLElement;
+
+      const controller = createWhichKeyController({ leaderOnly: true });
+
+      // Act 1: Pressing Space directly on a demo button opens WhichKey
+      const directSpaceOnButton = createKeyEvent(' ', { code: 'Space', target: demoButton });
+      const handledButtonSpace = controller.handleKeyDown(directSpaceOnButton);
+      expect(handledButtonSpace).toBe(true);
+      expect(controller.getState().activePath).toEqual(['Space']);
+      expect(controller.getState().isOpen).toBe(true);
+      controller.closePrefix();
+
+      // Act 2: Pressing Space on a ToggleGroupItem (role="radio") opens WhichKey
+      const spaceOnToggleRadio = createKeyEvent(' ', { code: 'Space', target: toggleRadio });
+      const handledRadioSpace = controller.handleKeyDown(spaceOnToggleRadio);
+      expect(handledRadioSpace).toBe(true);
+      expect(controller.getState().activePath).toEqual(['Space']);
+      expect(controller.getState().isOpen).toBe(true);
+      controller.closePrefix();
+
+      // Act 3: Pressing Enter then Space on the same non-trigger demo button yields Space to native button activation
+      const enterOnButton = createKeyEvent('Enter', { code: 'Enter', target: demoButton });
+      expect(controller.handleKeyDown(enterOnButton)).toBe(false);
+      const spaceAfterEnter = createKeyEvent(' ', { code: 'Space', target: demoButton });
+      expect(controller.handleKeyDown(spaceAfterEnter)).toBe(false);
+      expect(controller.getState().isOpen).toBe(false);
+
+      // Act 4: Pressing g (silent prefix when leaderOnly is true) then Space opens the Space leader menu
+      const gEvent = createKeyEvent('g', { code: 'KeyG' });
+      expect(controller.handleKeyDown(gEvent)).toBe(true);
+      expect(controller.getState().activePath).toEqual(['g']);
+      expect(controller.getState().isOpen).toBe(false);
+
+      const spaceAfterSilentPrefix = createKeyEvent(' ', { code: 'Space' });
+      expect(controller.handleKeyDown(spaceAfterSilentPrefix)).toBe(true);
+      expect(controller.getState().activePath).toEqual(['Space']);
+      expect(controller.getState().isOpen).toBe(true);
+    });
+  });
 });

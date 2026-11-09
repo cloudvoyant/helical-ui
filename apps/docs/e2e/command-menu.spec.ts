@@ -232,6 +232,10 @@ for (const framework of FRAMEWORKS) {
         await aliasesDemo.getByRole('radio', { name: 'Show Aliases' }).click();
         await expect(writeAliases).toBeVisible();
         await expect(writeAliases).toHaveText('w');
+
+        await page.keyboard.press('Space');
+        await expect(page.getByTestId('which-key-panel')).toBeVisible();
+        await page.keyboard.press('Escape');
       });
     });
   });

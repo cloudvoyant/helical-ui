@@ -222,7 +222,13 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'presets');
+          const panel = page.getByTestId('which-key-panel');
           await demo.getByRole('radio', { name: 'VIM' }).click();
+          await page.keyboard.press('Space');
+          await expect(panel).toBeVisible();
+          await page.keyboard.press('Escape');
+          await expect(panel).toBeHidden();
+
           await demo.getByRole('button', { name: 'Alpha Item' }).focus();
 
           await page.keyboard.press('Shift+G');
@@ -233,7 +239,6 @@ for (const framework of FRAMEWORKS) {
           await demo.getByRole('radio', { name: 'KAKOUNE' }).click();
           await demo.getByRole('button', { name: 'Alpha Item' }).focus();
           await page.keyboard.press('Shift+V');
-          const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-sticky', 'true');
           await page.keyboard.press('Escape');
