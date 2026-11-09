@@ -57,6 +57,7 @@
     emptyText = 'No matching commands.',
     noCommandsText = 'No commands registered.',
     columns = 'auto',
+    showAliases = false,
     showShortcuts = false,
     size = 'md',
     inline = false,
@@ -414,6 +415,9 @@
     },
     get size() {
       return size;
+    },
+    get showAliases() {
+      return showAliases;
     },
     get showShortcuts() {
       return showShortcuts;

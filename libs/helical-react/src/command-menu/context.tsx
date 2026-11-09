@@ -14,6 +14,7 @@ export interface CommandMenuContextValue {
   activeError: string | null;
   columns: CommandMenuColumns;
   size: 'sm' | 'md' | 'lg';
+  showAliases: boolean;
   showShortcuts: boolean;
   inline: boolean;
   placeholder: string;

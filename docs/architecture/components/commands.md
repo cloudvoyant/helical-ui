@@ -5,7 +5,7 @@
 `CommandPalette` (`⌘K` / `Ctrl+K`) and `CommandMenu` (`:menu`) provide two keyboard-first navigation surfaces for `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte`, powered by a shared hierarchical command tree (`TreeCollection<CommandNode>`) and fuzzy subsequence ranker (`fzf`) in `@cloudvoyant/helical-ui`.
 
 - **`CommandPalette`**: A traditional shadcn-style modal (or inline) command palette with fuzzy search, grouped items, keyboard shortcut badges (`<Kbd>`), and multi-level nested submenu drill-down with breadcrumb pills (without showing `:colon` tokens).
-- **`CommandMenu`**: A Helix/Kakoune-inspired `:` command-line prompt and multi-column completion popup docked across the bottom of the viewport (`columns="auto"`, `size="sm" | "md" | "lg"`), supporting `:command <subcommand> <arg>` token parsing, aliases, `Tab` completion, nested subcommand menus, and inline error diagnostics.
+- **`CommandMenu`**: A Helix/Kakoune-inspired `:` command-line prompt and multi-column completion popup docked across the bottom of the viewport (`columns="auto"`, `size="sm" | "md" | "lg"`, `showAliases`, `showShortcuts`), supporting `:command <subcommand> <arg>` token parsing, aliases, `Tab` completion, nested subcommand menus, and inline error diagnostics.
 - **`Toast` (`Toaster`, `ToastItem`, `toast`)**: A portaled Ark UI toast notification store and overlay used by command consumers (`CommandPalette`, `CommandMenu`) to announce command execution feedback.
 
 ## Design

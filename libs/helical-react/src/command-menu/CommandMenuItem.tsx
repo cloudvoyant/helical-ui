@@ -66,6 +66,7 @@ export function CommandMenuItem({ item }: CommandMenuItemProps) {
     resolution,
     effectiveHighlightedValue,
     size,
+    showAliases,
     showShortcuts,
     executeOrDrillItem,
   } = useCommandMenuContext();
@@ -110,8 +111,18 @@ export function CommandMenuItem({ item }: CommandMenuItemProps) {
           )}
         </Row>
       </ListboxItemText>
-      {(Boolean(showShortcuts && item.shortcut) || item.isBranch) && (
+      {(Boolean(showAliases && item.aliases.length > 0) ||
+        Boolean(showShortcuts && item.shortcut) ||
+        item.isBranch) && (
         <Row className="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          {showAliases && item.aliases.length > 0 ? (
+            <span
+              data-testid="command-menu-item-aliases"
+              className="font-mono text-xs text-muted-foreground"
+            >
+              {item.aliases.join(', ')}
+            </span>
+          ) : null}
           {showShortcuts && item.shortcut ? <Kbd size="sm" hotkey={item.shortcut} /> : null}
           {item.isBranch && (
             <ChevronRight

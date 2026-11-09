@@ -214,5 +214,25 @@ for (const framework of FRAMEWORKS) {
         });
       });
     });
+
+    test.describe('Given an inline command menu with aliases', () => {
+      test('it displays aliases in the trailing slot when showAliases is enabled and hides them when disabled', async ({
+        page,
+      }) => {
+        const aliasesDemo = island(page, framework, 'aliases');
+        const writeItem = aliasesDemo.locator('[data-testid="command-menu-item"][data-value="write"]');
+        const writeAliases = writeItem.getByTestId('command-menu-item-aliases');
+
+        await expect(writeAliases).toBeVisible();
+        await expect(writeAliases).toHaveText('w');
+
+        await aliasesDemo.getByRole('radio', { name: 'Hide Aliases' }).click();
+        await expect(writeAliases).toHaveCount(0);
+
+        await aliasesDemo.getByRole('radio', { name: 'Show Aliases' }).click();
+        await expect(writeAliases).toBeVisible();
+        await expect(writeAliases).toHaveText('w');
+      });
+    });
   });
 }
