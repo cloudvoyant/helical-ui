@@ -483,7 +483,11 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       trigger !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
-      <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
+      <span
+        ref={anchorRef}
+        data-command-menu-anchor="true"
+        className={showTrigger ? 'inline-flex' : 'contents'}
+      >
         <Dialog
           open={isOpen}
           lazyMount

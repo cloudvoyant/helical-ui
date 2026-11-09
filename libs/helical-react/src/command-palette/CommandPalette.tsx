@@ -415,7 +415,11 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       trigger !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
-      <span ref={anchorRef} data-command-palette-anchor="true" className="inline-flex">
+      <span
+        ref={anchorRef}
+        data-command-palette-anchor="true"
+        className={showTrigger ? 'inline-flex' : 'contents'}
+      >
         <Dialog
           open={isOpen}
           lazyMount

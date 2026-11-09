@@ -479,7 +479,11 @@
 {#if inline}
   {@render menuSurface()}
 {:else}
-  <span bind:this={anchorEl} data-command-menu-anchor="true" class="inline-flex">
+  <span
+    bind:this={anchorEl}
+    data-command-menu-anchor="true"
+    class={showTrigger ? 'inline-flex' : 'contents'}
+  >
     <Dialog
       open={isOpen}
       lazyMount
