@@ -1043,4 +1043,38 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
       expect(controller.getState().isOpen).toBe(true);
     });
   });
+
+  describe('When registering panes and stepping across page sections with { and }', () => {
+    it('Then only marks data-pane-active="true" when multiple panes are registered and focuses sections directly without focusing inner controls', () => {
+      // Arrange
+      const attrs1 = new Map<string, string>();
+      const attrs2 = new Map<string, string>();
+      const makePaneEl = (attrs: Map<string, string>) =>
+        ({
+          nodeType: 1,
+          tagName: 'DIV',
+          setAttribute: (k: string, v: string) => attrs.set(k, v),
+          getAttribute: (k: string) => attrs.get(k) ?? null,
+          contains: () => false,
+        }) as unknown as HTMLElement;
+
+      const paneEl1 = makePaneEl(attrs1);
+      const paneEl2 = makePaneEl(attrs2);
+      const controller = createWhichKeyController();
+
+      // Act 1: single pane does not receive data-pane-active="true"
+      const unreg1 = controller.registerPane({ id: 'pane-1', title: 'One', element: paneEl1, order: 1 });
+      expect(attrs1.get('data-pane-active')).toBe('false');
+
+      // Act 2: registering a second pane enables data-pane-active="true" on the active pane
+      const unreg2 = controller.registerPane({ id: 'pane-2', title: 'Two', element: paneEl2, order: 2 });
+      expect(attrs1.get('data-pane-active')).toBe('true');
+      expect(attrs2.get('data-pane-active')).toBe('false');
+
+      // Act 3: unregistering the second pane returns the single remaining pane to data-pane-active="false"
+      unreg2();
+      expect(attrs1.get('data-pane-active')).toBe('false');
+      unreg1();
+    });
+  });
 });

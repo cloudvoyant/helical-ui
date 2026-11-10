@@ -2,7 +2,7 @@
 // Framework-neutral modal keybinding controller wrapping @tanstack/hotkeys and @zag-js/* primitives.
 import { isModifierKey, normalizeKeyName, parseKeyboardEvent } from '@tanstack/hotkeys';
 import { trackDismissableBranch } from '@zag-js/dismissable';
-import { getFirstFocusable, getFocusables, isEditableElement, isInView } from '@zag-js/dom-query';
+import { getFocusables, isEditableElement, isInView } from '@zag-js/dom-query';
 import { setInteractionModality, trackInteractionModality } from '@zag-js/focus-visible';
 import { createLiveRegion, type LiveRegion } from '@zag-js/live-region';
 import {
@@ -923,9 +923,10 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function syncPaneActiveAttributes(): void {
+    const hasMultiplePanes = getOrderedPanes().length > 1;
     for (const pane of panes.values()) {
       if (pane.element && typeof pane.element.setAttribute === 'function') {
-        pane.element.setAttribute('data-pane-active', pane.id === activePaneId ? 'true' : 'false');
+        pane.element.setAttribute('data-pane-active', hasMultiplePanes && pane.id === activePaneId ? 'true' : 'false');
       }
     }
   }
@@ -1791,20 +1792,70 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function stepSection(delta: number): boolean {
-    const container = getActiveContainer();
+    const doc = resolveDoc();
+    const ownScope = options.getScopeElement?.() ?? null;
+    const container =
+      !ownScope && panes.has('docs-main') && panes.get('docs-main')?.element
+        ? panes.get('docs-main')!.element!
+        : getActiveContainer();
     if (!container) return false;
-    const sections = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        '[data-page-section], [data-slot="page-section"], section[id], .docs-prose :is(h2, h3)',
-      ),
+    const selector = ownScope
+      ? '[data-page-section], [data-slot="page-section"], section[id], .docs-prose :is(h1, h2, h3)'
+      : 'h1:not([data-demo] *), [data-page-section]:not([data-demo] *), [data-slot="page-section"]:not([data-demo] *), section[id]:not([data-demo] *), .docs-prose :is(h1, h2, h3):not([data-demo] *)';
+    const rawSections = Array.from(container.querySelectorAll<HTMLElement>(selector));
+    const sections = rawSections.filter(
+      (el) =>
+        !rawSections.some(
+          (other) =>
+            other !== el &&
+            (other.hasAttribute?.('data-page-section') ||
+              other.getAttribute?.('data-slot') === 'page-section' ||
+              other.tagName === 'SECTION') &&
+            other.contains(el),
+        ),
     );
     if (sections.length === 0) {
-      return stepFocusInPane(delta);
+      if (ownScope && doc) {
+        const rootCtrl = rootControllerByDoc.get(doc);
+        if (rootCtrl && rootCtrl !== controllerApi) {
+          return rootCtrl.executeCommand(delta >= 0 ? 'motion.paragraphForward' : 'motion.paragraphBackward', {
+            count: Math.abs(delta),
+          });
+        }
+      }
+      return false;
     }
 
-    const doc = resolveDoc();
     const activeEl = doc?.activeElement as HTMLElement | null;
-    const currentIdx = activeEl ? sections.findIndex((s) => s === activeEl || s.contains(activeEl)) : -1;
+    let currentIdx = activeEl ? sections.findIndex((s) => s === activeEl || s.contains(activeEl)) : -1;
+    if (
+      currentIdx === -1 &&
+      activeEl &&
+      activeEl !== doc?.body &&
+      activeEl !== doc?.documentElement &&
+      container.contains(activeEl)
+    ) {
+      for (let i = sections.length - 1; i >= 0; i -= 1) {
+        const sec = sections[i]!;
+        if (typeof sec.compareDocumentPosition === 'function' && Boolean(sec.compareDocumentPosition(activeEl) & 4)) {
+          currentIdx = i;
+          break;
+        }
+      }
+    }
+    if (currentIdx === -1 && typeof sections[0]?.getBoundingClientRect === 'function') {
+      const firstRect = sections[0].getBoundingClientRect();
+      const lastRect = sections[sections.length - 1]!.getBoundingClientRect();
+      if (firstRect.height > 0 || lastRect.top !== firstRect.top) {
+        const viewportAnchor = 140;
+        for (let i = sections.length - 1; i >= 0; i -= 1) {
+          if (sections[i]!.getBoundingClientRect().top <= viewportAnchor) {
+            currentIdx = i;
+            break;
+          }
+        }
+      }
+    }
     const nextIdx =
       currentIdx === -1
         ? delta >= 0
@@ -1815,27 +1866,29 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     if (!targetSection) return false;
 
     recordCurrentLocation();
-    if (typeof targetSection.scrollIntoView === 'function') {
+    if (!ownScope && doc) {
+      lastInteractedScopeByDoc.set(doc, null);
+    }
+    if (nextIdx === 0 && delta < 0 && !ownScope && doc?.defaultView && !isScrollableContainer(container, doc)) {
+      try {
+        doc.defaultView.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      } catch {
+        doc.defaultView.scrollTo(0, 0);
+      }
+    } else if (typeof targetSection.scrollIntoView === 'function') {
       try {
         targetSection.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
       } catch {
         // Ignore
       }
     }
-    const innerFocusable =
-      getPaneFocusableItems(targetSection, options.getScopeElement?.())[0] ??
-      getFirstFocusable(targetSection, { includeContainer: false });
-    if (innerFocusable instanceof HTMLElement) {
-      focusElementInActivePane(innerFocusable);
-    } else {
-      runProgrammaticFocus(() => {
-        if (targetSection.tabIndex < 0) {
-          targetSection.tabIndex = -1;
-        }
-        targetSection.style.outline = 'none';
-        targetSection.focus({ preventScroll: true });
-      });
-    }
+    runProgrammaticFocus(() => {
+      if (targetSection.tabIndex < 0) {
+        targetSection.tabIndex = -1;
+      }
+      targetSection.style.outline = 'none';
+      targetSection.focus({ preventScroll: true });
+    });
     recordCurrentLocation();
     emit();
     return true;

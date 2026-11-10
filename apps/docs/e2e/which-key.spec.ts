@@ -281,6 +281,23 @@ for (const framework of FRAMEWORKS) {
           await page.keyboard.press('Control+i');
           await expect(navBtn).toBeFocused();
         });
+
+        test('it only renders data-pane-active="true" on multi-pane scopes and traverses page sections with } and { without focusing example blocks', async ({
+          page,
+        }) => {
+          const singlePane = island(page, framework, 'default').locator('[data-pane-id="wk-default-pane"]');
+          const multiPaneNav = island(page, framework, 'panes').locator('[data-pane-id="pane-nav"]');
+          await expect(singlePane).toHaveAttribute('data-pane-active', 'false');
+          await expect(multiPaneNav).toHaveAttribute('data-pane-active', 'true');
+
+          await page.keyboard.press('}');
+          const focusedTag = await page.evaluate(() => document.activeElement?.tagName ?? '');
+          const focusedIsExample = await page.evaluate(
+            () => document.activeElement?.hasAttribute('data-example') ?? false,
+          );
+          expect(['H1', 'H2', 'H3', 'SECTION']).toContain(focusedTag);
+          expect(focusedIsExample).toBe(false);
+        });
       });
     });
 
