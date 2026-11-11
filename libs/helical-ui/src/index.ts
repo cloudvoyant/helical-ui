@@ -145,12 +145,16 @@ export {
   THEME_NAMES,
   THEME_CLASS_PREFIX,
   themeToggleButtonVariants,
+  cycleThemeModeValue,
+  mergeThemePresets,
   readSystemDarkMode,
+  subscribeSystemDarkMode,
   syncDocumentTheme,
   type ThemeMeta,
   type ThemeMode,
   type ThemeName,
   type ThemeServiceOptions,
+  type ThemeToggleBaseProps,
   type ThemeToggleButtonVariants,
 } from './themes';
 export { cn } from './cn';

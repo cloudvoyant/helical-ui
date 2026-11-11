@@ -4,13 +4,14 @@ import type {
   ThemeMode,
   ThemeName,
   ThemeServiceOptions,
+  ThemeToggleBaseProps,
   ThemeToggleButtonVariants,
 } from '@cloudvoyant/helical-ui';
-import type { ThemeService } from './themeService.svelte';
+import type { ThemeService } from './theme-service.svelte';
 
-export type { ThemeMeta, ThemeMode, ThemeName, ThemeServiceOptions, ThemeToggleButtonVariants };
+export type { ThemeMeta, ThemeMode, ThemeName, ThemeServiceOptions, ThemeToggleBaseProps, ThemeToggleButtonVariants };
 
-export interface ThemeToggleProps {
+export interface ThemeToggleProps extends ThemeToggleBaseProps {
   theme?: ThemeService;
   class?: string;
 }

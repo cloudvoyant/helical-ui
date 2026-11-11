@@ -20,10 +20,32 @@ export interface ThemeServiceOptions {
   onModeChange?: (mode: ThemeMode) => void;
 }
 
+export interface ThemeToggleBaseProps {
+  mode?: ThemeMode;
+  defaultMode?: ThemeMode;
+  onModeChange?: (mode: ThemeMode) => void;
+}
+
 export const THEME_CLASS_PREFIX = 'theme-';
 
 export const themeToggleButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
 export type ThemeToggleButtonVariants = VariantProps<typeof themeToggleButtonVariants>;
+
+export function cycleThemeModeValue(mode: ThemeMode): ThemeMode {
+  return mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system';
+}
+
+export function mergeThemePresets(customThemes: readonly ThemeMeta[]): ThemeMeta[] {
+  const merged: ThemeMeta[] = [...customThemes];
+  const seen = new Set(customThemes.map((t) => t.name));
+  for (const preset of THEMES) {
+    if (!seen.has(preset.name)) {
+      merged.push(preset);
+      seen.add(preset.name);
+    }
+  }
+  return merged;
+}
 
 export function readSystemDarkMode(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
@@ -31,6 +53,20 @@ export function readSystemDarkMode(): boolean {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   } catch {
     return false;
+  }
+}
+
+export function subscribeSystemDarkMode(onChange: (dark: boolean) => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => {};
+  }
+  try {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = (event: MediaQueryListEvent) => onChange(event.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  } catch {
+    return () => {};
   }
 }
 

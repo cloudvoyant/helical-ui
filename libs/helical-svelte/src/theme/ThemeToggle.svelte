@@ -1,18 +1,41 @@
 <!-- libs/helical-svelte/src/theme/ThemeToggle.svelte -->
 <script lang="ts">
   // 1. Imports
-  import { cn, themeToggleButtonVariants } from '@cloudvoyant/helical-ui';
+  import {
+    cn,
+    cycleThemeModeValue,
+    themeToggleButtonVariants,
+  } from '@cloudvoyant/helical-ui';
   import { Monitor, Moon, Sun } from 'lucide-svelte';
   import Button from '../Button.svelte';
-  import { themeService } from './themeService.svelte';
+  import { themeService } from './theme-service.svelte';
   import type { ThemeToggleProps } from './types';
 
   // --- State ---
-  let { theme = themeService, class: className }: ThemeToggleProps = $props();
+  let {
+    theme = themeService,
+    mode: controlledMode,
+    defaultMode,
+    onModeChange,
+    class: className,
+  }: ThemeToggleProps = $props();
+
+  const currentMode = $derived(controlledMode ?? theme.themeMode);
+
+  // --- Effects ---
+  $effect(() => {
+    if (defaultMode && controlledMode === undefined) {
+      theme.setThemeMode(defaultMode, false);
+    }
+  });
 
   // --- Methods ---
   function handleClick(): void {
-    theme.cycleThemeMode();
+    const next = cycleThemeModeValue(currentMode);
+    if (controlledMode === undefined) {
+      theme.setThemeMode(next);
+    }
+    onModeChange?.(next);
   }
 </script>
 
@@ -20,13 +43,13 @@
   variant="text"
   size="sm"
   class={cn(themeToggleButtonVariants(), className)}
-  aria-label={`Theme: ${theme.themeMode}`}
-  title={`Theme: ${theme.themeMode}`}
+  aria-label={`Theme: ${currentMode}`}
+  title={`Theme: ${currentMode}`}
   onclick={handleClick}
 >
-  {#if theme.themeMode === 'light'}
+  {#if currentMode === 'light'}
     <Sun size={14} strokeWidth={1.5} />
-  {:else if theme.themeMode === 'dark'}
+  {:else if currentMode === 'dark'}
     <Moon size={14} strokeWidth={1.5} />
   {:else}
     <Monitor size={14} strokeWidth={1.5} />

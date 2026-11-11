@@ -5,20 +5,22 @@ import { useEffect, useState } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import {
   cn,
+  cycleThemeModeValue,
   readSystemDarkMode,
+  subscribeSystemDarkMode,
   syncDocumentTheme,
   themeToggleButtonVariants,
   type ThemeMode,
   type ThemeName,
+  type ThemeToggleBaseProps,
 } from '@cloudvoyant/helical-ui';
 import { Button, type ButtonProps } from './button';
 
 // 2. Module constants & types
-export interface ThemeToggleProps extends Omit<ButtonProps, 'onChange'> {
+export interface ThemeToggleProps
+  extends Omit<ButtonProps, 'onChange'>,
+    ThemeToggleBaseProps {
   theme?: ThemeName;
-  mode?: ThemeMode;
-  defaultMode?: ThemeMode;
-  onModeChange?: (mode: ThemeMode) => void;
 }
 
 // 4. Exported component
@@ -42,26 +44,11 @@ export function ThemeToggle({
     syncDocumentTheme(theme, dark);
   }, [theme, currentMode, systemDark]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    try {
-      const media = window.matchMedia('(prefers-color-scheme: dark)');
-      const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
-      media.addEventListener('change', onChange);
-      return () => media.removeEventListener('change', onChange);
-    } catch {
-      return;
-    }
-  }, []);
+  useEffect(() => subscribeSystemDarkMode(setSystemDark), []);
 
   // --- Methods ---
   const handleClick: ButtonProps['onClick'] = (event) => {
-    const next: ThemeMode =
-      currentMode === 'system'
-        ? 'light'
-        : currentMode === 'light'
-          ? 'dark'
-          : 'system';
+    const next = cycleThemeModeValue(currentMode);
     if (controlledMode === undefined) {
       setUncontrolledMode(next);
     }

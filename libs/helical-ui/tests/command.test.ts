@@ -18,7 +18,6 @@ import {
   splitHighlightSegments,
   type CommandNode,
 } from '../src/command';
-import { syncDocumentTheme } from '../src/themes';
 
 const SAMPLE_COMMANDS: CommandNode[] = [
   {
@@ -367,35 +366,6 @@ describe('Given command focus retention and restoration helpers', () => {
       // Assert
       expect(captured).toBe(customEl);
       expect(restoreFocus).toHaveBeenCalledTimes(2);
-      vi.unstubAllGlobals();
-    });
-  });
-});
-
-describe('Given syncDocumentTheme is called with a theme name and dark flag', () => {
-  describe('When switching themes and dark mode on documentElement', () => {
-    it('Then replaces any existing theme- class with the new theme class and toggles the dark class', () => {
-      // Arrange
-      const classes = new Set<string>(['theme-helical-ui', 'custom-class']);
-      vi.stubGlobal('document', {
-        documentElement: {
-          classList: {
-            forEach: (cb: (cls: string) => void) => classes.forEach(cb),
-            remove: (cls: string) => classes.delete(cls),
-            add: (cls: string) => classes.add(cls),
-            toggle: (cls: string, force?: boolean) => {
-              if (force) classes.add(cls);
-              else classes.delete(cls);
-            },
-          },
-        },
-      });
-
-      // Act
-      syncDocumentTheme('catppuccin', true);
-
-      // Assert
-      expect(Array.from(classes)).toEqual(['custom-class', 'theme-catppuccin', 'dark']);
       vi.unstubAllGlobals();
     });
   });

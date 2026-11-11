@@ -1,7 +1,10 @@
-// libs/helical-svelte/src/theme/themeService.svelte.ts
+// libs/helical-svelte/src/theme/theme-service.svelte.ts
 import {
   THEMES,
+  cycleThemeModeValue,
+  mergeThemePresets,
   readSystemDarkMode,
+  subscribeSystemDarkMode,
   syncDocumentTheme,
   type ThemeMeta,
   type ThemeMode,
@@ -38,16 +41,9 @@ export class ThemeService {
       this.modeListeners.add(options.onModeChange);
     }
     syncDocumentTheme(this.theme, this.isDark());
-    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      try {
-        const media = window.matchMedia('(prefers-color-scheme: dark)');
-        media.addEventListener('change', (event) => {
-          this.setSystemDark(event.matches);
-        });
-      } catch {
-        // Ignore matchMedia errors
-      }
-    }
+    subscribeSystemDarkMode((dark) => {
+      this.setSystemDark(dark);
+    });
   }
 
   private isDark(): boolean {
@@ -55,16 +51,9 @@ export class ThemeService {
   }
 
   registerThemes(customThemes: readonly ThemeMeta[], options?: { defaultTheme?: ThemeName }): void {
-    const merged: ThemeMeta[] = [...customThemes];
-    const seen = new Set(customThemes.map((t) => t.name));
-    for (const preset of THEMES) {
-      if (!seen.has(preset.name)) {
-        merged.push(preset);
-        seen.add(preset.name);
-      }
-    }
+    const merged = mergeThemePresets(customThemes);
     this.themes = merged;
-    this.validThemeNames = seen;
+    this.validThemeNames = new Set(merged.map((t) => t.name));
     const nextDefault = options?.defaultTheme ?? customThemes[0]?.name;
     if (nextDefault && this.validThemeNames.has(nextDefault) && this.theme === 'helical-ui') {
       this.theme = nextDefault;
@@ -115,8 +104,7 @@ export class ThemeService {
   }
 
   cycleThemeMode(): ThemeMode {
-    const next: ThemeMode = this.themeMode === 'system' ? 'light' : this.themeMode === 'light' ? 'dark' : 'system';
-    return this.setThemeMode(next);
+    return this.setThemeMode(cycleThemeModeValue(this.themeMode));
   }
 }
 
