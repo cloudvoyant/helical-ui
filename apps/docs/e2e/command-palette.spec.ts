@@ -153,6 +153,23 @@ for (const framework of FRAMEWORKS) {
           await expect(palette.getByText('Search Docs')).toBeVisible();
         });
       });
+
+      test.describe('When a leaf command that focuses an element is selected', () => {
+        test.beforeEach(async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').fill('Open Settings');
+          await page.keyboard.press('Enter');
+        });
+
+        test('it closes the command palette and preserves focus on the target element', async ({
+          page,
+        }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]');
+          await expect(palette).toHaveCount(0);
+          const defaultDemo = island(page, framework, 'default');
+          await expect(defaultDemo.getByRole('button')).toBeFocused();
+        });
+      });
     });
   });
 }

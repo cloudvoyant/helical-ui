@@ -7,7 +7,14 @@ const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 
 function resolveLocalModule(dir, relSpec) {
   const base = path.resolve(dir, relSpec);
-  for (const cand of [base, `${base}.ts`, `${base}.tsx`, `${base}.svelte`, path.join(base, 'index.ts')]) {
+  for (const cand of [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.svelte`,
+    `${base}.svelte.ts`,
+    path.join(base, 'index.ts'),
+  ]) {
     if (fs.existsSync(cand) && fs.statSync(cand).isFile()) return cand;
   }
   return base;

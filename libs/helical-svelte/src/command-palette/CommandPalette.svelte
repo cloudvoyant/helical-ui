@@ -6,6 +6,7 @@
   import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-svelte';
   import {
     announceCommandMessage,
+    captureCommandFocusTarget,
     cn,
     commandPaletteBreadcrumbBase,
     commandPaletteDialogContentBase,
@@ -17,8 +18,10 @@
     commandPalettePositionerBase,
     commandPaletteVariants,
     createCommandTree,
+    finalizeCommandSelectFocus,
     matchesCommandHotkey,
     resolveCommandLevel,
+    restoreCommandFocusTarget,
     shouldHandleCommandHotkey,
     splitHighlightSegments,
     type CommandFlatItem,
@@ -91,20 +94,24 @@
   let highlightedValue = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
   let anchorEl = $state<HTMLSpanElement | null>(null);
+  let previousFocusEl: HTMLElement | null = null;
 
   const isStandalone = $derived(
     itemsProp !== undefined || externalCollectionProp !== undefined,
   );
+  const isProviderManaged = $derived(
+    !isStandalone && sharedCommand !== null && sharedCommand !== undefined,
+  );
   const items = $derived(itemsProp ?? sharedCommand?.items);
   const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
   const sharedOpen = $derived(
-    !isStandalone && sharedCommand && sharedCommand.style === 'palette'
-      ? sharedCommand.open
+    isProviderManaged
+      ? sharedCommand!.style === 'palette' && sharedCommand!.open
       : undefined,
   );
   const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
   const showTrigger = $derived(
-    children !== undefined || (controlledOpen === undefined && sharedOpen === undefined),
+    children !== undefined || (controlledOpen === undefined && !isProviderManaged),
   );
   const currentActivePath = $derived(controlledActivePath ?? uncontrolledActivePath);
   const currentQuery = $derived(controlledQuery ?? uncontrolledQuery);
@@ -144,6 +151,7 @@
   // --- Effects ---
   $effect(() => {
     if (inline || !hotkey || typeof window === 'undefined') return;
+    if (isProviderManaged && sharedCommand?.style !== 'palette') return;
     const onWindowKeyDown = (event: KeyboardEvent) => {
       if (!matchesCommandHotkey(event, hotkey)) return;
       if (
@@ -165,6 +173,9 @@
     const _depth = currentActivePath.length;
     void _depth;
     if (!isOpen || inline || typeof document === 'undefined') return;
+    if (!previousFocusEl) {
+      recordPreviousFocus();
+    }
     const focusInput = () => {
       getInputElement()?.focus();
     };
@@ -174,6 +185,13 @@
   });
 
   // --- Methods ---
+  function recordPreviousFocus() {
+    const target = captureCommandFocusTarget(rootEl);
+    if (target) {
+      previousFocusEl = target;
+    }
+  }
+
   function setActivePath(nextPath: string[]) {
     if (controlledActivePath !== undefined) {
       controlledActivePath = nextPath;
@@ -192,18 +210,29 @@
     onQueryChange?.(nextQuery);
   }
 
-  function handleOpenChange(nextOpen: boolean) {
+  function handleOpenChange(
+    nextOpen: boolean,
+    options?: { restoreFocus?: boolean },
+  ) {
+    if (nextOpen && !isOpen) {
+      recordPreviousFocus();
+    }
     if (controlledOpen !== undefined) {
       controlledOpen = nextOpen;
     } else {
       uncontrolledOpen = nextOpen;
     }
-    if (sharedCommand && sharedCommand.style === 'palette') {
+    if (isProviderManaged && sharedCommand?.style === 'palette') {
       sharedCommand.setOpen(nextOpen);
     }
     if (!nextOpen) {
       setActivePath([]);
       setQuery('');
+      const restoreTarget = previousFocusEl;
+      previousFocusEl = null;
+      if (options?.restoreFocus !== false) {
+        restoreCommandFocusTarget(restoreTarget);
+      }
     }
     onOpenChange?.(nextOpen);
   }
@@ -221,6 +250,12 @@
       return;
     }
 
+    const shouldClose = !inline && item.node.closeOnSelect !== false;
+    const restoreTarget = previousFocusEl;
+    if (shouldClose) {
+      handleOpenChange(false, { restoreFocus: false });
+    }
+
     const ctx: CommandSelectContext = {
       value: item.node.value,
       valuePath: item.valuePath,
@@ -229,11 +264,13 @@
     };
     item.node.onSelect?.(ctx);
     onSelectCommandProp?.(ctx);
-    sharedCommand?.onSelectCommand?.(ctx);
+    if (!isStandalone) {
+      sharedCommand?.onSelectCommand?.(ctx);
+    }
     announceCommandMessage(`Executed ${item.label}`);
 
-    if (!inline && item.node.closeOnSelect !== false) {
-      handleOpenChange(false);
+    if (shouldClose) {
+      finalizeCommandSelectFocus(rootEl, restoreTarget);
     }
   }
 
@@ -586,6 +623,8 @@
       open={isOpen}
       lazyMount
       unmountOnExit
+      trapFocus={false}
+      restoreFocus={false}
       closeOnEscape={currentActivePath.length === 0}
       initialFocusEl={() => getInputElement()}
       onOpenChange={(details) => handleOpenChange(details.open)}

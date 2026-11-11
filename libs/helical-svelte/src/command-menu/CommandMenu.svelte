@@ -5,15 +5,18 @@
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import {
     announceCommandMessage,
+    captureCommandFocusTarget,
     cn,
     commandMenuDialogContentBase,
     commandMenuPositionerBase,
     commandMenuVariants,
     createCommandTree,
+    finalizeCommandSelectFocus,
     formatCommandMenuCompletionInput,
     matchesCommandHotkey,
     resolveCommandMenuGridNavigation,
     resolveCommandMenuState,
+    restoreCommandFocusTarget,
     shouldHandleCommandHotkey,
     type CommandFlatItem,
     type CommandMenuProps as CoreCommandMenuProps,
@@ -75,17 +78,20 @@
   let submittedError = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
   let anchorEl = $state<HTMLSpanElement | null>(null);
+  let previousFocusEl: HTMLElement | null = null;
 
   const isStandalone = $derived(
     itemsProp !== undefined || externalCollectionProp !== undefined,
   );
+  const isProviderManaged = $derived(
+    !isStandalone && sharedCommand !== null && sharedCommand !== undefined,
+  );
   const items = $derived(itemsProp ?? sharedCommand?.items);
   const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
   const sharedOpen = $derived(
-    !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
-      ? sharedCommand.open
+    isProviderManaged
+      ? (sharedCommand!.style === 'menu' || sharedCommand!.style === 'colon') &&
+          sharedCommand!.open
       : undefined,
   );
   const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
@@ -121,21 +127,31 @@
 
   const activeError = $derived(submittedError ?? resolution.error);
   const showTrigger = $derived(
-    children !== undefined || (controlledOpen === undefined && sharedOpen === undefined),
+    children !== undefined || (controlledOpen === undefined && !isProviderManaged),
   );
 
   // --- Effects ---
   $effect(() => {
     if (inline || !hotkey || typeof window === 'undefined') return;
+    if (
+      isProviderManaged &&
+      sharedCommand?.style !== 'menu' &&
+      sharedCommand?.style !== 'colon'
+    ) {
+      return;
+    }
     const onWindowKeyDown = (event: KeyboardEvent) => {
       if (!matchesCommandHotkey(event, hotkey)) return;
-      if (!shouldHandleCommandHotkey(anchorEl, '[data-command-menu-anchor="true"]')) {
+      if (
+        !isOpen &&
+        !shouldHandleCommandHotkey(anchorEl, '[data-command-menu-anchor="true"]')
+      ) {
         return;
       }
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      handleOpenChange(true);
+      handleOpenChange(hotkey === ':' ? true : !isOpen);
     };
     window.addEventListener('keydown', onWindowKeyDown, true);
     return () => window.removeEventListener('keydown', onWindowKeyDown, true);
@@ -143,6 +159,9 @@
 
   $effect(() => {
     if (!isOpen || inline || typeof document === 'undefined') return;
+    if (!previousFocusEl) {
+      recordPreviousFocus();
+    }
     const focusInput = () => {
       getInputElement()?.focus();
     };
@@ -152,6 +171,13 @@
   });
 
   // --- Methods ---
+  function recordPreviousFocus() {
+    const target = captureCommandFocusTarget(rootEl);
+    if (target) {
+      previousFocusEl = target;
+    }
+  }
+
   function setInputValue(nextValue: string, nextTabBase: string | null = null) {
     if (controlledInputValue !== undefined) {
       controlledInputValue = nextValue;
@@ -163,22 +189,32 @@
     onInputValueChange?.(nextValue);
   }
 
-  function handleOpenChange(nextOpen: boolean) {
+  function handleOpenChange(
+    nextOpen: boolean,
+    options?: { restoreFocus?: boolean },
+  ) {
+    if (nextOpen && !isOpen) {
+      recordPreviousFocus();
+    }
     if (controlledOpen !== undefined) {
       controlledOpen = nextOpen;
     } else {
       uncontrolledOpen = nextOpen;
     }
     if (
-      !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+      isProviderManaged &&
+      (sharedCommand?.style === 'menu' || sharedCommand?.style === 'colon')
     ) {
       sharedCommand.setOpen(nextOpen);
     }
     if (!nextOpen) {
       setInputValue('', null);
       submittedError = null;
+      const restoreTarget = previousFocusEl;
+      previousFocusEl = null;
+      if (options?.restoreFocus !== false) {
+        restoreCommandFocusTarget(restoreTarget);
+      }
     }
     onOpenChange?.(nextOpen);
   }
@@ -199,6 +235,14 @@
       return;
     }
 
+    const shouldClose = !inline && item.node.closeOnSelect !== false;
+    const restoreTarget = previousFocusEl;
+    if (shouldClose) {
+      handleOpenChange(false, { restoreFocus: false });
+    } else {
+      setInputValue('');
+    }
+
     const ctx: CommandSelectContext = {
       value: item.node.value,
       valuePath: item.valuePath,
@@ -212,10 +256,8 @@
     }
     announceCommandMessage(`Executed ${item.fullCommand}`);
 
-    if (!inline && item.node.closeOnSelect !== false) {
-      handleOpenChange(false);
-    } else {
-      setInputValue('');
+    if (shouldClose) {
+      finalizeCommandSelectFocus(rootEl, restoreTarget);
     }
   }
 
@@ -465,6 +507,8 @@
       open={isOpen}
       lazyMount
       unmountOnExit
+      trapFocus={false}
+      restoreFocus={false}
       initialFocusEl={() => getInputElement()}
       onOpenChange={(details) => handleOpenChange(details.open)}
     >

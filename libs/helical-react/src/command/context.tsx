@@ -8,6 +8,7 @@ import {
   type CommandContextValue,
   type CommandStyle,
 } from '@cloudvoyant/helical-ui';
+import { useKeymapCommand } from '../which-key';
 
 // 2. Module constants & types
 export interface CommandProviderProps extends CommandContextProps {
@@ -96,6 +97,28 @@ export function CommandProvider({
     }),
     [items, collection, tree, open, style, onSelectCommand],
   );
+
+  useKeymapCommand('command.open', () => {
+    setOpen(true);
+    return true;
+  });
+
+  useKeymapCommand('command.toggle', () => {
+    setOpen(!open);
+    return true;
+  });
+
+  useKeymapCommand('command.palette', () => {
+    setStyle('palette');
+    setOpen(true);
+    return true;
+  });
+
+  useKeymapCommand('command.menu', () => {
+    setStyle('menu');
+    setOpen(true);
+    return true;
+  });
 
   // --- Render ---
   return <CommandContext.Provider value={value}>{children}</CommandContext.Provider>;

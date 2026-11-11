@@ -1,6 +1,7 @@
 // apps/docs/src/components/examples/command-palette/default/react.tsx
 
 // 1. Imports
+import { useRef } from 'react';
 import { CommandPalette, type CommandNode } from '@cloudvoyant/helical-react';
 
 // 2. Module constants & types
@@ -42,6 +43,20 @@ const COMMANDS: CommandNode[] = [
 
 // 4. Exported component
 export default function ReactCommandPaletteDefault() {
+  // --- State ---
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   // --- Render ---
-  return <CommandPalette items={COMMANDS} />;
+  return (
+    <div ref={containerRef} className="contents">
+      <CommandPalette
+        items={COMMANDS}
+        onSelectCommand={(ctx) => {
+          if (ctx.value === 'settings') {
+            containerRef.current?.querySelector<HTMLElement>('button')?.focus();
+          }
+        }}
+      />
+    </div>
+  );
 }

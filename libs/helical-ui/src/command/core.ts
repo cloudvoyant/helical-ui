@@ -636,3 +636,40 @@ export function resolveCommandMenuGridNavigation(
 }
 
 export const resolveColonCommandGridNavigation = resolveCommandMenuGridNavigation;
+
+export function captureCommandFocusTarget(rootEl: HTMLElement | null): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  const active = document.activeElement;
+  if (
+    active &&
+    typeof (active as HTMLElement).focus === 'function' &&
+    active !== document.body &&
+    active !== document.documentElement &&
+    (!rootEl || !rootEl.contains(active))
+  ) {
+    return active as HTMLElement;
+  }
+  return null;
+}
+
+export function restoreCommandFocusTarget(target: HTMLElement | null): void {
+  if (typeof document === 'undefined' || !target) return;
+  if (target.isConnected && target !== document.body && target !== document.documentElement) {
+    target.focus({ preventScroll: true });
+  }
+}
+
+export function finalizeCommandSelectFocus(rootEl: HTMLElement | null, restoreTarget: HTMLElement | null): void {
+  const customFocusTarget = captureCommandFocusTarget(rootEl);
+  if (customFocusTarget) {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        if (customFocusTarget.isConnected && document.activeElement !== customFocusTarget) {
+          customFocusTarget.focus({ preventScroll: true });
+        }
+      });
+    }
+    return;
+  }
+  restoreCommandFocusTarget(restoreTarget);
+}

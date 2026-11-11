@@ -140,7 +140,19 @@ export {
   navbarMobileMenuBase,
   navbarMobileActionsBase,
 } from './navbar';
-export { THEMES, THEME_NAMES, type ThemeMeta } from './themes';
+export {
+  THEMES,
+  THEME_NAMES,
+  THEME_CLASS_PREFIX,
+  themeToggleButtonVariants,
+  readSystemDarkMode,
+  syncDocumentTheme,
+  type ThemeMeta,
+  type ThemeMode,
+  type ThemeName,
+  type ThemeServiceOptions,
+  type ThemeToggleButtonVariants,
+} from './themes';
 export { cn } from './cn';
 export {
   fieldRootBase,

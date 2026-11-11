@@ -1,6 +1,7 @@
 // apps/docs/src/components/examples/command-menu/default/react.tsx
 
 // 1. Imports
+import { useRef } from 'react';
 import { CommandMenu, type CommandNode } from '@cloudvoyant/helical-react';
 
 // 2. Module constants & types
@@ -45,6 +46,20 @@ const COMMANDS: CommandNode[] = [
 
 // 4. Exported component
 export default function ReactCommandMenuDefault() {
+  // --- State ---
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   // --- Render ---
-  return <CommandMenu items={COMMANDS} />;
+  return (
+    <div ref={containerRef} className="contents">
+      <CommandMenu
+        items={COMMANDS}
+        onSelectCommand={(ctx) => {
+          if (ctx.value === 'settings') {
+            containerRef.current?.querySelector<HTMLElement>('button')?.focus();
+          }
+        }}
+      />
+    </div>
+  );
 }

@@ -13,15 +13,18 @@ import {
 import { createListCollection } from '@ark-ui/react/listbox';
 import {
   announceCommandMessage,
+  captureCommandFocusTarget,
   cn,
   commandMenuDialogContentBase,
   commandMenuPositionerBase,
   commandMenuVariants,
   createCommandTree,
+  finalizeCommandSelectFocus,
   formatCommandMenuCompletionInput,
   matchesCommandHotkey,
   resolveCommandMenuGridNavigation,
   resolveCommandMenuState,
+  restoreCommandFocusTarget,
   shouldHandleCommandHotkey,
   type CommandFlatItem,
   type CommandMenuProps as CoreCommandMenuProps,
@@ -78,6 +81,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     // --- State ---
     const sharedCommand = useOptionalCommand();
     const isStandalone = itemsProp !== undefined || externalCollectionProp !== undefined;
+    const isProviderManaged =
+      !isStandalone && sharedCommand !== null && sharedCommand !== undefined;
     const items = itemsProp ?? sharedCommand?.items;
     const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
 
@@ -89,13 +94,12 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
 
     const rootRef = useRef<HTMLDivElement | null>(null);
     const anchorRef = useRef<HTMLSpanElement | null>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
 
-    const sharedOpen =
-      !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
-        ? sharedCommand.open
-        : undefined;
+    const sharedOpen = isProviderManaged
+      ? (sharedCommand.style === 'menu' || sharedCommand.style === 'colon') &&
+        sharedCommand.open
+      : undefined;
     const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentInput = controlledInputValue ?? uncontrolledInput;
 
@@ -145,15 +149,25 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     // --- Effects ---
     useEffect(() => {
       if (inline || !hotkey || typeof window === 'undefined') return;
+      if (
+        isProviderManaged &&
+        sharedCommand?.style !== 'menu' &&
+        sharedCommand?.style !== 'colon'
+      ) {
+        return;
+      }
       const onWindowKeyDown = (event: globalThis.KeyboardEvent) => {
         if (!matchesCommandHotkey(event, hotkey)) return;
-        if (!shouldHandleCommandHotkey(anchorRef.current, '[data-command-menu-anchor="true"]')) {
+        if (
+          !isOpen &&
+          !shouldHandleCommandHotkey(anchorRef.current, '[data-command-menu-anchor="true"]')
+        ) {
           return;
         }
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        handleOpenChange(true);
+        handleOpenChange(hotkey === ':' ? true : !isOpen);
       };
       window.addEventListener('keydown', onWindowKeyDown, true);
       return () => window.removeEventListener('keydown', onWindowKeyDown, true);
@@ -161,6 +175,9 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
 
     useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
+      if (!previousFocusRef.current) {
+        recordPreviousFocus();
+      }
       const focusInput = () => {
         getInputElement()?.focus();
       };
@@ -170,6 +187,13 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     }, [isOpen, inline]);
 
     // --- Methods ---
+    const recordPreviousFocus = () => {
+      const target = captureCommandFocusTarget(rootRef.current);
+      if (target) {
+        previousFocusRef.current = target;
+      }
+    };
+
     const setInputValue = (nextValue: string, nextTabBase: string | null = null) => {
       if (controlledInputValue === undefined) {
         setUncontrolledInput(nextValue);
@@ -179,20 +203,30 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       onInputValueChange?.(nextValue);
     };
 
-    const handleOpenChange = (nextOpen: boolean) => {
+    const handleOpenChange = (
+      nextOpen: boolean,
+      options?: { restoreFocus?: boolean },
+    ) => {
+      if (nextOpen && !isOpen) {
+        recordPreviousFocus();
+      }
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
       }
       if (
-        !isStandalone &&
-        sharedCommand &&
-        (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+        isProviderManaged &&
+        (sharedCommand?.style === 'menu' || sharedCommand?.style === 'colon')
       ) {
         sharedCommand.setOpen(nextOpen);
       }
       if (!nextOpen) {
         setInputValue('', null);
         setSubmittedError(null);
+        const restoreTarget = previousFocusRef.current;
+        previousFocusRef.current = null;
+        if (options?.restoreFocus !== false) {
+          restoreCommandFocusTarget(restoreTarget);
+        }
       }
       onOpenChange?.(nextOpen);
     };
@@ -213,6 +247,14 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
         return;
       }
 
+      const shouldClose = !inline && item.node.closeOnSelect !== false;
+      const restoreTarget = previousFocusRef.current;
+      if (shouldClose) {
+        handleOpenChange(false, { restoreFocus: false });
+      } else {
+        setInputValue('');
+      }
+
       const ctx: CommandSelectContext = {
         value: item.node.value,
         valuePath: item.valuePath,
@@ -226,10 +268,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       }
       announceCommandMessage(`Executed ${item.fullCommand}`);
 
-      if (!inline && item.node.closeOnSelect !== false) {
-        handleOpenChange(false);
-      } else {
-        setInputValue('');
+      if (shouldClose) {
+        finalizeCommandSelectFocus(rootRef.current, restoreTarget);
       }
     };
 
@@ -459,7 +499,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       return menuSurface;
     }
 
-    const showTrigger = children !== undefined || (controlledOpen === undefined && sharedOpen === undefined);
+    const showTrigger =
+      children !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
       <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
@@ -467,6 +508,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           open={isOpen}
           lazyMount
           unmountOnExit
+          trapFocus={false}
+          restoreFocus={false}
           initialFocusEl={() => getInputElement()}
           onOpenChange={(details) => handleOpenChange(details.open)}
         >

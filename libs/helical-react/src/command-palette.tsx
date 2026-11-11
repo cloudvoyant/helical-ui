@@ -7,6 +7,7 @@ import { createListCollection } from '@ark-ui/react/listbox';
 import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-react';
 import {
   announceCommandMessage,
+  captureCommandFocusTarget,
   cn,
   commandPaletteBreadcrumbBase,
   commandPaletteDialogContentBase,
@@ -18,8 +19,10 @@ import {
   commandPalettePositionerBase,
   commandPaletteVariants,
   createCommandTree,
+  finalizeCommandSelectFocus,
   matchesCommandHotkey,
   resolveCommandLevel,
+  restoreCommandFocusTarget,
   shouldHandleCommandHotkey,
   splitHighlightSegments,
   type CommandFlatItem,
@@ -122,6 +125,8 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     // --- State ---
     const sharedCommand = useOptionalCommand();
     const isStandalone = itemsProp !== undefined || externalCollectionProp !== undefined;
+    const isProviderManaged =
+      !isStandalone && sharedCommand !== null && sharedCommand !== undefined;
     const items = itemsProp ?? sharedCommand?.items;
     const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
 
@@ -131,11 +136,11 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     const [highlightedValue, setHighlightedValue] = useState<string | null>(null);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const anchorRef = useRef<HTMLSpanElement | null>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
 
-    const sharedOpen =
-      !isStandalone && sharedCommand && sharedCommand.style === 'palette'
-        ? sharedCommand.open
-        : undefined;
+    const sharedOpen = isProviderManaged
+      ? sharedCommand.style === 'palette' && sharedCommand.open
+      : undefined;
     const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentActivePath = controlledActivePath ?? uncontrolledActivePath;
     const currentQuery = controlledQuery ?? uncontrolledQuery;
@@ -187,6 +192,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     // --- Effects ---
     useEffect(() => {
       if (inline || !hotkey || typeof window === 'undefined') return;
+      if (isProviderManaged && sharedCommand?.style !== 'palette') return;
       const onWindowKeyDown = (event: KeyboardEvent) => {
         if (!matchesCommandHotkey(event, hotkey)) return;
         if (
@@ -206,6 +212,9 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
 
     useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
+      if (!previousFocusRef.current) {
+        recordPreviousFocus();
+      }
       const focusInput = () => {
         getInputElement()?.focus();
       };
@@ -215,6 +224,13 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     }, [isOpen, inline, currentActivePath.length]);
 
     // --- Methods ---
+    const recordPreviousFocus = () => {
+      const target = captureCommandFocusTarget(rootRef.current);
+      if (target) {
+        previousFocusRef.current = target;
+      }
+    };
+
     const setActivePath = (nextPath: string[]) => {
       if (controlledActivePath === undefined) {
         setUncontrolledActivePath(nextPath);
@@ -229,16 +245,27 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       onQueryChange?.(nextQuery);
     };
 
-    const handleOpenChange = (nextOpen: boolean) => {
+    const handleOpenChange = (
+      nextOpen: boolean,
+      options?: { restoreFocus?: boolean },
+    ) => {
+      if (nextOpen && !isOpen) {
+        recordPreviousFocus();
+      }
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
       }
-      if (sharedCommand && sharedCommand.style === 'palette') {
+      if (isProviderManaged && sharedCommand?.style === 'palette') {
         sharedCommand.setOpen(nextOpen);
       }
       if (!nextOpen) {
         setActivePath([]);
         setQuery('');
+        const restoreTarget = previousFocusRef.current;
+        previousFocusRef.current = null;
+        if (options?.restoreFocus !== false) {
+          restoreCommandFocusTarget(restoreTarget);
+        }
       }
       onOpenChange?.(nextOpen);
     };
@@ -256,6 +283,12 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
         return;
       }
 
+      const shouldClose = !inline && item.node.closeOnSelect !== false;
+      const restoreTarget = previousFocusRef.current;
+      if (shouldClose) {
+        handleOpenChange(false, { restoreFocus: false });
+      }
+
       const ctx: CommandSelectContext = {
         value: item.node.value,
         valuePath: item.valuePath,
@@ -264,11 +297,13 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       };
       item.node.onSelect?.(ctx);
       onSelectCommandProp?.(ctx);
-      sharedCommand?.onSelectCommand?.(ctx);
+      if (!isStandalone) {
+        sharedCommand?.onSelectCommand?.(ctx);
+      }
       announceCommandMessage(`Executed ${item.label}`);
 
-      if (!inline && item.node.closeOnSelect !== false) {
-        handleOpenChange(false);
+      if (shouldClose) {
+        finalizeCommandSelectFocus(rootRef.current, restoreTarget);
       }
     };
 
@@ -610,7 +645,8 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       return paletteSurface;
     }
 
-    const showTrigger = children !== undefined || (controlledOpen === undefined && sharedOpen === undefined);
+    const showTrigger =
+      children !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
       <span ref={anchorRef} data-command-palette-anchor="true" className="inline-flex">
@@ -618,6 +654,8 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
           open={isOpen}
           lazyMount
           unmountOnExit
+          trapFocus={false}
+          restoreFocus={false}
           closeOnEscape={currentActivePath.length === 0}
           initialFocusEl={() => getInputElement()}
           onOpenChange={(details) => handleOpenChange(details.open)}

@@ -2,9 +2,52 @@
 // Theme registry for helical-ui's shadcn-compatible theme presets.
 // Ported from diffbook — each name maps to a `.theme-{name}` / `.theme-{name}.dark`
 // block in `src/themes/{name}.css` (all imported by `@cloudvoyant/helical-ui/themes.css`).
+import { cva, type VariantProps } from 'class-variance-authority';
+
 export interface ThemeMeta {
   name: string;
   label: string;
+}
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeName = string;
+
+export interface ThemeServiceOptions {
+  themes?: readonly ThemeMeta[];
+  initialTheme?: ThemeName;
+  initialMode?: ThemeMode;
+  onThemeChange?: (theme: ThemeName) => void;
+  onModeChange?: (mode: ThemeMode) => void;
+}
+
+export const THEME_CLASS_PREFIX = 'theme-';
+
+export const themeToggleButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
+export type ThemeToggleButtonVariants = VariantProps<typeof themeToggleButtonVariants>;
+
+export function readSystemDarkMode(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  try {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+}
+
+export function syncDocumentTheme(theme: ThemeName, dark: boolean): void {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const toRemove: string[] = [];
+  root.classList.forEach((cls) => {
+    if (cls.startsWith(THEME_CLASS_PREFIX)) {
+      toRemove.push(cls);
+    }
+  });
+  for (const cls of toRemove) {
+    root.classList.remove(cls);
+  }
+  root.classList.add(`${THEME_CLASS_PREFIX}${theme}`);
+  root.classList.toggle('dark', dark);
 }
 
 export const THEMES: ThemeMeta[] = [

@@ -7,6 +7,7 @@
     type CommandContextProps,
     type CommandStyle,
   } from '@cloudvoyant/helical-ui';
+  import { useKeymapCommand } from '../which-key';
   import { setCommandContext } from './context.svelte';
 
   // 2. Module constants & types
@@ -95,6 +96,28 @@
     get onSelectCommand() {
       return onSelectCommand;
     },
+  });
+
+  useKeymapCommand('command.open', () => {
+    setOpen(true);
+    return true;
+  });
+
+  useKeymapCommand('command.toggle', () => {
+    setOpen(!open);
+    return true;
+  });
+
+  useKeymapCommand('command.palette', () => {
+    setStyle('palette');
+    setOpen(true);
+    return true;
+  });
+
+  useKeymapCommand('command.menu', () => {
+    setStyle('menu');
+    setOpen(true);
+    return true;
   });
 </script>
 
