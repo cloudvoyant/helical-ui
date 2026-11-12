@@ -1076,5 +1076,18 @@ describe('Given scoped priority keymap layers registered on WhichKeyController',
       expect(attrs1.get('data-pane-active')).toBe('false');
       unreg1();
     });
+
+    it('Then closes the Window prefix menu when an unbound key s is pressed after Space w instead of chaining s > s > s', () => {
+      const controller = createWhichKeyController();
+
+      expect(controller.handleKeyDown(createKeyEvent(' ', { code: 'Space' }))).toBe(true);
+      expect(controller.handleKeyDown(createKeyEvent('w', { code: 'KeyW' }))).toBe(true);
+      expect(controller.getState().activePath).toEqual(['Space', 'w']);
+      expect(controller.getState().items.some((item) => item.key === 's')).toBe(false);
+
+      expect(controller.handleKeyDown(createKeyEvent('s', { code: 'KeyS' }))).toBe(true);
+      expect(controller.getState().activePath).toEqual([]);
+      expect(controller.getState().isOpen).toBe(false);
+    });
   });
 });

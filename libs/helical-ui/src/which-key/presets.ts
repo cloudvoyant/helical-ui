@@ -176,16 +176,6 @@ function createWindowMenu(): WhichKeyNode {
         category: 'Window / Pane',
         commandId: 'pane.prev',
       },
-      s: {
-        key: 's',
-        label: 'Sticky Window',
-        group: 'Sticky Window Mode',
-        description: 'Keep Window menu open until Escape',
-        category: 'Window / Pane',
-        sticky: true,
-        loop: true,
-        proxy: ['Control+w'],
-      },
     },
   };
 }

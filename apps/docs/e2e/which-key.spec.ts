@@ -37,7 +37,7 @@ for (const framework of FRAMEWORKS) {
           await expect(gotoItem.locator('svg')).toBeVisible();
         });
 
-        test('it drills into a submenu ("Space » w") and steps back on Backspace', async ({
+        test('it drills into a submenu ("Space » w"), steps back on Backspace, and closes on unbound key s without chaining', async ({
           page,
         }) => {
           await page.keyboard.press('w');
@@ -45,10 +45,16 @@ for (const framework of FRAMEWORKS) {
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space » w');
+          await expect(panel.locator('[data-testid="which-key-item"][data-key="s"]')).toHaveCount(0);
 
           await page.keyboard.press('Backspace');
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space');
           await expect(panel.getByTestId('which-key-breadcrumb')).not.toContainText('Space » w');
+
+          await page.keyboard.press('w');
+          await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space » w');
+          await page.keyboard.press('s');
+          await expect(panel).toBeHidden();
         });
       });
 

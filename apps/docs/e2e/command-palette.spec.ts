@@ -13,6 +13,14 @@ for (const framework of FRAMEWORKS) {
     });
 
     test.describe('Given a closed command palette', () => {
+      test('it suppresses the fallback trigger and inline anchor box when controlled without a trigger', async ({
+        page,
+      }) => {
+        const triggerlessAnchor = page.locator('[data-command-palette-anchor="true"].contents');
+        await expect(triggerlessAnchor).toHaveCount(1);
+        await expect(triggerlessAnchor.locator('button')).toHaveCount(0);
+      });
+
       test.describe('When the command palette shortcut is pressed', () => {
         test.beforeEach(async ({ page }) => {
           await page.keyboard.press(PALETTE_SHORTCUT);

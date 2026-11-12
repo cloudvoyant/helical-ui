@@ -99,6 +99,26 @@ describe('Given a nested preset keymap trie with proxy and expand nodes', () => 
       expect(proxiedTree.sticky).toBe(true);
       expect(proxiedTree.items.map((item) => item.key)).toEqual(['h', 'l']);
     });
+
+    it('Then omits cyclic self-proxy children when resolving and building a proxied submenu', () => {
+      // Arrange
+      const trie = createSampleTrie();
+      trie['Control+w']!.children!.s = {
+        key: 's',
+        label: 'Sticky Window',
+        sticky: true,
+        loop: true,
+        proxy: ['Control+w'],
+      };
+
+      // Act
+      const proxiedTree = buildWhichKeyTree(trie, ['Space', 'w']);
+      const cyclicNode = resolveNode(trie, ['Space', 'w', 's']);
+
+      // Assert
+      expect(proxiedTree.items.map((item) => item.key)).toEqual(['h', 'l']);
+      expect(cyclicNode).toBeNull();
+    });
   });
 
   describe('When flattenKeymapEntries is called on a preset + custom keymap tree', () => {

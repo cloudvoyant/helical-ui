@@ -11,6 +11,14 @@ for (const framework of FRAMEWORKS) {
     });
 
     test.describe('Given a closed command menu', () => {
+      test('it suppresses the fallback trigger and inline anchor box when controlled without a trigger', async ({
+        page,
+      }) => {
+        const triggerlessAnchor = page.locator('[data-command-menu-anchor="true"].contents');
+        await expect(triggerlessAnchor).toHaveCount(1);
+        await expect(triggerlessAnchor.locator('button')).toHaveCount(0);
+      });
+
       test.describe('When colon is pressed', () => {
         test.beforeEach(async ({ page }) => {
           await page.keyboard.press(':');

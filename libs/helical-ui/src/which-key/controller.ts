@@ -7,6 +7,7 @@ import { setInteractionModality, trackInteractionModality } from '@zag-js/focus-
 import { createLiveRegion, type LiveRegion } from '@zag-js/live-region';
 import {
   buildWhichKeyTree,
+  collectVisitedProxies,
   createJumplist,
   DEFAULT_JUMP_ALPHABET,
   findDirectionalPane,
@@ -2410,12 +2411,17 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   ): { handled: boolean; matchedAnyNode: boolean } {
     const layers = getOrderedActiveLayers(event, true);
     const mergedTrie = buildMergedTrie();
+    const visitedProxies = collectVisitedProxies(mergedTrie, activePath);
     let matchedAnyNode = false;
 
     for (const layer of layers) {
       const parentNode = resolveNode(layer.nodes, activePath, mode, mergedTrie);
       if (!parentNode) continue;
-      const children = getNodeChildren(parentNode, mergedTrie);
+      const children = getNodeChildren(parentNode, mergedTrie, visitedProxies);
+      const childVisitedProxies = new Set(visitedProxies);
+      if (parentNode.proxy && parentNode.proxy.length > 0) {
+        childVisitedProxies.add(parentNode.proxy.join('>'));
+      }
 
       for (const candidate of chordCandidates) {
         const child = children[candidate];
@@ -2425,7 +2431,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         const ctx = createCommandContext(event);
         if (child.when && !child.when(ctx)) continue;
 
-        if (!child.action && !child.commandId && isGroupNode(child, mergedTrie)) {
+        if (!child.action && !child.commandId && isGroupNode(child, mergedTrie, childVisitedProxies)) {
           activePath = [...activePath, candidate];
           if (child.sticky || child.loop) {
             sticky = true;
