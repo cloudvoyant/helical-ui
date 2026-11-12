@@ -1,7 +1,8 @@
 // libs/helical-ui/src/themes.ts
 // Theme registry, CSS verification, document synchronization, and cva variants
-// for helical-ui's shadcn-compatible theme presets, ThemeSelector, and LightSwitch.
+// for helical-ui's shadcn-compatible theme presets and ThemeSelector.
 import { cva, type VariantProps } from 'class-variance-authority';
+import { readDocumentDarkMode, type ThemeMode } from './light-switch';
 
 export interface ThemeMeta {
   name: string;
@@ -9,7 +10,6 @@ export interface ThemeMeta {
   css?: string;
 }
 
-export type ThemeMode = 'light' | 'dark' | 'system';
 export type ThemeName = string;
 
 export interface ThemeServiceOptions {
@@ -19,14 +19,6 @@ export interface ThemeServiceOptions {
   onThemeChange?: (theme: ThemeName) => void;
   onModeChange?: (mode: ThemeMode) => void;
 }
-
-export interface LightSwitchBaseProps {
-  mode?: ThemeMode;
-  defaultMode?: ThemeMode;
-  onModeChange?: (mode: ThemeMode) => void;
-}
-
-export type ThemeToggleBaseProps = LightSwitchBaseProps;
 
 export interface ThemeSelectorBaseProps {
   value?: ThemeName;
@@ -38,12 +30,6 @@ export interface ThemeSelectorBaseProps {
 
 export const THEME_CLASS_PREFIX = 'theme-';
 export const DEFAULT_THEME = 'helical-ui';
-
-export const lightSwitchButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
-export type LightSwitchButtonVariants = VariantProps<typeof lightSwitchButtonVariants>;
-
-export const themeToggleButtonVariants = lightSwitchButtonVariants;
-export type ThemeToggleButtonVariants = LightSwitchButtonVariants;
 
 export const themeSelectorContainerBase = 'max-h-64 overflow-y-auto rounded-md border border-border p-2';
 export const themeSelectorGridBase = 'grid grid-cols-2 gap-2';
@@ -63,6 +49,8 @@ export const themeSelectorSwatchVariants = cva(
   },
 );
 export type ThemeSelectorSwatchVariants = VariantProps<typeof themeSelectorSwatchVariants>;
+
+const customThemesWithCss = new Set<string>();
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -87,6 +75,9 @@ function ruleListHasThemeSelector(rules: CSSRuleList, pattern: RegExp): boolean 
 }
 
 function injectCustomThemeCss(theme: ThemeMeta): void {
+  if (theme.css?.trim()) {
+    customThemesWithCss.add(theme.name);
+  }
   if (typeof document === 'undefined' || !theme.css?.trim()) return;
   const selector = `style[data-helical-custom-theme="${theme.name}"]`;
   let styleEl = document.head.querySelector<HTMLStyleElement>(selector);
@@ -98,13 +89,6 @@ function injectCustomThemeCss(theme: ThemeMeta): void {
   if (styleEl.textContent !== theme.css) {
     styleEl.textContent = theme.css;
   }
-}
-
-/**
- * Cycles a color-mode preference through `'system' -> 'light' -> 'dark' -> 'system'`.
- */
-export function cycleThemeModeValue(mode: ThemeMode): ThemeMode {
-  return mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system';
 }
 
 /**
@@ -137,12 +121,12 @@ export const mergeThemePresets = registerCustomThemes;
 
 /**
  * Checks whether a `.theme-{name}` CSS rule is loaded in the active document stylesheets.
- * Falls back to checking the built-in `THEME_NAMES` list when running outside the browser.
+ * Falls back to checking registered themes with CSS or built-in `THEME_NAMES` when running outside the browser.
  */
 export function hasThemeCss(theme: ThemeName): boolean {
   if (!theme) return false;
   if (typeof document === 'undefined' || !document.styleSheets || document.styleSheets.length === 0) {
-    return THEME_NAMES.includes(theme);
+    return THEME_NAMES.includes(theme) || customThemesWithCss.has(theme);
   }
   const pattern = new RegExp(`\\.${THEME_CLASS_PREFIX}${escapeRegExp(theme)}(?![a-zA-Z0-9_-])`);
   for (let i = 0; i < document.styleSheets.length; i += 1) {
@@ -160,36 +144,6 @@ export function hasThemeCss(theme: ThemeName): boolean {
 }
 
 /**
- * Reads whether the operating system currently prefers a dark color scheme via `matchMedia`.
- */
-export function readSystemDarkMode(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  try {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Subscribes to operating system `prefers-color-scheme: dark` media query changes.
- * Returns an unsubscribe function.
- */
-export function subscribeSystemDarkMode(onChange: (dark: boolean) => void): () => void {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return () => {};
-  }
-  try {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const listener = (event: MediaQueryListEvent) => onChange(event.matches);
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  } catch {
-    return () => {};
-  }
-}
-
-/**
  * Reads the active `theme-*` class from `document.documentElement`, falling back to `'helical-ui'`.
  */
 export function readDocumentTheme(): ThemeName {
@@ -202,26 +156,6 @@ export function readDocumentTheme(): ThemeName {
     }
   }
   return DEFAULT_THEME;
-}
-
-/**
- * Reads whether `document.documentElement` currently has the `dark` class applied.
- */
-export function readDocumentDarkMode(): boolean {
-  if (typeof document === 'undefined') return readSystemDarkMode();
-  return document.documentElement.classList.contains('dark');
-}
-
-/**
- * Toggles the `dark` class on `document.documentElement` while preserving the active `theme-*` class.
- */
-export function syncDocumentDarkMode(dark: boolean): void {
-  if (typeof document === 'undefined') return;
-  const root = document.documentElement;
-  if (readDocumentTheme() === DEFAULT_THEME && !root.classList.contains(`${THEME_CLASS_PREFIX}${DEFAULT_THEME}`)) {
-    root.classList.add(`${THEME_CLASS_PREFIX}${DEFAULT_THEME}`);
-  }
-  root.classList.toggle('dark', dark);
 }
 
 /**

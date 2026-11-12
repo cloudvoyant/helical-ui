@@ -15,7 +15,7 @@
 - Split multi-concern component modules in `libs/helical-ui/src/` into a `<component>/` directory with separate `types.ts`, `core.ts`, `styles.ts`, and `index.ts` files rather than a single monolithic file.
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
-- [Proposed] Expose domain-specific submodules via subpath exports (e.g., `@cloudvoyant/helical-ui/<domain>`) when helpers are internal to a specific component domain rather than general-purpose root exports.
+- [Proposed] Keep main component types and public utilities on the `@cloudvoyant/helical-ui` barrel root; expose only internal component helpers that consumers are discouraged from calling directly via subpath exports (e.g., `@cloudvoyant/helical-ui/commands`).
 
 ### Repository layout
 

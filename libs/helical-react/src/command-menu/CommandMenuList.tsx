@@ -1,11 +1,11 @@
 // libs/helical-react/src/command-menu/CommandMenuList.tsx
 
 // 1. Imports
-import { cn } from '@cloudvoyant/helical-ui';
 import {
+  cn,
   commandMenuListVariants,
   resolveCommandMenuGridStyle,
-} from '@cloudvoyant/helical-ui/commands';
+} from '@cloudvoyant/helical-ui';
 import { ListboxContent, ListboxEmpty } from '../listbox';
 import { Scroll } from '../scroll';
 import { CommandMenuItem } from './CommandMenuItem';

@@ -6,7 +6,7 @@ import type {
   CommandFlatItem,
   CommandMenuColumns,
   CommandMenuResolution,
-} from '@cloudvoyant/helical-ui/commands';
+} from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
 export interface CommandMenuContextValue {

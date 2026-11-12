@@ -2,12 +2,12 @@
 
 // 1. Imports
 import { CornerDownLeft } from 'lucide-react';
-import { cn } from '@cloudvoyant/helical-ui';
 import {
+  cn,
   commandMenuInputVariants,
   commandMenuPrefixBase,
   commandMenuPromptBarVariants,
-} from '@cloudvoyant/helical-ui/commands';
+} from '@cloudvoyant/helical-ui';
 import { Kbd } from '../kbd';
 import { ListboxInput } from '../listbox';
 import { Row } from '../row';

@@ -12,23 +12,18 @@ import {
   subscribeDocumentTheme,
   subscribeSystemDarkMode,
   syncDocumentDarkMode,
-  syncDocumentTheme,
   type LightSwitchBaseProps,
   type ThemeMode,
-  type ThemeName,
 } from '@cloudvoyant/helical-ui';
 import { Button, type ButtonProps } from './button';
 
 // 2. Module constants & types
 export interface LightSwitchProps
   extends Omit<ButtonProps, 'onChange'>,
-    LightSwitchBaseProps {
-  theme?: ThemeName;
-}
+    LightSwitchBaseProps {}
 
 // 4. Exported component
 export function LightSwitch({
-  theme,
   mode: controlledMode,
   defaultMode,
   onModeChange,
@@ -46,12 +41,8 @@ export function LightSwitch({
   // --- Effects ---
   useEffect(() => {
     const dark = currentMode === 'system' ? systemDark : currentMode === 'dark';
-    if (theme) {
-      syncDocumentTheme(theme, dark);
-    } else {
-      syncDocumentDarkMode(dark);
-    }
-  }, [theme, currentMode, systemDark]);
+    syncDocumentDarkMode(dark);
+  }, [currentMode, systemDark]);
 
   useEffect(() => subscribeSystemDarkMode(setSystemDark), []);
 

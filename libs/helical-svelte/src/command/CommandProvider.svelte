@@ -6,7 +6,7 @@
     createCommandTree,
     type CommandContextProps,
     type CommandStyle,
-  } from '@cloudvoyant/helical-ui/commands';
+  } from '@cloudvoyant/helical-ui';
   import { setCommandContext } from './context.svelte';
 
   // 2. Module constants & types

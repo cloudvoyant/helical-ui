@@ -90,7 +90,7 @@ flowchart TD
 | Component / Class | Props / Methods | Description |
 | :--- | :--- | :--- |
 | `ThemeSelector` | `value?`, `defaultValue?`, `themes?`, `customThemes?`, `onValueChange?`, `className?` / `class?` | Scrollable 2-column swatch grid that applies themes to `document.documentElement`. |
-| `LightSwitch` (`ThemeToggle`) | `mode?`, `defaultMode?`, `onModeChange?`, `theme?`, `className?` / `class?` | Icon button that cycles light, dark, and system modes. |
+| `LightSwitch` | `mode?`, `defaultMode?`, `onModeChange?`, `className?` / `class?` | Standalone icon button that cycles light, dark, and system modes while preserving the active color theme. |
 | `ThemeService` (`themeService`) | `theme`, `themeMode`, `darkMode`, `themes`, `registerCustomThemes()`, `setTheme()`, `setThemeMode()`, `cycleThemeMode()` | Svelte 5 reactive theme controller exported from `@cloudvoyant/helical-svelte`. |
 
 #### Usage

@@ -2,7 +2,7 @@
 
 // 1. Imports
 import { getContext, hasContext, setContext } from 'svelte';
-import type { CommandContextValue } from '@cloudvoyant/helical-ui/commands';
+import type { CommandContextValue } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
 const COMMAND_CONTEXT_KEY = Symbol.for('helical-ui:command-context');

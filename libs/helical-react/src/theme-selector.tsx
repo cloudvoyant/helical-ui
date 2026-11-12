@@ -58,6 +58,14 @@ export function ThemeSelector({
 
   // --- Effects ---
   useEffect(() => {
+    if (themes && themes.length > 0) {
+      registerCustomThemes(themes);
+    } else if (customThemes && customThemes.length > 0) {
+      registerCustomThemes(customThemes);
+    }
+  }, [themes, customThemes]);
+
+  useEffect(() => {
     if (defaultValue) {
       const applied = syncDocumentTheme(defaultValue);
       setUncontrolledValue(applied);
@@ -89,6 +97,13 @@ export function ThemeSelector({
       data-theme-selector-grid
       {...props}
     >
+      {resolvedThemes.map((t) =>
+        t.css ? (
+          <style key={`css-${t.name}`} data-helical-custom-theme={t.name}>
+            {t.css}
+          </style>
+        ) : null,
+      )}
       <div className={themeSelectorGridBase} style={SWATCH_FONT_STYLE}>
         {resolvedThemes.map((t) => {
           const active = activeTheme === t.name;

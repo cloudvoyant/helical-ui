@@ -6,7 +6,6 @@ group: misc
 ---
 
 import Demo from '../../components/Demo.astro';
-import Examples from '../../components/Examples.astro';
 
 `ThemeSelector` renders a scrollable grid of live-preview theme swatches that apply the selected `theme-{name}` class to `<html>`, and `LightSwitch` cycles between light, dark, and system color modes while preserving the active theme preset.
 
@@ -14,11 +13,11 @@ import Examples from '../../components/Examples.astro';
 
 ## Examples
 
-### Custom Theme
+### Custom Theme (`solar-flare`)
 
-Pass `customThemes` to `ThemeSelector` (or call `registerCustomThemes`) to prepend custom presets ahead of the built-in `THEMES` registry. Custom themes with loaded `.theme-{name}` CSS rules can be selected and applied across the site; if a custom theme has no matching CSS rules loaded, selecting it falls back to the default `helical-ui` theme.
+Call `registerCustomThemes` (or pass `customThemes` to `ThemeSelector`) to register custom presets like `'solar-flare'` ahead of the built-in `THEMES` registry. Custom themes with loaded `.theme-{name}` CSS rules can be selected and applied across the site; if a custom theme has no matching CSS rules loaded (such as `'missing-css'`), selecting it falls back to the default `'helical-ui'` theme.
 
-<Examples component="theming" exclude="default" />
+<Demo component="theming" example="custom-theme" />
 
 ## API Reference
 

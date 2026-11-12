@@ -82,6 +82,11 @@
 </script>
 
 <div class={cn(themeSelectorContainerBase, className)} data-theme-selector-grid>
+  {#each resolvedThemes as t (`css-${t.name}`)}
+    {#if t.css}
+      {@html `<style data-helical-custom-theme="${t.name}">${t.css}</style>`}
+    {/if}
+  {/each}
   <div
     class={themeSelectorGridBase}
     style="--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;"

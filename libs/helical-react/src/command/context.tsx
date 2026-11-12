@@ -7,7 +7,7 @@ import {
   type CommandContextProps,
   type CommandContextValue,
   type CommandStyle,
-} from '@cloudvoyant/helical-ui/commands';
+} from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
 export interface CommandProviderProps extends CommandContextProps {

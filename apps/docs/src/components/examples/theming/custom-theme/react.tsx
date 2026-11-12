@@ -2,7 +2,7 @@
 
 // 1. Imports
 import { HStack, LightSwitch, ThemeSelector, VStack } from '@cloudvoyant/helical-react';
-import type { ThemeMeta } from '@cloudvoyant/helical-ui';
+import { registerCustomThemes, type ThemeMeta } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
 const CUSTOM_THEMES: ThemeMeta[] = [
@@ -32,13 +32,15 @@ const CUSTOM_THEMES: ThemeMeta[] = [
   },
 ];
 
+registerCustomThemes(CUSTOM_THEMES);
+
 // 4. Exported component
 export default function ThemingCustomTheme() {
   // --- Render ---
   return (
     <VStack className="w-full max-w-md gap-3">
       <HStack className="items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">Custom Themes</span>
+        <span className="text-xs font-medium text-muted-foreground">Solar Flare Custom Theme</span>
         <LightSwitch />
       </HStack>
       <ThemeSelector customThemes={CUSTOM_THEMES} />

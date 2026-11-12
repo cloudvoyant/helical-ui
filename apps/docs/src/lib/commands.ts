@@ -3,10 +3,11 @@ import {
   THEMES,
   getDocumentWhichKeyController,
   subscribeDocumentWhichKeyController,
+  type CommandNode,
+  type CommandStyle,
   type JumpAction,
   type KeybindingPreset,
 } from '@cloudvoyant/helical-ui';
-import type { CommandNode, CommandStyle } from '@cloudvoyant/helical-ui/commands';
 import { FRAMEWORK_EVENT, getStoredFramework, setFramework, type Framework } from './framework';
 import { applyColorMode, applyTheme, getInitialColorMode, getInitialTheme, type ColorMode } from './theme';
 

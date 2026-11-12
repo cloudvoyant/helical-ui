@@ -2,7 +2,7 @@
 
 // 1. Imports
 import { getContext, setContext } from 'svelte';
-import type { CommandFlatItem, CommandMenuColumns, CommandMenuResolution } from '@cloudvoyant/helical-ui/commands';
+import type { CommandFlatItem, CommandMenuColumns, CommandMenuResolution } from '@cloudvoyant/helical-ui';
 
 // 2. Module constants & types
 const COMMAND_MENU_CONTEXT_KEY = Symbol.for('helical-ui:command-menu-context');
