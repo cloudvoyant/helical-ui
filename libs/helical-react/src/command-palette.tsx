@@ -6,30 +6,19 @@ import { Highlight } from '@ark-ui/react/highlight';
 import { createListCollection } from '@ark-ui/react/listbox';
 import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-react';
 import {
-  announceCommandMessage,
   cn,
-  commandPaletteBreadcrumbBase,
-  commandPaletteDialogContentBase,
-  commandPaletteFooterBase,
-  commandPaletteHeaderBase,
-  commandPaletteInputBase,
-  commandPaletteItemBase,
-  commandPaletteListBase,
-  commandPalettePositionerBase,
-  commandPaletteVariants,
+  commandPaletteStyles,
   createCommandTree,
   matchesCommandHotkey,
-  resolveCommandLevel,
-  shouldHandleCommandHotkey,
-  splitHighlightSegments,
   type CommandFlatItem,
   type CommandPaletteProps as CoreCommandPaletteProps,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
 import {
-  captureCommandFocusTarget,
-  finalizeCommandSelectFocus,
-  restoreCommandFocusTarget,
+  announceCommandMessage,
+  resolveCommandLevel,
+  shouldHandleCommandHotkey,
+  splitHighlightSegments,
 } from '@cloudvoyant/helical-ui/commands';
 import { Badge } from './badge';
 import { Button } from './button';
@@ -138,7 +127,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     const [highlightedValue, setHighlightedValue] = useState<string | null>(null);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const anchorRef = useRef<HTMLSpanElement | null>(null);
-    const previousFocusRef = useRef<HTMLElement | null>(null);
 
     const sharedOpen = isProviderManaged
       ? sharedCommand.style === 'palette' && sharedCommand.open
@@ -214,9 +202,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
 
     useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
-      if (!previousFocusRef.current) {
-        recordPreviousFocus();
-      }
       const focusInput = () => {
         getInputElement()?.focus();
       };
@@ -226,13 +211,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     }, [isOpen, inline, currentActivePath.length]);
 
     // --- Methods ---
-    const recordPreviousFocus = () => {
-      const target = captureCommandFocusTarget(rootRef.current);
-      if (target) {
-        previousFocusRef.current = target;
-      }
-    };
-
     const setActivePath = (nextPath: string[]) => {
       if (controlledActivePath === undefined) {
         setUncontrolledActivePath(nextPath);
@@ -247,13 +225,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       onQueryChange?.(nextQuery);
     };
 
-    const handleOpenChange = (
-      nextOpen: boolean,
-      options?: { restoreFocus?: boolean },
-    ) => {
-      if (nextOpen && !isOpen) {
-        recordPreviousFocus();
-      }
+    const handleOpenChange = (nextOpen: boolean) => {
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
       }
@@ -263,11 +235,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       if (!nextOpen) {
         setActivePath([]);
         setQuery('');
-        const restoreTarget = previousFocusRef.current;
-        previousFocusRef.current = null;
-        if (options?.restoreFocus !== false) {
-          restoreCommandFocusTarget(restoreTarget);
-        }
       }
       onOpenChange?.(nextOpen);
     };
@@ -286,10 +253,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       }
 
       const shouldClose = !inline && item.node.closeOnSelect !== false;
-      const restoreTarget = previousFocusRef.current;
-      if (shouldClose) {
-        handleOpenChange(false, { restoreFocus: false });
-      }
 
       const ctx: CommandSelectContext = {
         value: item.node.value,
@@ -305,7 +268,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       announceCommandMessage(`Executed ${item.label}`);
 
       if (shouldClose) {
-        finalizeCommandSelectFocus(rootRef.current, restoreTarget);
+        handleOpenChange(false);
       }
     };
 
@@ -362,7 +325,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
         data-command-palette-inline={inline ? 'true' : undefined}
         data-testid={inline ? 'command-palette' : 'command-palette-surface'}
         className={cn(
-          inline ? commandPaletteVariants({ size }) : 'flex w-full flex-col outline-none',
+          inline ? commandPaletteStyles.root({ size }) : 'flex w-full flex-col outline-none',
           inline ? className : undefined,
         )}
       >
@@ -377,7 +340,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
           }}
           className="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
         >
-          <div className={commandPaletteHeaderBase}>
+          <div className={commandPaletteStyles.header}>
             <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             {resolution.breadcrumbs.length > 0 && (
               <Row className="shrink-0 items-center gap-1" data-testid="command-palette-breadcrumbs">
@@ -390,7 +353,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                     setQuery('');
                     getInputElement()?.focus();
                   }}
-                  className={commandPaletteBreadcrumbBase}
+                  className={commandPaletteStyles.breadcrumb}
                 >
                   Commands
                 </button>
@@ -406,7 +369,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                       setQuery('');
                       getInputElement()?.focus();
                     }}
-                    className={commandPaletteBreadcrumbBase}
+                    className={commandPaletteStyles.breadcrumb}
                   >
                     <span>›</span>
                     <span>{crumb.label}</span>
@@ -501,7 +464,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                   }
                 }
               }}
-              className={commandPaletteInputBase}
+              className={commandPaletteStyles.input}
             />
             {!inline && (
               <button
@@ -520,7 +483,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
             <ListboxContent
               tabIndex={-1}
               data-testid="command-palette-list"
-              className={commandPaletteListBase}
+              className={commandPaletteStyles.list}
             >
               {!resolution.hasCommands ? (
                 <ListboxEmpty
@@ -558,7 +521,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                           e.stopPropagation();
                           selectFlatItem(item);
                         }}
-                        className={commandPaletteItemBase}
+                        className={commandPaletteStyles.item}
                       >
                         <ListboxItemText className="min-w-0 flex-1 truncate font-medium text-foreground">
                           <Row className="min-w-0 items-center gap-2">
@@ -613,7 +576,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
             </ListboxContent>
           </Scroll>
 
-          <div className={commandPaletteFooterBase}>
+          <div className={commandPaletteStyles.footer}>
             <Row className="items-center gap-3">
               <span className="inline-flex items-center gap-1">
                 <Kbd size="sm">↑</Kbd>
@@ -657,7 +620,6 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
           lazyMount
           unmountOnExit
           trapFocus={false}
-          restoreFocus={false}
           closeOnEscape={currentActivePath.length === 0}
           initialFocusEl={() => getInputElement()}
           onOpenChange={(details) => handleOpenChange(details.open)}
@@ -673,13 +635,13 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
           )}
           <DialogBackdrop />
           <DialogContent
-            positionerClassName={commandPalettePositionerBase}
+            positionerClassName={commandPaletteStyles.positioner}
             data-command-palette="true"
             data-modal="true"
             data-testid="command-palette"
             className={cn(
-              commandPaletteDialogContentBase,
-              commandPaletteVariants({ size }),
+              commandPaletteStyles.dialogContent,
+              commandPaletteStyles.root({ size }),
               className,
             )}
           >

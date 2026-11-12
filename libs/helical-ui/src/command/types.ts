@@ -86,8 +86,6 @@ export interface CommandMenuResolution {
   error: string | null;
 }
 
-export type ColonCommandResolution = CommandMenuResolution;
-
 export interface CommandHighlightSegment {
   text: string;
   highlight: boolean;

@@ -12,25 +12,20 @@ import {
 } from 'react';
 import { createListCollection } from '@ark-ui/react/listbox';
 import {
-  announceCommandMessage,
   cn,
-  commandMenuDialogContentBase,
-  commandMenuPositionerBase,
-  commandMenuVariants,
+  commandMenuStyles,
   createCommandTree,
-  formatCommandMenuCompletionInput,
   matchesCommandHotkey,
-  resolveCommandMenuGridNavigation,
-  resolveCommandMenuState,
-  shouldHandleCommandHotkey,
   type CommandFlatItem,
   type CommandMenuProps as CoreCommandMenuProps,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
 import {
-  captureCommandFocusTarget,
-  finalizeCommandSelectFocus,
-  restoreCommandFocusTarget,
+  announceCommandMessage,
+  formatCommandMenuCompletionInput,
+  resolveCommandMenuGridNavigation,
+  resolveCommandMenuState,
+  shouldHandleCommandHotkey,
 } from '@cloudvoyant/helical-ui/commands';
 import { Button } from '../button';
 import { useOptionalCommand } from '../command';
@@ -96,7 +91,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
 
     const rootRef = useRef<HTMLDivElement | null>(null);
     const anchorRef = useRef<HTMLSpanElement | null>(null);
-    const previousFocusRef = useRef<HTMLElement | null>(null);
 
     const sharedOpen = isProviderManaged
       ? (sharedCommand.style === 'menu' || sharedCommand.style === 'colon') &&
@@ -177,9 +171,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
 
     useEffect(() => {
       if (!isOpen || inline || typeof document === 'undefined') return;
-      if (!previousFocusRef.current) {
-        recordPreviousFocus();
-      }
       const focusInput = () => {
         getInputElement()?.focus();
       };
@@ -189,13 +180,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     }, [isOpen, inline]);
 
     // --- Methods ---
-    const recordPreviousFocus = () => {
-      const target = captureCommandFocusTarget(rootRef.current);
-      if (target) {
-        previousFocusRef.current = target;
-      }
-    };
-
     const setInputValue = (nextValue: string, nextTabBase: string | null = null) => {
       if (controlledInputValue === undefined) {
         setUncontrolledInput(nextValue);
@@ -205,13 +189,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       onInputValueChange?.(nextValue);
     };
 
-    const handleOpenChange = (
-      nextOpen: boolean,
-      options?: { restoreFocus?: boolean },
-    ) => {
-      if (nextOpen && !isOpen) {
-        recordPreviousFocus();
-      }
+    const handleOpenChange = (nextOpen: boolean) => {
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
       }
@@ -224,11 +202,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       if (!nextOpen) {
         setInputValue('', null);
         setSubmittedError(null);
-        const restoreTarget = previousFocusRef.current;
-        previousFocusRef.current = null;
-        if (options?.restoreFocus !== false) {
-          restoreCommandFocusTarget(restoreTarget);
-        }
       }
       onOpenChange?.(nextOpen);
     };
@@ -250,12 +223,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       }
 
       const shouldClose = !inline && item.node.closeOnSelect !== false;
-      const restoreTarget = previousFocusRef.current;
-      if (shouldClose) {
-        handleOpenChange(false, { restoreFocus: false });
-      } else {
-        setInputValue('');
-      }
 
       const ctx: CommandSelectContext = {
         value: item.node.value,
@@ -271,7 +238,9 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       announceCommandMessage(`Executed ${item.fullCommand}`);
 
       if (shouldClose) {
-        finalizeCommandSelectFocus(rootRef.current, restoreTarget);
+        handleOpenChange(false);
+      } else {
+        setInputValue('');
       }
     };
 
@@ -474,7 +443,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           data-command-menu-inline={inline ? 'true' : undefined}
           data-testid={inline ? 'command-menu' : 'command-menu-surface'}
           className={cn(
-            commandMenuVariants({ size }),
+            commandMenuStyles.root({ size }),
             inline ? cn('rounded-lg border', className) : 'max-w-none border-0 shadow-none',
           )}
         >
@@ -511,7 +480,6 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           lazyMount
           unmountOnExit
           trapFocus={false}
-          restoreFocus={false}
           initialFocusEl={() => getInputElement()}
           onOpenChange={(details) => handleOpenChange(details.open)}
         >
@@ -526,15 +494,15 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           )}
           <DialogBackdrop className="bg-black/20" />
           <DialogContent
-            positionerClassName={commandMenuPositionerBase}
+            positionerClassName={commandMenuStyles.positioner}
             data-command-menu="true"
             data-modal="true"
             data-size={size}
             data-command-menu-columns={String(columns)}
             data-testid="command-menu"
             className={cn(
-              commandMenuDialogContentBase,
-              commandMenuVariants({ size }),
+              commandMenuStyles.dialogContent,
+              commandMenuStyles.root({ size }),
               className,
             )}
           >

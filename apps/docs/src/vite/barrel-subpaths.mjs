@@ -139,9 +139,6 @@ export function helicalBarrelSubpathPlugin() {
     if (exportMaps) return exportMaps;
     exportMaps = {
       '@cloudvoyant/helical-ui': parseBarrel(path.resolve(docsRoot, '../../libs/helical-ui/src/index.ts')),
-      '@cloudvoyant/helical-ui/command': parseBarrel(
-        path.resolve(docsRoot, '../../libs/helical-ui/src/command/index.ts'),
-      ),
       '@cloudvoyant/helical-ui/commands': parseBarrel(
         path.resolve(docsRoot, '../../libs/helical-ui/src/command/index.ts'),
       ),

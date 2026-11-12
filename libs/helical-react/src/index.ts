@@ -393,3 +393,4 @@ export * from './which-key';
 export * from './editor';
 export { LightSwitch, type LightSwitchProps } from './light-switch';
 export { ThemeSelector, type ThemeSelectorProps } from './theme-selector';
+export { useTheme, type ThemeController, type UseThemeOptions } from './use-theme';

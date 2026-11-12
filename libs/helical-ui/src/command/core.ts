@@ -492,9 +492,6 @@ export function resolveCommandMenuState(
   };
 }
 
-/** Alias for `resolveCommandMenuState`. */
-export const resolveColonCommandState = resolveCommandMenuState;
-
 /**
  * Formats the next `:command` input string when completing or drilling into a suggestion.
  */
@@ -506,9 +503,6 @@ export function formatCommandMenuCompletionInput(
   const nextTokens = [...completedTokens, item.command].join(' ');
   return item.isBranch && appendBranchSpace ? `:${nextTokens} ` : `:${nextTokens}`;
 }
-
-/** Alias for `formatCommandMenuCompletionInput`. */
-export const formatColonCompletionInput = formatCommandMenuCompletionInput;
 
 /**
  * Splits a label or command string into highlighted and non-highlighted text segments
@@ -641,9 +635,6 @@ export function resolveCommandMenuGridStyle(
   };
 }
 
-/** Alias for `resolveCommandMenuGridStyle`. */
-export const resolveColonCommandGridStyle = resolveCommandMenuGridStyle;
-
 /**
  * Computes the next highlighted suggestion index for 2D arrow-key navigation in `CommandMenu`.
  */
@@ -672,55 +663,4 @@ export function resolveCommandMenuGridNavigation(
   const col = Math.floor(safeIdx / rowCount);
   const nextCol = key === 'ArrowRight' ? (col + 1) % totalCols : (col - 1 + totalCols) % totalCols;
   return Math.min(nextCol * rowCount + row, itemCount - 1);
-}
-
-/** Alias for `resolveCommandMenuGridNavigation`. */
-export const resolveColonCommandGridNavigation = resolveCommandMenuGridNavigation;
-
-/**
- * Captures the currently focused element outside `rootEl` so focus can be restored
- * or preserved when a command overlay opens or closes.
- */
-export function captureCommandFocusTarget(rootEl: HTMLElement | null): HTMLElement | null {
-  if (typeof document === 'undefined') return null;
-  const active = document.activeElement;
-  if (
-    active &&
-    typeof (active as HTMLElement).focus === 'function' &&
-    active !== document.body &&
-    active !== document.documentElement &&
-    (!rootEl || !rootEl.contains(active))
-  ) {
-    return active as HTMLElement;
-  }
-  return null;
-}
-
-/**
- * Restores DOM focus to a previously captured focus target if it remains connected.
- */
-export function restoreCommandFocusTarget(target: HTMLElement | null): void {
-  if (typeof document === 'undefined' || !target) return;
-  if (target.isConnected && target !== document.body && target !== document.documentElement) {
-    target.focus({ preventScroll: true });
-  }
-}
-
-/**
- * Preserves any custom focus target focused synchronously during a command's `onSelect` handler,
- * or restores the pre-open focus target when no custom element was focused.
- */
-export function finalizeCommandSelectFocus(rootEl: HTMLElement | null, restoreTarget: HTMLElement | null): void {
-  const customFocusTarget = captureCommandFocusTarget(rootEl);
-  if (customFocusTarget) {
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => {
-        if (customFocusTarget.isConnected && document.activeElement !== customFocusTarget) {
-          customFocusTarget.focus({ preventScroll: true });
-        }
-      });
-    }
-    return;
-  }
-  restoreCommandFocusTarget(restoreTarget);
 }

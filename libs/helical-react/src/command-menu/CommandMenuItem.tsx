@@ -3,11 +3,8 @@
 // 1. Imports
 import { Highlight } from '@ark-ui/react/highlight';
 import { Check, ChevronRight } from 'lucide-react';
-import {
-  commandMenuItemVariants,
-  splitHighlightSegments,
-  type CommandFlatItem,
-} from '@cloudvoyant/helical-ui';
+import { commandMenuStyles, type CommandFlatItem } from '@cloudvoyant/helical-ui';
+import { splitHighlightSegments } from '@cloudvoyant/helical-ui/commands';
 import { Kbd } from '../kbd';
 import { ListboxItem, ListboxItemText } from '../listbox';
 import { Row } from '../row';
@@ -91,7 +88,7 @@ export function CommandMenuItem({ item }: CommandMenuItemProps) {
         e.stopPropagation();
         executeOrDrillItem(item);
       }}
-      className={commandMenuItemVariants({ size })}
+      className={commandMenuStyles.item({ size })}
     >
       <ListboxItemText className="min-w-0 flex-1 truncate">
         <Row className="min-w-0 items-center gap-2">

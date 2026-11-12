@@ -4,25 +4,20 @@
   import type { Snippet } from 'svelte';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import {
-    announceCommandMessage,
     cn,
-    commandMenuDialogContentBase,
-    commandMenuPositionerBase,
-    commandMenuVariants,
+    commandMenuStyles,
     createCommandTree,
-    formatCommandMenuCompletionInput,
     matchesCommandHotkey,
-    resolveCommandMenuGridNavigation,
-    resolveCommandMenuState,
-    shouldHandleCommandHotkey,
     type CommandFlatItem,
     type CommandMenuProps as CoreCommandMenuProps,
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
   import {
-    captureCommandFocusTarget,
-    finalizeCommandSelectFocus,
-    restoreCommandFocusTarget,
+    announceCommandMessage,
+    formatCommandMenuCompletionInput,
+    resolveCommandMenuGridNavigation,
+    resolveCommandMenuState,
+    shouldHandleCommandHotkey,
   } from '@cloudvoyant/helical-ui/commands';
   import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';
@@ -80,7 +75,6 @@
   let submittedError = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
   let anchorEl = $state<HTMLSpanElement | null>(null);
-  let previousFocusEl: HTMLElement | null = null;
 
   const isStandalone = $derived(
     itemsProp !== undefined || externalCollectionProp !== undefined,
@@ -161,9 +155,6 @@
 
   $effect(() => {
     if (!isOpen || inline || typeof document === 'undefined') return;
-    if (!previousFocusEl) {
-      recordPreviousFocus();
-    }
     const focusInput = () => {
       getInputElement()?.focus();
     };
@@ -173,13 +164,6 @@
   });
 
   // --- Methods ---
-  function recordPreviousFocus() {
-    const target = captureCommandFocusTarget(rootEl);
-    if (target) {
-      previousFocusEl = target;
-    }
-  }
-
   function setInputValue(nextValue: string, nextTabBase: string | null = null) {
     if (controlledInputValue !== undefined) {
       controlledInputValue = nextValue;
@@ -191,13 +175,7 @@
     onInputValueChange?.(nextValue);
   }
 
-  function handleOpenChange(
-    nextOpen: boolean,
-    options?: { restoreFocus?: boolean },
-  ) {
-    if (nextOpen && !isOpen) {
-      recordPreviousFocus();
-    }
+  function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen !== undefined) {
       controlledOpen = nextOpen;
     } else {
@@ -212,11 +190,6 @@
     if (!nextOpen) {
       setInputValue('', null);
       submittedError = null;
-      const restoreTarget = previousFocusEl;
-      previousFocusEl = null;
-      if (options?.restoreFocus !== false) {
-        restoreCommandFocusTarget(restoreTarget);
-      }
     }
     onOpenChange?.(nextOpen);
   }
@@ -238,12 +211,6 @@
     }
 
     const shouldClose = !inline && item.node.closeOnSelect !== false;
-    const restoreTarget = previousFocusEl;
-    if (shouldClose) {
-      handleOpenChange(false, { restoreFocus: false });
-    } else {
-      setInputValue('');
-    }
 
     const ctx: CommandSelectContext = {
       value: item.node.value,
@@ -259,7 +226,9 @@
     announceCommandMessage(`Executed ${item.fullCommand}`);
 
     if (shouldClose) {
-      finalizeCommandSelectFocus(rootEl, restoreTarget);
+      handleOpenChange(false);
+    } else {
+      setInputValue('');
     }
   }
 
@@ -479,7 +448,7 @@
     data-command-menu-inline={inline ? 'true' : undefined}
     data-testid={inline ? 'command-menu' : 'command-menu-surface'}
     class={cn(
-      commandMenuVariants({ size }),
+      commandMenuStyles.root({ size }),
       inline ? cn('rounded-lg border', className, reactClassName) : 'max-w-none border-0 shadow-none',
     )}
   >
@@ -510,7 +479,6 @@
       lazyMount
       unmountOnExit
       trapFocus={false}
-      restoreFocus={false}
       initialFocusEl={() => getInputElement()}
       onOpenChange={(details) => handleOpenChange(details.open)}
     >
@@ -525,15 +493,15 @@
       {/if}
       <DialogBackdrop class="bg-black/20" />
       <DialogContent
-        positionerClass={commandMenuPositionerBase}
+        positionerClass={commandMenuStyles.positioner}
         data-command-menu="true"
         data-modal="true"
         data-size={size}
         data-command-menu-columns={String(columns)}
         data-testid="command-menu"
         class={cn(
-          commandMenuDialogContentBase,
-          commandMenuVariants({ size }),
+          commandMenuStyles.dialogContent,
+          commandMenuStyles.root({ size }),
           className,
           reactClassName,
         )}

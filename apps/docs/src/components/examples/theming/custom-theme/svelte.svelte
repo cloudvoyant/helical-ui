@@ -1,8 +1,8 @@
 <!-- apps/docs/src/components/examples/theming/custom-theme/svelte.svelte -->
 <script lang="ts">
   // 1. Imports
-  import { HStack, LightSwitch, ThemeSelector, VStack } from '@cloudvoyant/helical-svelte';
-  import { registerCustomThemes, type ThemeMeta } from '@cloudvoyant/helical-ui';
+  import { HStack, LightSwitch, ThemeSelector, VStack, useTheme } from '@cloudvoyant/helical-svelte';
+  import type { ThemeMeta } from '@cloudvoyant/helical-ui';
 
   // 2. Module constants & types
   const CUSTOM_THEMES: ThemeMeta[] = [
@@ -32,7 +32,8 @@
     },
   ];
 
-  registerCustomThemes(CUSTOM_THEMES);
+  // --- State ---
+  useTheme({ customThemes: CUSTOM_THEMES });
 </script>
 
 <VStack class="w-full max-w-md gap-3">
@@ -40,5 +41,5 @@
     <span class="text-xs font-medium text-muted-foreground">Solar Flare Custom Theme</span>
     <LightSwitch />
   </HStack>
-  <ThemeSelector customThemes={CUSTOM_THEMES} />
+  <ThemeSelector />
 </VStack>

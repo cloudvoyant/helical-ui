@@ -14,10 +14,34 @@ export type ThemeName = string;
 
 export interface ThemeServiceOptions {
   themes?: readonly ThemeMeta[];
+  customThemes?: readonly ThemeMeta[];
   initialTheme?: ThemeName;
   initialMode?: ThemeMode;
   onThemeChange?: (theme: ThemeName) => void;
   onModeChange?: (mode: ThemeMode) => void;
+}
+
+export interface UseThemeOptions {
+  customThemes?: readonly ThemeMeta[];
+  themes?: readonly ThemeMeta[];
+  defaultTheme?: ThemeName;
+  defaultMode?: ThemeMode;
+  onThemeChange?: (theme: ThemeName) => void;
+  onModeChange?: (mode: ThemeMode) => void;
+}
+
+export interface ThemeController {
+  readonly theme: ThemeName;
+  readonly themeMode: ThemeMode;
+  readonly darkMode: boolean;
+  readonly themes: readonly ThemeMeta[];
+  setTheme: (theme: ThemeName) => ThemeName;
+  setThemeMode: (mode: ThemeMode) => ThemeMode;
+  cycleThemeMode: () => ThemeMode;
+  registerCustomThemes: (
+    customThemes: readonly ThemeMeta[],
+    options?: { defaultTheme?: ThemeName },
+  ) => readonly ThemeMeta[];
 }
 
 export interface ThemeSelectorBaseProps {
@@ -50,7 +74,25 @@ export const themeSelectorSwatchVariants = cva(
 );
 export type ThemeSelectorSwatchVariants = VariantProps<typeof themeSelectorSwatchVariants>;
 
+export const themeSelectorStyles = {
+  container: themeSelectorContainerBase,
+  grid: themeSelectorGridBase,
+  swatch: themeSelectorSwatchVariants,
+} as const;
+
 const customThemesWithCss = new Set<string>();
+const themeSubscribers = new Set<(state: { theme: ThemeName; dark: boolean; themes: readonly ThemeMeta[] }) => void>();
+
+function notifyThemeSubscribers(): void {
+  const snapshot = {
+    theme: readDocumentTheme(),
+    dark: readDocumentDarkMode(),
+    themes: [...THEMES],
+  };
+  for (const listener of themeSubscribers) {
+    listener(snapshot);
+  }
+}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -111,6 +153,18 @@ export function registerCustomThemes(customThemes: readonly ThemeMeta[]): ThemeM
       seen.add(preset.name);
     }
   }
+  for (const preset of BUILTIN_THEMES) {
+    if (!seen.has(preset.name)) {
+      merged.push(preset);
+      seen.add(preset.name);
+    }
+  }
+  const changed = merged.length !== THEMES.length || merged.some((item, idx) => THEMES[idx]?.name !== item.name);
+  THEMES.splice(0, THEMES.length, ...merged);
+  THEME_NAMES.splice(0, THEME_NAMES.length, ...merged.map((t) => t.name));
+  if (changed) {
+    notifyThemeSubscribers();
+  }
   return merged;
 }
 
@@ -126,7 +180,7 @@ export const mergeThemePresets = registerCustomThemes;
 export function hasThemeCss(theme: ThemeName): boolean {
   if (!theme) return false;
   if (typeof document === 'undefined' || !document.styleSheets || document.styleSheets.length === 0) {
-    return THEME_NAMES.includes(theme) || customThemesWithCss.has(theme);
+    return BUILTIN_THEME_NAMES.has(theme) || customThemesWithCss.has(theme);
   }
   const pattern = new RegExp(`\\.${THEME_CLASS_PREFIX}${escapeRegExp(theme)}(?![a-zA-Z0-9_-])`);
   for (let i = 0; i < document.styleSheets.length; i += 1) {
@@ -183,29 +237,40 @@ export function syncDocumentTheme(theme: ThemeName, dark?: boolean): ThemeName {
   if (typeof dark === 'boolean') {
     root.classList.toggle('dark', dark);
   }
+  notifyThemeSubscribers();
   return resolvedTheme;
 }
 
 /**
- * Observes `document.documentElement` class mutations and invokes `onChange` whenever
- * the active `theme-*` class or `dark` mode class changes. Returns an unsubscribe function.
+ * Observes `document.documentElement` class mutations and custom theme registrations, invoking
+ * `onChange` whenever the active `theme-*` class, `dark` mode class, or registered themes change.
+ * Returns an unsubscribe function.
  */
-export function subscribeDocumentTheme(onChange: (state: { theme: ThemeName; dark: boolean }) => void): () => void {
+export function subscribeDocumentTheme(
+  onChange: (state: { theme: ThemeName; dark: boolean; themes: readonly ThemeMeta[] }) => void,
+): () => void {
+  themeSubscribers.add(onChange);
   if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') {
-    return () => {};
+    return () => {
+      themeSubscribers.delete(onChange);
+    };
   }
   const root = document.documentElement;
   const observer = new MutationObserver(() => {
     onChange({
       theme: readDocumentTheme(),
       dark: readDocumentDarkMode(),
+      themes: [...THEMES],
     });
   });
   observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-  return () => observer.disconnect();
+  return () => {
+    themeSubscribers.delete(onChange);
+    observer.disconnect();
+  };
 }
 
-export const THEMES: ThemeMeta[] = [
+const BUILTIN_THEMES: readonly ThemeMeta[] = [
   { name: 'amber-minimal', label: 'Amber Minimal' },
   { name: 'amethyst-haze', label: 'Amethyst Haze' },
   { name: 'anthropic', label: 'Anthropic' },
@@ -260,5 +325,9 @@ export const THEMES: ThemeMeta[] = [
   { name: 'vitepress', label: 'Vitepress' },
   { name: 'helical-ui', label: 'Helical UI' },
 ];
+
+const BUILTIN_THEME_NAMES = new Set<string>(BUILTIN_THEMES.map((t) => t.name));
+
+export const THEMES: ThemeMeta[] = [...BUILTIN_THEMES];
 
 export const THEME_NAMES: string[] = THEMES.map((t) => t.name);

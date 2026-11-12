@@ -3,7 +3,7 @@
 // 1. Imports
 import { cva, type VariantProps } from 'class-variance-authority';
 
-// 2. Exported variants & base classes
+// 2. Exported variants & grouped style objects
 export const commandPaletteVariants = cva(
   'flex w-full flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl outline-none',
   {
@@ -41,6 +41,18 @@ export const commandPaletteItemBase =
 
 export const commandPaletteFooterBase =
   'flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground';
+
+export const commandPaletteStyles = {
+  root: commandPaletteVariants,
+  positioner: commandPalettePositionerBase,
+  dialogContent: commandPaletteDialogContentBase,
+  header: commandPaletteHeaderBase,
+  breadcrumb: commandPaletteBreadcrumbBase,
+  input: commandPaletteInputBase,
+  list: commandPaletteListBase,
+  item: commandPaletteItemBase,
+  footer: commandPaletteFooterBase,
+} as const;
 
 export const commandMenuVariants = cva(
   'flex w-full flex-col overflow-hidden border border-border bg-popover font-mono text-popover-foreground shadow-2xl outline-none',
@@ -139,13 +151,14 @@ export const commandMenuInputVariants = cva(
 export const commandMenuErrorBase =
   'flex items-center justify-between gap-2 border-t border-destructive/30 bg-destructive/10 px-3 py-1.5 font-mono text-xs text-destructive';
 
-export const colonCommandVariants = commandMenuVariants;
-export type ColonCommandVariants = CommandMenuVariants;
-export const colonCommandPositionerBase = commandMenuPositionerBase;
-export const colonCommandDialogContentBase = commandMenuDialogContentBase;
-export const colonCommandListVariants = commandMenuListVariants;
-export const colonCommandItemVariants = commandMenuItemVariants;
-export const colonCommandPromptBarVariants = commandMenuPromptBarVariants;
-export const colonCommandPrefixBase = commandMenuPrefixBase;
-export const colonCommandInputVariants = commandMenuInputVariants;
-export const colonCommandErrorBase = commandMenuErrorBase;
+export const commandMenuStyles = {
+  root: commandMenuVariants,
+  positioner: commandMenuPositionerBase,
+  dialogContent: commandMenuDialogContentBase,
+  list: commandMenuListVariants,
+  item: commandMenuItemVariants,
+  promptBar: commandMenuPromptBarVariants,
+  prefix: commandMenuPrefixBase,
+  input: commandMenuInputVariants,
+  error: commandMenuErrorBase,
+} as const;

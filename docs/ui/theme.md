@@ -89,15 +89,16 @@ flowchart TD
 
 | Component / Class | Props / Methods | Description |
 | :--- | :--- | :--- |
-| `ThemeSelector` | `value?`, `defaultValue?`, `themes?`, `customThemes?`, `onValueChange?`, `className?` / `class?` | Scrollable 2-column swatch grid that applies themes to `document.documentElement`. |
+| `ThemeSelector` | `value?`, `defaultValue?`, `themes?`, `onValueChange?`, `className?` / `class?` | Scrollable 2-column swatch grid that applies themes to `document.documentElement`. |
 | `LightSwitch` | `mode?`, `defaultMode?`, `onModeChange?`, `className?` / `class?` | Standalone icon button that cycles light, dark, and system modes while preserving the active color theme. |
+| `useTheme` | `useTheme(options?: UseThemeOptions): ThemeController` | Shared hook across `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte` for registering custom themes and reading/updating active theme and dark mode. |
 | `ThemeService` (`themeService`) | `theme`, `themeMode`, `darkMode`, `themes`, `registerCustomThemes()`, `setTheme()`, `setThemeMode()`, `cycleThemeMode()` | Svelte 5 reactive theme controller exported from `@cloudvoyant/helical-svelte`. |
 
 #### Usage
 
 ```tsx
 // React
-import { HStack, LightSwitch, ThemeSelector, VStack } from '@cloudvoyant/helical-react';
+import { HStack, LightSwitch, ThemeSelector, VStack, useTheme } from '@cloudvoyant/helical-react';
 
 const CUSTOM_THEMES = [
   {
@@ -108,13 +109,14 @@ const CUSTOM_THEMES = [
 ];
 
 export function AppearancePanel() {
+  useTheme({ customThemes: CUSTOM_THEMES });
   return (
     <VStack className="max-w-md gap-3">
       <HStack className="items-center justify-between">
         <span>Appearance</span>
         <LightSwitch />
       </HStack>
-      <ThemeSelector customThemes={CUSTOM_THEMES} />
+      <ThemeSelector />
     </VStack>
   );
 }

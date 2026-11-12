@@ -2,11 +2,8 @@
 
 // 1. Imports
 import { createContext, useContext, type KeyboardEvent } from 'react';
-import type {
-  CommandFlatItem,
-  CommandMenuColumns,
-  CommandMenuResolution,
-} from '@cloudvoyant/helical-ui';
+import type { CommandFlatItem, CommandMenuColumns } from '@cloudvoyant/helical-ui';
+import type { CommandMenuResolution } from '@cloudvoyant/helical-ui/commands';
 
 // 2. Module constants & types
 export interface CommandMenuContextValue {
@@ -35,6 +32,9 @@ export const CommandMenuContext = createContext<CommandMenuContextValue | null>(
 export const ColonCommandContext = CommandMenuContext;
 
 // 3. Local helpers / hooks
+/**
+ * Returns the active `CommandMenuContextValue` for child `CommandMenu` parts.
+ */
 export function useCommandMenuContext(): CommandMenuContextValue {
   const ctx = useContext(CommandMenuContext);
   if (!ctx) {

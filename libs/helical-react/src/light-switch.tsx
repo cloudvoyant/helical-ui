@@ -23,6 +23,9 @@ export interface LightSwitchProps
     LightSwitchBaseProps {}
 
 // 4. Exported component
+/**
+ * Button that cycles the active document light/dark/system mode (`light` -> `dark` -> `system`).
+ */
 export function LightSwitch({
   mode: controlledMode,
   defaultMode,

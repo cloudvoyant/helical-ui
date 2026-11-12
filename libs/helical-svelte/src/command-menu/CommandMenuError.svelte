@@ -2,7 +2,7 @@
 <script lang="ts">
   // 1. Imports
   import { AlertCircle } from 'lucide-svelte';
-  import { commandMenuErrorBase } from '@cloudvoyant/helical-ui';
+  import { commandMenuStyles } from '@cloudvoyant/helical-ui';
   import Row from '../Row.svelte';
   import { getCommandMenuContext } from './context.svelte';
 
@@ -14,7 +14,7 @@
   <div
     role="alert"
     data-testid="command-menu-error"
-    class={commandMenuErrorBase}
+    class={commandMenuStyles.error}
   >
     <Row class="items-center gap-1.5">
       <AlertCircle class="size-3.5 shrink-0" aria-hidden="true" />

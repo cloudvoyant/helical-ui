@@ -16,6 +16,7 @@
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
 - [Proposed] Keep main component types and public utilities on the `@cloudvoyant/helical-ui` barrel root; expose only internal component helpers that consumers are discouraged from calling directly via subpath exports (e.g., `@cloudvoyant/helical-ui/commands`).
+- [Proposed] Implement shared overlay behaviors such as focus capture and restoration on `Dialog` in `libs/helical-ui/src/dialog.ts` and the `Dialog` wrappers rather than duplicating them inside dialog-based components like `CommandPalette` or `CommandMenu`.
 
 ### Repository layout
 
@@ -94,8 +95,9 @@ export const badgeVariants = cva('inline-flex items-center', {
 });
 ```
 
+- Prioritize typing and autocomplete ergonomics for consumers; export multi-part component styles as a grouped object (e.g., `commandPaletteStyles`, `commandMenuStyles`, `themeSelectorStyles`) rather than flat individual style constants.
 - [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/architecture/components/<component>.md`.
-- [Proposed] Document exported public functions in `libs/helical-ui` with concise JSDoc comments.
+- Document all exported public functions, classes, and public methods across `libs/*` with TSDoc comments.
 - [Proposed] Document complex UI components with `difflab templates scaffold ui-component-architecture`, using Mermaid diagrams for state transitions and data flow.
 - [Proposed] Keep `Behavior` and `Public API` sections in `docs/architecture/components/<component>.md` terse and in plain English; explain component wiring and runtime mechanics with Mermaid diagrams under `Design` and `Implementation` rather than prose paragraphs.
 - [Proposed] Prefer Tailwind utilities and `cva` variants in `libs/helical-ui/src/<component>.ts` over raw rules in [components.css](libs/helical-ui/src/components.css), reserving `components.css` for `@keyframes` or third-party selector overrides.
@@ -103,6 +105,7 @@ export const badgeVariants = cva('inline-flex items-center', {
 ### React and Svelte
 
 - Keep wrappers thin, maintain prop parity across React and Svelte 5 runes (`$props`, `$derived`, `$state`), and compose layouts with helical-ui primitives (`Container`, `Row`, `Col`, `Stack`, `HStack`, `VStack`, `Center`):
+- [Proposed] Provide identically typed hooks (e.g., `useTheme`) across `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte` backed by shared state in `@cloudvoyant/helical-ui`, and pass configuration such as custom themes to hooks or providers rather than picker components.
 - [Proposed] Support uncontrolled usage (internal state fallback when `open` or `value` is omitted) on interactive overlay and menu components so consumers do not have to wire external state for basic usage.
 - Keep documentation examples in `apps/docs/src/components/examples/` self-contained with hardcoded sample data and minimal UI; omit `data-testid` attributes, docs-shell state subscriptions, status readouts used only to prove effects, and explanatory prose that belongs in the surrounding MDX page.
 

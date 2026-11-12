@@ -16,11 +16,6 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./command": {
-      "types": "./dist/command/index.d.ts",
-      "import": "./dist/command/index.js",
-      "require": "./dist/command/index.cjs"
-    },
     "./commands": {
       "types": "./dist/command/index.d.ts",
       "import": "./dist/command/index.js",

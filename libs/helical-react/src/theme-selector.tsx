@@ -1,22 +1,14 @@
 // libs/helical-react/src/theme-selector.tsx
 
 // 1. Imports
-import { useEffect, useMemo, useState, type CSSProperties, type HTMLAttributes } from 'react';
+import type { CSSProperties, HTMLAttributes } from 'react';
 import {
-  THEMES,
   cn,
-  readDocumentDarkMode,
-  readDocumentTheme,
-  registerCustomThemes,
-  subscribeDocumentTheme,
-  syncDocumentTheme,
-  themeSelectorContainerBase,
-  themeSelectorGridBase,
-  themeSelectorSwatchVariants,
-  type ThemeMeta,
+  themeSelectorStyles,
   type ThemeName,
   type ThemeSelectorBaseProps,
 } from '@cloudvoyant/helical-ui';
+import { useTheme } from './use-theme';
 
 // 2. Module constants & types
 export interface ThemeSelectorProps
@@ -28,72 +20,38 @@ const SWATCH_FONT_STYLE = {
 } as CSSProperties;
 
 // 4. Exported component
+/**
+ * Visual color theme swatch selector synchronized with the shared `useTheme` store.
+ */
 export function ThemeSelector({
   value: controlledValue,
   defaultValue,
-  themes,
+  themes: themesProp,
   customThemes,
   onValueChange,
   className,
   ...props
 }: ThemeSelectorProps) {
   // --- State ---
-  const [uncontrolledValue, setUncontrolledValue] = useState<ThemeName>(
-    () => defaultValue ?? readDocumentTheme(),
-  );
-  const [isDark, setIsDark] = useState<boolean>(() => readDocumentDarkMode());
+  const themeController = useTheme({
+    customThemes,
+    themes: themesProp,
+    defaultTheme: defaultValue,
+    onThemeChange: onValueChange,
+  });
 
-  const resolvedThemes = useMemo<readonly ThemeMeta[]>(() => {
-    if (themes && themes.length > 0) {
-      registerCustomThemes(themes);
-      return themes;
-    }
-    if (customThemes && customThemes.length > 0) {
-      return registerCustomThemes(customThemes);
-    }
-    return THEMES;
-  }, [themes, customThemes]);
-
-  const activeTheme = controlledValue ?? uncontrolledValue;
-
-  // --- Effects ---
-  useEffect(() => {
-    if (themes && themes.length > 0) {
-      registerCustomThemes(themes);
-    } else if (customThemes && customThemes.length > 0) {
-      registerCustomThemes(customThemes);
-    }
-  }, [themes, customThemes]);
-
-  useEffect(() => {
-    if (defaultValue) {
-      const applied = syncDocumentTheme(defaultValue);
-      setUncontrolledValue(applied);
-    }
-  }, [defaultValue]);
-
-  useEffect(() => {
-    return subscribeDocumentTheme(({ theme, dark }) => {
-      setIsDark(dark);
-      if (controlledValue === undefined) {
-        setUncontrolledValue(theme);
-      }
-    });
-  }, [controlledValue]);
+  const resolvedThemes = themesProp && themesProp.length > 0 ? themesProp : themeController.themes;
+  const activeTheme = controlledValue ?? themeController.theme;
 
   // --- Methods ---
   const handleSelect = (name: ThemeName) => {
-    const applied = syncDocumentTheme(name);
-    if (controlledValue === undefined) {
-      setUncontrolledValue(applied);
-    }
-    onValueChange?.(applied);
+    themeController.setTheme(name);
   };
 
   // --- Render ---
   return (
     <div
-      className={cn(themeSelectorContainerBase, className)}
+      className={cn(themeSelectorStyles.container, className)}
       data-theme-selector-grid
       {...props}
     >
@@ -104,7 +62,7 @@ export function ThemeSelector({
           </style>
         ) : null,
       )}
-      <div className={themeSelectorGridBase} style={SWATCH_FONT_STYLE}>
+      <div className={themeSelectorStyles.grid} style={SWATCH_FONT_STYLE}>
         {resolvedThemes.map((t) => {
           const active = activeTheme === t.name;
           return (
@@ -117,8 +75,8 @@ export function ThemeSelector({
               onClick={() => handleSelect(t.name)}
               className={cn(
                 `theme-${t.name}`,
-                isDark && 'dark',
-                themeSelectorSwatchVariants({ active }),
+                themeController.darkMode && 'dark',
+                themeSelectorStyles.swatch({ active }),
               )}
             >
               {active && (

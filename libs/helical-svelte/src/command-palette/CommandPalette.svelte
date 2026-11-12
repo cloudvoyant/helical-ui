@@ -5,30 +5,19 @@
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-svelte';
   import {
-    announceCommandMessage,
     cn,
-    commandPaletteBreadcrumbBase,
-    commandPaletteDialogContentBase,
-    commandPaletteFooterBase,
-    commandPaletteHeaderBase,
-    commandPaletteInputBase,
-    commandPaletteItemBase,
-    commandPaletteListBase,
-    commandPalettePositionerBase,
-    commandPaletteVariants,
+    commandPaletteStyles,
     createCommandTree,
     matchesCommandHotkey,
-    resolveCommandLevel,
-    shouldHandleCommandHotkey,
-    splitHighlightSegments,
     type CommandFlatItem,
     type CommandPaletteProps as CoreCommandPaletteProps,
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
   import {
-    captureCommandFocusTarget,
-    finalizeCommandSelectFocus,
-    restoreCommandFocusTarget,
+    announceCommandMessage,
+    resolveCommandLevel,
+    shouldHandleCommandHotkey,
+    splitHighlightSegments,
   } from '@cloudvoyant/helical-ui/commands';
   import Badge from '../Badge.svelte';
   import Button from '../Button.svelte';
@@ -96,7 +85,6 @@
   let highlightedValue = $state<string | null>(null);
   let rootEl = $state<HTMLDivElement | null>(null);
   let anchorEl = $state<HTMLSpanElement | null>(null);
-  let previousFocusEl: HTMLElement | null = null;
 
   const isStandalone = $derived(
     itemsProp !== undefined || externalCollectionProp !== undefined,
@@ -175,9 +163,6 @@
     const _depth = currentActivePath.length;
     void _depth;
     if (!isOpen || inline || typeof document === 'undefined') return;
-    if (!previousFocusEl) {
-      recordPreviousFocus();
-    }
     const focusInput = () => {
       getInputElement()?.focus();
     };
@@ -187,13 +172,6 @@
   });
 
   // --- Methods ---
-  function recordPreviousFocus() {
-    const target = captureCommandFocusTarget(rootEl);
-    if (target) {
-      previousFocusEl = target;
-    }
-  }
-
   function setActivePath(nextPath: string[]) {
     if (controlledActivePath !== undefined) {
       controlledActivePath = nextPath;
@@ -212,13 +190,7 @@
     onQueryChange?.(nextQuery);
   }
 
-  function handleOpenChange(
-    nextOpen: boolean,
-    options?: { restoreFocus?: boolean },
-  ) {
-    if (nextOpen && !isOpen) {
-      recordPreviousFocus();
-    }
+  function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen !== undefined) {
       controlledOpen = nextOpen;
     } else {
@@ -230,11 +202,6 @@
     if (!nextOpen) {
       setActivePath([]);
       setQuery('');
-      const restoreTarget = previousFocusEl;
-      previousFocusEl = null;
-      if (options?.restoreFocus !== false) {
-        restoreCommandFocusTarget(restoreTarget);
-      }
     }
     onOpenChange?.(nextOpen);
   }
@@ -253,10 +220,6 @@
     }
 
     const shouldClose = !inline && item.node.closeOnSelect !== false;
-    const restoreTarget = previousFocusEl;
-    if (shouldClose) {
-      handleOpenChange(false, { restoreFocus: false });
-    }
 
     const ctx: CommandSelectContext = {
       value: item.node.value,
@@ -272,7 +235,7 @@
     announceCommandMessage(`Executed ${item.label}`);
 
     if (shouldClose) {
-      finalizeCommandSelectFocus(rootEl, restoreTarget);
+      handleOpenChange(false);
     }
   }
 
@@ -320,7 +283,7 @@
     data-command-palette-inline={inline ? 'true' : undefined}
     data-testid={inline ? 'command-palette' : 'command-palette-surface'}
     class={cn(
-      inline ? commandPaletteVariants({ size }) : 'flex w-full flex-col outline-none',
+      inline ? commandPaletteStyles.root({ size }) : 'flex w-full flex-col outline-none',
       inline ? cn(className, reactClassName) : undefined,
     )}
   >
@@ -335,7 +298,7 @@
       }}
       class="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
     >
-      <div class={commandPaletteHeaderBase}>
+      <div class={commandPaletteStyles.header}>
         <Search class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         {#if resolution.breadcrumbs.length > 0}
           <Row class="shrink-0 items-center gap-1" data-testid="command-palette-breadcrumbs">
@@ -348,7 +311,7 @@
                 setQuery('');
                 getInputElement()?.focus();
               }}
-              class={commandPaletteBreadcrumbBase}
+              class={commandPaletteStyles.breadcrumb}
             >
               Commands
             </button>
@@ -363,7 +326,7 @@
                   setQuery('');
                   getInputElement()?.focus();
                 }}
-                class={commandPaletteBreadcrumbBase}
+                class={commandPaletteStyles.breadcrumb}
               >
                 <span>›</span>
                 <span>{crumb.label}</span>
@@ -460,7 +423,7 @@
               }
             }
           }}
-          class={commandPaletteInputBase}
+          class={commandPaletteStyles.input}
         />
         {#if !inline}
           <button
@@ -480,7 +443,7 @@
           <ListboxContent
             tabindex={-1}
             data-testid="command-palette-list"
-            class={commandPaletteListBase}
+            class={commandPaletteStyles.list}
           >
             {#if !resolution.hasCommands}
               <ListboxEmpty
@@ -517,7 +480,7 @@
                         e.stopPropagation();
                         selectFlatItem(item);
                       }}
-                      class={commandPaletteItemBase}
+                      class={commandPaletteStyles.item}
                     >
                       <ListboxItemText class="min-w-0 flex-1 truncate font-medium text-foreground">
                         <Row class="min-w-0 items-center gap-2">
@@ -587,7 +550,7 @@
         {/snippet}
       </Scroll>
 
-      <div class={commandPaletteFooterBase}>
+      <div class={commandPaletteStyles.footer}>
         <Row class="items-center gap-3">
           <span class="inline-flex items-center gap-1">
             <Kbd size="sm">↑</Kbd>
@@ -626,7 +589,6 @@
       lazyMount
       unmountOnExit
       trapFocus={false}
-      restoreFocus={false}
       closeOnEscape={currentActivePath.length === 0}
       initialFocusEl={() => getInputElement()}
       onOpenChange={(details) => handleOpenChange(details.open)}
@@ -642,13 +604,13 @@
       {/if}
       <DialogBackdrop />
       <DialogContent
-        positionerClass={commandPalettePositionerBase}
+        positionerClass={commandPaletteStyles.positioner}
         data-command-palette="true"
         data-modal="true"
         data-testid="command-palette"
         class={cn(
-          commandPaletteDialogContentBase,
-          commandPaletteVariants({ size }),
+          commandPaletteStyles.dialogContent,
+          commandPaletteStyles.root({ size }),
           className,
           reactClassName,
         )}

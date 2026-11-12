@@ -9,9 +9,8 @@
     registerCustomThemes,
     subscribeDocumentTheme,
     syncDocumentTheme,
-    themeSelectorContainerBase,
-    themeSelectorGridBase,
-    themeSelectorSwatchVariants,
+    themeSelectorStyles,
+    type ThemeMeta,
     type ThemeName,
   } from '@cloudvoyant/helical-ui';
   import { themeService } from './theme-service.svelte';
@@ -31,6 +30,7 @@
   // svelte-ignore state_referenced_locally
   let uncontrolledValue = $state<ThemeName>(defaultValue ?? readDocumentTheme());
   let isDark = $state<boolean>(readDocumentDarkMode());
+  let storeThemes = $state<readonly ThemeMeta[]>(THEMES);
 
   const resolvedThemes = $derived.by(() => {
     if (themes && themes.length > 0) {
@@ -40,7 +40,7 @@
     if (customThemes && customThemes.length > 0) {
       return registerCustomThemes(customThemes);
     }
-    return THEMES;
+    return storeThemes;
   });
 
   const activeTheme = $derived(controlledValue ?? uncontrolledValue);
@@ -62,8 +62,9 @@
   });
 
   $effect(() => {
-    return subscribeDocumentTheme(({ theme: docTheme, dark }) => {
+    return subscribeDocumentTheme(({ theme: docTheme, dark, themes: nextThemes }) => {
       isDark = dark;
+      storeThemes = nextThemes;
       if (controlledValue === undefined) {
         uncontrolledValue = docTheme;
       }
@@ -81,14 +82,14 @@
   }
 </script>
 
-<div class={cn(themeSelectorContainerBase, className)} data-theme-selector-grid>
+<div class={cn(themeSelectorStyles.container, className)} data-theme-selector-grid>
   {#each resolvedThemes as t (`css-${t.name}`)}
     {#if t.css}
       {@html `<style data-helical-custom-theme="${t.name}">${t.css}</style>`}
     {/if}
   {/each}
   <div
-    class={themeSelectorGridBase}
+    class={themeSelectorStyles.grid}
     style="--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;"
   >
     {#each resolvedThemes as t (t.name)}
@@ -102,7 +103,7 @@
         class={cn(
           `theme-${t.name}`,
           isDark && 'dark',
-          themeSelectorSwatchVariants({ active }),
+          themeSelectorStyles.swatch({ active }),
         )}
       >
         {#if active}

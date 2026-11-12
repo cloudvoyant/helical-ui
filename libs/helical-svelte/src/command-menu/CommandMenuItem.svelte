@@ -3,11 +3,8 @@
   // 1. Imports
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { Check, ChevronRight } from 'lucide-svelte';
-  import {
-    commandMenuItemVariants,
-    splitHighlightSegments,
-    type CommandFlatItem,
-  } from '@cloudvoyant/helical-ui';
+  import { commandMenuStyles, type CommandFlatItem } from '@cloudvoyant/helical-ui';
+  import { splitHighlightSegments } from '@cloudvoyant/helical-ui/commands';
   import Kbd from '../Kbd.svelte';
   import { ListboxItem, ListboxItemText } from '../listbox';
   import Row from '../Row.svelte';
@@ -45,7 +42,7 @@
     e.stopPropagation();
     ctx.executeOrDrillItem(item);
   }}
-  class={commandMenuItemVariants({ size: ctx.size })}
+  class={commandMenuStyles.item({ size: ctx.size })}
 >
   <ListboxItemText class="min-w-0 flex-1 truncate">
     <Row class="min-w-0 items-center gap-2">
