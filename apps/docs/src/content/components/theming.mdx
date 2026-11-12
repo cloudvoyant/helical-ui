@@ -1,0 +1,47 @@
+---
+title: Theming
+description: Live-preview theme swatch selector and light/dark mode switch for React and Svelte.
+order: 4
+group: misc
+---
+
+import Demo from '../../components/Demo.astro';
+import Examples from '../../components/Examples.astro';
+
+`ThemeSelector` renders a scrollable grid of live-preview theme swatches that apply the selected `theme-{name}` class to `<html>`, and `LightSwitch` cycles between light, dark, and system color modes while preserving the active theme preset.
+
+<Demo component="theming" example="default" />
+
+## Examples
+
+### Custom Theme
+
+Pass `customThemes` to `ThemeSelector` (or call `registerCustomThemes`) to prepend custom presets ahead of the built-in `THEMES` registry. Custom themes with loaded `.theme-{name}` CSS rules can be selected and applied across the site; if a custom theme has no matching CSS rules loaded, selecting it falls back to the default `helical-ui` theme.
+
+<Examples component="theming" exclude="default" />
+
+## API Reference
+
+### ThemeSelector
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `ThemeName` | — | Controlled active theme name. |
+| `defaultValue` | `ThemeName` | `'helical-ui'` | Initial active theme when uncontrolled. |
+| `themes` | `readonly ThemeMeta[]` | `THEMES` | Explicit list of theme presets to render. |
+| `customThemes` | `readonly ThemeMeta[]` | — | Custom themes registered ahead of `THEMES` via `registerCustomThemes`. |
+| `onValueChange` | `(theme: ThemeName) => void` | — | Invoked with the resolved theme name after applying it to `document.documentElement`. |
+| `className` / `class` | `string` | — | Additional classes merged onto the scrollable container. |
+
+### LightSwitch
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `mode` | `'light' \| 'dark' \| 'system'` | — | Controlled color mode. |
+| `defaultMode` | `'light' \| 'dark' \| 'system'` | Current document mode | Initial color mode when uncontrolled. |
+| `onModeChange` | `(mode: ThemeMode) => void` | — | Invoked when the color mode cycles. |
+| `className` / `class` | `string` | — | Additional classes merged onto the button. |
+
+## Accessibility
+
+Each swatch in `ThemeSelector` is a native `<button type="button">` with `aria-pressed` reflecting whether that theme is currently active. `LightSwitch` renders an accessible `aria-label` announcing the current color mode (`Theme: light`, `Theme: dark`, or `Theme: system`).

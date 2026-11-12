@@ -144,18 +144,33 @@ export {
   THEMES,
   THEME_NAMES,
   THEME_CLASS_PREFIX,
+  DEFAULT_THEME,
+  lightSwitchButtonVariants,
   themeToggleButtonVariants,
+  themeSelectorContainerBase,
+  themeSelectorGridBase,
+  themeSelectorSwatchVariants,
   cycleThemeModeValue,
+  registerCustomThemes,
   mergeThemePresets,
+  hasThemeCss,
   readSystemDarkMode,
   subscribeSystemDarkMode,
+  readDocumentTheme,
+  readDocumentDarkMode,
+  syncDocumentDarkMode,
   syncDocumentTheme,
+  subscribeDocumentTheme,
   type ThemeMeta,
   type ThemeMode,
   type ThemeName,
   type ThemeServiceOptions,
+  type LightSwitchBaseProps,
+  type LightSwitchButtonVariants,
   type ThemeToggleBaseProps,
   type ThemeToggleButtonVariants,
+  type ThemeSelectorBaseProps,
+  type ThemeSelectorSwatchVariants,
 } from './themes';
 export { cn } from './cn';
 export {
@@ -402,6 +417,5 @@ export {
   type ToastActionOptions,
   type ToastVariants,
 } from './toast';
-export * from './command';
 export * from './which-key';
 export * from './editor';

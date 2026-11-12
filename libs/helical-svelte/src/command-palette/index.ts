@@ -1,2 +1,7 @@
 export { default as CommandPalette } from './CommandPalette.svelte';
-export type { CommandFlatItem, CommandNode, CommandSelectContext, CommandStyle } from '@cloudvoyant/helical-ui';
+export type {
+  CommandFlatItem,
+  CommandNode,
+  CommandSelectContext,
+  CommandStyle,
+} from '@cloudvoyant/helical-ui/commands';

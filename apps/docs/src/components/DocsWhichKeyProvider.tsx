@@ -1,7 +1,7 @@
 // apps/docs/src/components/DocsWhichKeyProvider.tsx
 // Site-wide WhichKeyProvider + WhichKey command panel + CommandPalette / CommandMenu for the Astro docs shell.
 import { useEffect, useMemo, useState } from 'react';
-import { matchesCommandHotkey, type CommandStyle } from '@cloudvoyant/helical-ui';
+import { matchesCommandHotkey, type CommandStyle } from '@cloudvoyant/helical-ui/commands';
 import {
   CommandMenu,
   CommandPalette,

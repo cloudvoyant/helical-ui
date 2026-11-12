@@ -5,7 +5,9 @@
     "types": ["svelte"],
     "baseUrl": ".",
     "paths": {
-      "@cloudvoyant/helical-ui": ["../helical-ui/src/index.ts"]
+      "@cloudvoyant/helical-ui": ["../helical-ui/src/index.ts"],
+      "@cloudvoyant/helical-ui/command": ["../helical-ui/src/command/index.ts"],
+      "@cloudvoyant/helical-ui/commands": ["../helical-ui/src/command/index.ts"]
     }
   },
   "include": ["src", "tests"]

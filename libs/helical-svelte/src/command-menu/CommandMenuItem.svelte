@@ -7,7 +7,7 @@
     commandMenuItemVariants,
     splitHighlightSegments,
     type CommandFlatItem,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/commands';
   import Kbd from '../Kbd.svelte';
   import { ListboxItem, ListboxItemText } from '../listbox';
   import Row from '../Row.svelte';

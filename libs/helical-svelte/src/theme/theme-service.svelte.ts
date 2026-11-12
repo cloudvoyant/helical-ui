@@ -1,10 +1,15 @@
 // libs/helical-svelte/src/theme/theme-service.svelte.ts
 import {
+  DEFAULT_THEME,
   THEMES,
   cycleThemeModeValue,
-  mergeThemePresets,
+  readDocumentDarkMode,
+  readDocumentTheme,
   readSystemDarkMode,
+  registerCustomThemes,
+  subscribeDocumentTheme,
   subscribeSystemDarkMode,
+  syncDocumentDarkMode,
   syncDocumentTheme,
   type ThemeMeta,
   type ThemeMode,
@@ -13,8 +18,8 @@ import {
 } from '@cloudvoyant/helical-ui';
 
 export class ThemeService {
-  theme = $state<ThemeName>('helical-ui');
-  themeMode = $state<ThemeMode>('system');
+  theme = $state<ThemeName>(readDocumentTheme());
+  themeMode = $state<ThemeMode>(readDocumentDarkMode() ? 'dark' : 'light');
   systemDark = $state(readSystemDarkMode());
   darkMode = $derived(this.themeMode === 'system' ? this.systemDark : this.themeMode === 'dark');
   themes = $state<readonly ThemeMeta[]>(THEMES);
@@ -24,15 +29,17 @@ export class ThemeService {
 
   constructor(options: ThemeServiceOptions = {}) {
     if (options.themes && options.themes.length > 0) {
-      this.registerThemes(options.themes);
-    }
-    if (options.initialTheme && this.validThemeNames.has(options.initialTheme)) {
-      this.theme = options.initialTheme;
-    } else if (options.themes && options.themes[0]) {
-      this.theme = options.themes[0].name;
+      this.registerCustomThemes(options.themes);
     }
     if (options.initialMode) {
       this.themeMode = options.initialMode;
+    }
+    if (options.initialTheme && this.validThemeNames.has(options.initialTheme)) {
+      this.theme = syncDocumentTheme(options.initialTheme, this.isDark());
+    } else if (options.themes && options.themes[0]) {
+      this.theme = syncDocumentTheme(options.themes[0].name, this.isDark());
+    } else if (options.initialMode) {
+      syncDocumentDarkMode(this.isDark());
     }
     if (options.onThemeChange) {
       this.themeListeners.add(options.onThemeChange);
@@ -40,9 +47,16 @@ export class ThemeService {
     if (options.onModeChange) {
       this.modeListeners.add(options.onModeChange);
     }
-    syncDocumentTheme(this.theme, this.isDark());
     subscribeSystemDarkMode((dark) => {
       this.setSystemDark(dark);
+    });
+    subscribeDocumentTheme(({ theme, dark }) => {
+      if (this.theme !== theme) {
+        this.theme = theme;
+      }
+      if (this.isDark() !== dark) {
+        this.themeMode = dark ? 'dark' : 'light';
+      }
     });
   }
 
@@ -50,15 +64,18 @@ export class ThemeService {
     return this.themeMode === 'system' ? this.systemDark : this.themeMode === 'dark';
   }
 
-  registerThemes(customThemes: readonly ThemeMeta[], options?: { defaultTheme?: ThemeName }): void {
-    const merged = mergeThemePresets(customThemes);
+  registerCustomThemes(customThemes: readonly ThemeMeta[], options?: { defaultTheme?: ThemeName }): void {
+    const merged = registerCustomThemes(customThemes);
     this.themes = merged;
     this.validThemeNames = new Set(merged.map((t) => t.name));
-    const nextDefault = options?.defaultTheme ?? customThemes[0]?.name;
-    if (nextDefault && this.validThemeNames.has(nextDefault) && this.theme === 'helical-ui') {
-      this.theme = nextDefault;
-      syncDocumentTheme(this.theme, this.isDark());
+    const nextDefault = options?.defaultTheme;
+    if (nextDefault && this.validThemeNames.has(nextDefault) && this.theme === DEFAULT_THEME) {
+      this.theme = syncDocumentTheme(nextDefault, this.isDark());
     }
+  }
+
+  registerThemes(customThemes: readonly ThemeMeta[], options?: { defaultTheme?: ThemeName }): void {
+    this.registerCustomThemes(customThemes, options);
   }
 
   onThemeChange(listener: (theme: ThemeName) => void): () => void {
@@ -77,16 +94,17 @@ export class ThemeService {
 
   setSystemDark(dark: boolean): void {
     this.systemDark = dark;
-    syncDocumentTheme(this.theme, this.isDark());
+    if (this.themeMode === 'system') {
+      syncDocumentDarkMode(this.isDark());
+    }
   }
 
   setTheme(theme: ThemeName, notify = true): ThemeName {
-    if (!this.validThemeNames.has(theme)) return this.theme;
-    this.theme = theme;
-    syncDocumentTheme(this.theme, this.isDark());
+    const applied = syncDocumentTheme(this.validThemeNames.has(theme) ? theme : DEFAULT_THEME, this.isDark());
+    this.theme = applied;
     if (notify) {
       for (const listener of this.themeListeners) {
-        listener(theme);
+        listener(applied);
       }
     }
     return this.theme;
@@ -94,7 +112,7 @@ export class ThemeService {
 
   setThemeMode(mode: ThemeMode, notify = true): ThemeMode {
     this.themeMode = mode;
-    syncDocumentTheme(this.theme, this.isDark());
+    syncDocumentDarkMode(this.isDark());
     if (notify) {
       for (const listener of this.modeListeners) {
         listener(mode);

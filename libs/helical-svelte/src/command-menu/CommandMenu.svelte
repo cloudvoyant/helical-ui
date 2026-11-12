@@ -3,10 +3,10 @@
   // 1. Imports
   import type { Snippet } from 'svelte';
   import { createListCollection } from '@ark-ui/svelte/listbox';
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     announceCommandMessage,
     captureCommandFocusTarget,
-    cn,
     commandMenuDialogContentBase,
     commandMenuPositionerBase,
     commandMenuVariants,
@@ -21,7 +21,7 @@
     type CommandFlatItem,
     type CommandMenuProps as CoreCommandMenuProps,
     type CommandSelectContext,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/commands';
   import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';
   import {

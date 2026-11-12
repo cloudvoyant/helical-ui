@@ -1,7 +1,7 @@
 // apps/docs/src/components/TopNav.tsx
 // The docs site top navigation, built from the helical-ui Navbar (shrink variant).
 import { useEffect, useState } from 'react';
-import { type CommandStyle } from '@cloudvoyant/helical-ui';
+import { type CommandStyle } from '@cloudvoyant/helical-ui/commands';
 import {
   Navbar,
   NavbarProvider,

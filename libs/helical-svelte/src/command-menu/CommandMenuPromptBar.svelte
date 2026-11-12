@@ -6,7 +6,7 @@
     commandMenuInputVariants,
     commandMenuPrefixBase,
     commandMenuPromptBarVariants,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/commands';
   import Kbd from '../Kbd.svelte';
   import { ListboxInput } from '../listbox';
   import Row from '../Row.svelte';

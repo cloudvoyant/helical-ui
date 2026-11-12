@@ -2,7 +2,8 @@
 
 // 1. Imports
 import { AlertCircle } from 'lucide-react';
-import { cn, commandMenuErrorBase } from '@cloudvoyant/helical-ui';
+import { cn } from '@cloudvoyant/helical-ui';
+import { commandMenuErrorBase } from '@cloudvoyant/helical-ui/commands';
 import { Row } from '../row';
 import { useCommandMenuContext } from './context';
 

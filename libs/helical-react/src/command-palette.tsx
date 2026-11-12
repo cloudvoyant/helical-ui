@@ -5,10 +5,10 @@ import { forwardRef, useEffect, useMemo, useRef, useState, type ReactNode } from
 import { Highlight } from '@ark-ui/react/highlight';
 import { createListCollection } from '@ark-ui/react/listbox';
 import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-react';
+import { cn } from '@cloudvoyant/helical-ui';
 import {
   announceCommandMessage,
   captureCommandFocusTarget,
-  cn,
   commandPaletteBreadcrumbBase,
   commandPaletteDialogContentBase,
   commandPaletteFooterBase,
@@ -28,7 +28,7 @@ import {
   type CommandFlatItem,
   type CommandPaletteProps as CoreCommandPaletteProps,
   type CommandSelectContext,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/commands';
 import { Badge } from './badge';
 import { Button } from './button';
 import {

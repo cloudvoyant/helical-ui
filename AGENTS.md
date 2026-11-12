@@ -15,6 +15,7 @@
 - Split multi-concern component modules in `libs/helical-ui/src/` into a `<component>/` directory with separate `types.ts`, `core.ts`, `styles.ts`, and `index.ts` files rather than a single monolithic file.
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
+- [Proposed] Expose domain-specific submodules via subpath exports (e.g., `@cloudvoyant/helical-ui/<domain>`) when helpers are internal to a specific component domain rather than general-purpose root exports.
 
 ### Repository layout
 
@@ -94,6 +95,7 @@ export const badgeVariants = cva('inline-flex items-center', {
 ```
 
 - [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/architecture/components/<component>.md`.
+- [Proposed] Document exported public functions in `libs/helical-ui` with concise JSDoc comments.
 - [Proposed] Document complex UI components with `difflab templates scaffold ui-component-architecture`, using Mermaid diagrams for state transitions and data flow.
 - [Proposed] Keep `Behavior` and `Public API` sections in `docs/architecture/components/<component>.md` terse and in plain English; explain component wiring and runtime mechanics with Mermaid diagrams under `Design` and `Implementation` rather than prose paragraphs.
 - [Proposed] Prefer Tailwind utilities and `cva` variants in `libs/helical-ui/src/<component>.ts` over raw rules in [components.css](libs/helical-ui/src/components.css), reserving `components.css` for `@keyframes` or third-party selector overrides.
@@ -131,6 +133,7 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 | E2E (`playwright`) | `apps/docs/e2e/<component>.spec.ts` | ARIA state, keyboard navigation, and parity across React & Svelte islands |
 
 - Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`) with shared setup/actions in `test.beforeEach`, and focused outcome assertions in `test('it ...')`.
+- [Proposed] Prefer Playwright E2E tests on the demo site over mocked DOM (`vi.stubGlobal`) unit tests for browser-dependent behaviors like focus management, media queries, and document class synchronization.
 - Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):

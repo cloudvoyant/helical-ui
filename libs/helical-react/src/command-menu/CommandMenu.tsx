@@ -11,10 +11,10 @@ import {
   type ReactNode,
 } from 'react';
 import { createListCollection } from '@ark-ui/react/listbox';
+import { cn } from '@cloudvoyant/helical-ui';
 import {
   announceCommandMessage,
   captureCommandFocusTarget,
-  cn,
   commandMenuDialogContentBase,
   commandMenuPositionerBase,
   commandMenuVariants,
@@ -29,7 +29,7 @@ import {
   type CommandFlatItem,
   type CommandMenuProps as CoreCommandMenuProps,
   type CommandSelectContext,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/commands';
 import { Button } from '../button';
 import { useOptionalCommand } from '../command';
 import {

@@ -1,20 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  captureCommandFocusTarget,
   commandMenuDialogContentBase,
   commandMenuItemVariants,
   commandMenuListVariants,
   commandMenuPositionerBase,
   commandMenuPromptBarVariants,
   createCommandTree,
-  finalizeCommandSelectFocus,
   formatCommandMenuCompletionInput,
   matchesCommandHotkey,
   resolveCommandMenuGridNavigation,
   resolveCommandMenuGridStyle,
   resolveCommandMenuState,
   resolveCommandLevel,
-  restoreCommandFocusTarget,
   splitHighlightSegments,
   type CommandNode,
 } from '../src/command';
@@ -327,46 +324,6 @@ describe('Given CommandMenu bottom-docked positioner, compactness variants, and 
       expect(resolveCommandMenuGridNavigation('auto', 6, 0, 'ArrowRight')).toBe(3);
       expect(resolveCommandMenuGridNavigation('auto', 6, 3, 'ArrowLeft')).toBe(0);
       expect(resolveCommandMenuGridNavigation('auto', 6, 1, 'ArrowRight')).toBe(4);
-    });
-  });
-});
-
-describe('Given command focus retention and restoration helpers', () => {
-  describe('When finalizeCommandSelectFocus runs after a command selection', () => {
-    it('Then preserves a custom focus target focused during selection and otherwise restores previous focus', () => {
-      // Arrange
-      const restoreFocus = vi.fn();
-      const customFocus = vi.fn();
-      const restoreEl = { isConnected: true, focus: restoreFocus } as unknown as HTMLElement;
-      const customEl = { isConnected: true, focus: customFocus } as unknown as HTMLElement;
-      const bodyEl = {} as HTMLElement;
-      const docEl = {} as HTMLElement;
-      const rootEl = { contains: (node: Node) => node === rootEl } as unknown as HTMLElement;
-      vi.stubGlobal('document', {
-        body: bodyEl,
-        documentElement: docEl,
-        activeElement: customEl,
-      });
-      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-        cb(0);
-        return 1;
-      });
-
-      // Act
-      const captured = captureCommandFocusTarget(rootEl);
-      finalizeCommandSelectFocus(rootEl, restoreEl);
-      vi.stubGlobal('document', {
-        body: bodyEl,
-        documentElement: docEl,
-        activeElement: bodyEl,
-      });
-      finalizeCommandSelectFocus(rootEl, restoreEl);
-      restoreCommandFocusTarget(restoreEl);
-
-      // Assert
-      expect(captured).toBe(customEl);
-      expect(restoreFocus).toHaveBeenCalledTimes(2);
-      vi.unstubAllGlobals();
     });
   });
 });

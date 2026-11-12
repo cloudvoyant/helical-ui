@@ -3,6 +3,7 @@
   // 1. Imports
   import {
     Button,
+    CommandMenu,
     Dialog,
     DialogBackdrop,
     DialogContent,
@@ -14,16 +15,30 @@
     Pane,
     WhichKey,
     WhichKeyProvider,
+    type CommandNode,
   } from '@cloudvoyant/helical-svelte';
+
+  // 2. Module constants & types
+  const MODAL_COMMANDS: CommandNode[] = [
+    {
+      value: 'open-dialog',
+      label: 'Open Modal Dialog',
+      command: 'open-dialog',
+    },
+  ];
+
+  // --- State ---
+  let dialogOpen = $state(false);
+  let menuOpen = $state(false);
 </script>
 
 <WhichKeyProvider preset="helix">
   <Pane
     paneId="wk-modal-pane"
     paneTitle="Modal Interaction"
-    class="flex items-center justify-center rounded-lg border border-border bg-card p-4"
+    class="flex items-center justify-center gap-2 rounded-lg border border-border bg-card p-4"
   >
-    <Dialog lazyMount unmountOnExit>
+    <Dialog bind:open={dialogOpen} lazyMount unmountOnExit>
       <DialogTrigger class="inline-flex">
         <Button size="sm" variant="outline" tag="span">
           Open Modal Dialog
@@ -45,6 +60,19 @@
         </HStack>
       </DialogContent>
     </Dialog>
+    <Button size="sm" variant="outline" onclick={() => (menuOpen = true)}>
+      Run Command
+    </Button>
   </Pane>
+  <CommandMenu
+    bind:open={menuOpen}
+    hotkey={false}
+    items={MODAL_COMMANDS}
+    onSelectCommand={({ value }) => {
+      if (value === 'open-dialog') {
+        dialogOpen = true;
+      }
+    }}
+  />
   <WhichKey />
 </WhichKeyProvider>

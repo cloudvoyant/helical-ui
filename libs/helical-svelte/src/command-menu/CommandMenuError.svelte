@@ -2,7 +2,7 @@
 <script lang="ts">
   // 1. Imports
   import { AlertCircle } from 'lucide-svelte';
-  import { commandMenuErrorBase } from '@cloudvoyant/helical-ui';
+  import { commandMenuErrorBase } from '@cloudvoyant/helical-ui/commands';
   import Row from '../Row.svelte';
   import { getCommandMenuContext } from './context.svelte';
 

@@ -4,7 +4,7 @@
   import {
     commandMenuListVariants,
     resolveCommandMenuGridStyle,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/commands';
   import { ListboxContent, ListboxEmpty } from '../listbox';
   import Scroll from '../Scroll.svelte';
   import CommandMenuItem from './CommandMenuItem.svelte';

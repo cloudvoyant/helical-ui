@@ -74,6 +74,6 @@ export type {
   CommandNode,
   CommandSelectContext,
   CommandStyle,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/commands';
 export * from './which-key';
 export * from './theme';

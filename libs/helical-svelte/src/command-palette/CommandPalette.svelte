@@ -4,10 +4,10 @@
   import { Highlight } from '@ark-ui/svelte/highlight';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import { Check, ChevronRight, CornerDownLeft, Search } from 'lucide-svelte';
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     announceCommandMessage,
     captureCommandFocusTarget,
-    cn,
     commandPaletteBreadcrumbBase,
     commandPaletteDialogContentBase,
     commandPaletteFooterBase,
@@ -27,7 +27,7 @@
     type CommandFlatItem,
     type CommandPaletteProps as CoreCommandPaletteProps,
     type CommandSelectContext,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/commands';
   import Badge from '../Badge.svelte';
   import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';

@@ -388,7 +388,13 @@ export type {
   CommandNode,
   CommandSelectContext,
   CommandStyle,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/commands';
 export * from './which-key';
 export * from './editor';
-export { ThemeToggle, type ThemeToggleProps } from './theme-toggle';
+export {
+  LightSwitch,
+  LightSwitch as ThemeToggle,
+  type LightSwitchProps,
+  type LightSwitchProps as ThemeToggleProps,
+} from './light-switch';
+export { ThemeSelector, type ThemeSelectorProps } from './theme-selector';

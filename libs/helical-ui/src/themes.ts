@@ -1,12 +1,12 @@
 // libs/helical-ui/src/themes.ts
-// Theme registry for helical-ui's shadcn-compatible theme presets.
-// Ported from diffbook — each name maps to a `.theme-{name}` / `.theme-{name}.dark`
-// block in `src/themes/{name}.css` (all imported by `@cloudvoyant/helical-ui/themes.css`).
+// Theme registry, CSS verification, document synchronization, and cva variants
+// for helical-ui's shadcn-compatible theme presets, ThemeSelector, and LightSwitch.
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export interface ThemeMeta {
   name: string;
   label: string;
+  css?: string;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -20,24 +20,107 @@ export interface ThemeServiceOptions {
   onModeChange?: (mode: ThemeMode) => void;
 }
 
-export interface ThemeToggleBaseProps {
+export interface LightSwitchBaseProps {
   mode?: ThemeMode;
   defaultMode?: ThemeMode;
   onModeChange?: (mode: ThemeMode) => void;
 }
 
+export type ThemeToggleBaseProps = LightSwitchBaseProps;
+
+export interface ThemeSelectorBaseProps {
+  value?: ThemeName;
+  defaultValue?: ThemeName;
+  themes?: readonly ThemeMeta[];
+  customThemes?: readonly ThemeMeta[];
+  onValueChange?: (theme: ThemeName) => void;
+}
+
 export const THEME_CLASS_PREFIX = 'theme-';
+export const DEFAULT_THEME = 'helical-ui';
 
-export const themeToggleButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
-export type ThemeToggleButtonVariants = VariantProps<typeof themeToggleButtonVariants>;
+export const lightSwitchButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
+export type LightSwitchButtonVariants = VariantProps<typeof lightSwitchButtonVariants>;
 
+export const themeToggleButtonVariants = lightSwitchButtonVariants;
+export type ThemeToggleButtonVariants = LightSwitchButtonVariants;
+
+export const themeSelectorContainerBase = 'max-h-64 overflow-y-auto rounded-md border border-border p-2';
+export const themeSelectorGridBase = 'grid grid-cols-2 gap-2';
+
+export const themeSelectorSwatchVariants = cva(
+  'relative flex flex-col gap-1.5 overflow-hidden rounded-md border bg-background p-1.5 text-left text-foreground transition-colors',
+  {
+    variants: {
+      active: {
+        true: 'border-foreground',
+        false: 'border-border hover:border-muted-foreground',
+      },
+    },
+    defaultVariants: {
+      active: false,
+    },
+  },
+);
+export type ThemeSelectorSwatchVariants = VariantProps<typeof themeSelectorSwatchVariants>;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function ruleListHasThemeSelector(rules: CSSRuleList, pattern: RegExp): boolean {
+  for (let i = 0; i < rules.length; i += 1) {
+    const rule = rules[i];
+    if (!rule) continue;
+    if ('selectorText' in rule && typeof (rule as CSSStyleRule).selectorText === 'string') {
+      if (pattern.test((rule as CSSStyleRule).selectorText)) {
+        return true;
+      }
+    }
+    if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) {
+      if (ruleListHasThemeSelector((rule as CSSGroupingRule).cssRules, pattern)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function injectCustomThemeCss(theme: ThemeMeta): void {
+  if (typeof document === 'undefined' || !theme.css?.trim()) return;
+  const selector = `style[data-helical-custom-theme="${theme.name}"]`;
+  let styleEl = document.head.querySelector<HTMLStyleElement>(selector);
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.setAttribute('data-helical-custom-theme', theme.name);
+    document.head.appendChild(styleEl);
+  }
+  if (styleEl.textContent !== theme.css) {
+    styleEl.textContent = theme.css;
+  }
+}
+
+/**
+ * Cycles a color-mode preference through `'system' -> 'light' -> 'dark' -> 'system'`.
+ */
 export function cycleThemeModeValue(mode: ThemeMode): ThemeMode {
   return mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system';
 }
 
-export function mergeThemePresets(customThemes: readonly ThemeMeta[]): ThemeMeta[] {
-  const merged: ThemeMeta[] = [...customThemes];
-  const seen = new Set(customThemes.map((t) => t.name));
+/**
+ * Registers custom theme definitions ahead of the built-in `THEMES` presets,
+ * deduplicating by theme `name` and injecting any inline `css` declarations into `document.head`.
+ */
+export function registerCustomThemes(customThemes: readonly ThemeMeta[]): ThemeMeta[] {
+  const merged: ThemeMeta[] = [];
+  const seen = new Set<string>();
+  for (const custom of customThemes) {
+    if (!seen.has(custom.name)) {
+      injectCustomThemeCss(custom);
+      merged.push(custom);
+      seen.add(custom.name);
+    }
+  }
   for (const preset of THEMES) {
     if (!seen.has(preset.name)) {
       merged.push(preset);
@@ -47,6 +130,38 @@ export function mergeThemePresets(customThemes: readonly ThemeMeta[]): ThemeMeta
   return merged;
 }
 
+/**
+ * Alias for {@link registerCustomThemes}.
+ */
+export const mergeThemePresets = registerCustomThemes;
+
+/**
+ * Checks whether a `.theme-{name}` CSS rule is loaded in the active document stylesheets.
+ * Falls back to checking the built-in `THEME_NAMES` list when running outside the browser.
+ */
+export function hasThemeCss(theme: ThemeName): boolean {
+  if (!theme) return false;
+  if (typeof document === 'undefined' || !document.styleSheets || document.styleSheets.length === 0) {
+    return THEME_NAMES.includes(theme);
+  }
+  const pattern = new RegExp(`\\.${THEME_CLASS_PREFIX}${escapeRegExp(theme)}(?![a-zA-Z0-9_-])`);
+  for (let i = 0; i < document.styleSheets.length; i += 1) {
+    const sheet = document.styleSheets[i];
+    if (!sheet) continue;
+    try {
+      if (sheet.cssRules && ruleListHasThemeSelector(sheet.cssRules, pattern)) {
+        return true;
+      }
+    } catch {
+      // Ignore cross-origin stylesheets that restrict cssRules access.
+    }
+  }
+  return false;
+}
+
+/**
+ * Reads whether the operating system currently prefers a dark color scheme via `matchMedia`.
+ */
 export function readSystemDarkMode(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   try {
@@ -56,6 +171,10 @@ export function readSystemDarkMode(): boolean {
   }
 }
 
+/**
+ * Subscribes to operating system `prefers-color-scheme: dark` media query changes.
+ * Returns an unsubscribe function.
+ */
 export function subscribeSystemDarkMode(onChange: (dark: boolean) => void): () => void {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return () => {};
@@ -70,20 +189,86 @@ export function subscribeSystemDarkMode(onChange: (dark: boolean) => void): () =
   }
 }
 
-export function syncDocumentTheme(theme: ThemeName, dark: boolean): void {
+/**
+ * Reads the active `theme-*` class from `document.documentElement`, falling back to `'helical-ui'`.
+ */
+export function readDocumentTheme(): ThemeName {
+  if (typeof document === 'undefined') return DEFAULT_THEME;
+  const classes = Array.from(document.documentElement.classList);
+  for (const cls of classes) {
+    if (cls.startsWith(THEME_CLASS_PREFIX)) {
+      const candidate = cls.slice(THEME_CLASS_PREFIX.length);
+      if (candidate) return candidate;
+    }
+  }
+  return DEFAULT_THEME;
+}
+
+/**
+ * Reads whether `document.documentElement` currently has the `dark` class applied.
+ */
+export function readDocumentDarkMode(): boolean {
+  if (typeof document === 'undefined') return readSystemDarkMode();
+  return document.documentElement.classList.contains('dark');
+}
+
+/**
+ * Toggles the `dark` class on `document.documentElement` while preserving the active `theme-*` class.
+ */
+export function syncDocumentDarkMode(dark: boolean): void {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
+  if (readDocumentTheme() === DEFAULT_THEME && !root.classList.contains(`${THEME_CLASS_PREFIX}${DEFAULT_THEME}`)) {
+    root.classList.add(`${THEME_CLASS_PREFIX}${DEFAULT_THEME}`);
+  }
+  root.classList.toggle('dark', dark);
+}
+
+/**
+ * Applies a `theme-{name}` class (and optional `dark` class) to `document.documentElement`.
+ * If the requested theme has no loaded CSS rules, falls back to `'helical-ui'`.
+ * Returns the resolved theme name that was applied.
+ */
+export function syncDocumentTheme(theme: ThemeName, dark?: boolean): ThemeName {
+  const resolvedTheme = hasThemeCss(theme) ? theme : DEFAULT_THEME;
+  if (typeof document === 'undefined') return resolvedTheme;
+  const root = document.documentElement;
+  const targetClass = `${THEME_CLASS_PREFIX}${resolvedTheme}`;
   const toRemove: string[] = [];
   root.classList.forEach((cls) => {
-    if (cls.startsWith(THEME_CLASS_PREFIX)) {
+    if (cls.startsWith(THEME_CLASS_PREFIX) && cls !== targetClass) {
       toRemove.push(cls);
     }
   });
   for (const cls of toRemove) {
     root.classList.remove(cls);
   }
-  root.classList.add(`${THEME_CLASS_PREFIX}${theme}`);
-  root.classList.toggle('dark', dark);
+  if (!root.classList.contains(targetClass)) {
+    root.classList.add(targetClass);
+  }
+  if (typeof dark === 'boolean') {
+    root.classList.toggle('dark', dark);
+  }
+  return resolvedTheme;
+}
+
+/**
+ * Observes `document.documentElement` class mutations and invokes `onChange` whenever
+ * the active `theme-*` class or `dark` mode class changes. Returns an unsubscribe function.
+ */
+export function subscribeDocumentTheme(onChange: (state: { theme: ThemeName; dark: boolean }) => void): () => void {
+  if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') {
+    return () => {};
+  }
+  const root = document.documentElement;
+  const observer = new MutationObserver(() => {
+    onChange({
+      theme: readDocumentTheme(),
+      dark: readDocumentDarkMode(),
+    });
+  });
+  observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+  return () => observer.disconnect();
 }
 
 export const THEMES: ThemeMeta[] = [
