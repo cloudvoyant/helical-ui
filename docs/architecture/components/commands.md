@@ -39,7 +39,7 @@ CommandMenu (bottom-docked, columns="auto", size="sm" | "md" | "lg"):
 
 ```mermaid
 flowchart TD
-  subgraph Core["@cloudvoyant/helical-ui/command (Framework-Agnostic)"]
+  subgraph Core["@cloudvoyant/helical-ui & @cloudvoyant/helical-ui/commands (Framework-Agnostic)"]
     Tree["createCommandTree(items)\n(@zag-js/collection TreeCollection<CommandNode>)"]
     PalRes["resolveCommandLevel(tree, activePath, query)\n(Submenu children, breadcrumbs, deep root fzf search)"]
     MenuRes["resolveCommandMenuState(tree, rawInput)\n(Tokenize ':cmd sub', alias lookup, fzf completions, error state)"]
@@ -47,8 +47,8 @@ flowchart TD
   end
 
   subgraph Wrappers["@cloudvoyant/helical-react & @cloudvoyant/helical-svelte"]
-    Palette["CommandPalette\n(Dialog + Listbox + Highlight + Kbd + Badge)"]
-    Menu["CommandMenu\n(Dialog + ':' Prompt ListboxInput + Popup ListboxContent)"]
+    Palette["CommandPalette\n(CommandPaletteSearch + CommandPaletteResults + CommandPaletteFallback + CommandPaletteItem + CommandPaletteFooter)"]
+    Menu["CommandMenu\n(CommandMenuList + CommandMenuItem + CommandMenuPromptBar + CommandMenuError)"]
   end
 
   Tree --> PalRes
@@ -74,8 +74,9 @@ flowchart TD
 
 ### Public API
 
-- **`@cloudvoyant/helical-ui`**: `createCommandTree`, `resolveCommandLevel`, `resolveCommandMenuState`, `splitHighlightSegments`, `commandPaletteVariants`, `commandMenuVariants`, `commandMenuPositionerBase`, `commandMenuDialogContentBase`, `commandMenuListVariants`, `commandMenuItemVariants`, `commandMenuPromptBarVariants`, `commandMenuInputVariants`, `CommandNode`, `CommandSelectContext`, `CommandBreadcrumb`, `CommandFlatItem`, `CommandLevelResolution`, `CommandMenuResolution`, `CommandPaletteProps`, `CommandMenuProps`, `CommandMenuColumns`, `CommandStyle`, `toastVariants`, `toasterBase`, `ToastType`, `ToastPlacement`, `ToastActionOptions`, `ToastVariants`.
-- **`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`**: `CommandPalette`, `CommandMenu`, `Toaster`, `ToastItem`, `ToastRoot`, `ToastTitle`, `ToastDescription`, `ToastActionTrigger`, `ToastCloseTrigger`, `ToastDismiss`, `ToastContext`, `createToaster`, `toast`, `useToast`, `useToastContext`.
+- **`@cloudvoyant/helical-ui`**: `createCommandTree`, `matchesCommandHotkey`, `commandPaletteStyles`, `commandMenuStyles`, `CommandNode`, `CommandSelectContext`, `CommandBreadcrumb`, `CommandFlatItem`, `CommandPaletteProps`, `CommandMenuProps`, `CommandMenuColumns`, `CommandStyle`, `CommandContextProps`, `CommandContextValue`, `CommandPaletteVariants`, `CommandMenuVariants`, `toastVariants`, `toasterBase`, `ToastType`, `ToastPlacement`, `ToastActionOptions`, `ToastVariants`.
+- **`@cloudvoyant/helical-ui/commands`**: `resolveCommandLevel`, `resolveCommandMenuState`, `formatCommandMenuCompletionInput`, `resolveCommandMenuGridStyle`, `resolveCommandMenuGridNavigation`, `splitHighlightSegments`, `announceCommandMessage`, `shouldHandleCommandHotkey`, `CommandLevelResolution`, `CommandMenuResolution`.
+- **`@cloudvoyant/helical-react` & `@cloudvoyant/helical-svelte`**: `CommandPalette`, `CommandPaletteSearch`, `CommandPaletteResults`, `CommandPaletteFallback`, `CommandPaletteItem`, `CommandPaletteFooter`, `useCommandPaletteContext` / `getCommandPaletteContext`, `CommandMenu`, `CommandMenuList`, `CommandMenuItem`, `CommandMenuPromptBar`, `CommandMenuError`, `useCommandMenuContext` / `getCommandMenuContext`, `CommandProvider`, `useCommand` / `getCommandContext`, `Toaster`, `ToastItem`, `ToastRoot`, `ToastTitle`, `ToastDescription`, `ToastActionTrigger`, `ToastCloseTrigger`, `ToastDismiss`, `ToastContext`, `createToaster`, `toast`, `useToast`, `useToastContext`.
 
 ### State and Data Flow
 

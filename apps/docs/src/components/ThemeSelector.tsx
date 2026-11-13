@@ -3,11 +3,12 @@
 // live-preview theme swatches. Ported from diffbook's settings-dialog as a
 // self-contained component (no shadcn Dialog dependency yet). Each swatch
 // applies its own `theme-{name}` class so its preview renders in that theme.
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+// 1. Imports
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
-import { THEMES, type KeybindingPreset, type ThemeMeta } from '@cloudvoyant/helical-ui';
-import { useWhichKey } from '@cloudvoyant/helical-react';
+import { subscribeDocumentTheme, type KeybindingPreset } from '@cloudvoyant/helical-ui';
+import { ThemeSelector as HelicalThemeSelector, useWhichKey } from '@cloudvoyant/helical-react';
 import { APPEARANCE_CHANGE_EVENT, OPEN_SETTINGS_MODAL_EVENT } from '../lib/commands';
 import {
   applyColorMode,
@@ -18,6 +19,7 @@ import {
   type ColorMode,
 } from '../lib/theme';
 
+// 2. Module constants & types
 const MODES: { value: ColorMode; label: string; Icon: LucideIcon }[] = [
   { value: 'light', label: 'Light', Icon: Sun },
   { value: 'dark', label: 'Dark', Icon: Moon },
@@ -30,6 +32,7 @@ const KEYBINDING_PRESETS: { value: KeybindingPreset; label: string }[] = [
   { value: 'kakoune', label: 'Kakoune' },
 ];
 
+// 3. Local helpers / hooks
 function KeybindingPresetToggle() {
   const { preset, setPreset } = useWhichKey();
 
@@ -80,13 +83,10 @@ function KeybindingPresetToggle() {
  * theme previews can mirror it.
  */
 function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDark: boolean) => void }) {
+  // --- State ---
   const [mode, setMode] = useState<ColorMode>(() => getInitialColorMode());
 
-  function selectMode(m: ColorMode) {
-    applyColorMode(m);
-    setMode(m);
-  }
-
+  // --- Effects ---
   useEffect(() => {
     const onAppearanceChange = () => {
       const next = getInitialColorMode();
@@ -105,6 +105,14 @@ function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDa
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, [mode, onResolvedDarkChange]);
+
+  // --- Methods ---
+  function selectMode(m: ColorMode) {
+    applyColorMode(m);
+    setMode(m);
+  }
+
+  // --- Render ---
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -142,56 +150,7 @@ function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDa
   );
 }
 
-/**
- * A single theme swatch: applies its own `theme-{name}` class (plus `dark` when
- * the effective mode is dark) so its mini preview renders in that theme's actual
- * colors, and applies the theme on click.
- */
-function ThemeSwatch({
-  theme,
-  active,
-  isDark,
-  onSelect,
-}: {
-  theme: ThemeMeta;
-  active: boolean;
-  isDark: boolean;
-  onSelect: (name: string) => void;
-}) {
-  return (
-    <button
-      type="button"
-      title={theme.label}
-      onClick={() => onSelect(theme.name)}
-      aria-pressed={active}
-      data-theme-swatch={theme.name}
-      className={[
-        `theme-${theme.name}`,
-        isDark && 'dark',
-        'relative flex flex-col gap-1.5 overflow-hidden rounded-md border bg-background p-1.5 text-left text-foreground transition-colors',
-        active ? 'border-foreground' : 'border-border hover:border-muted-foreground',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      {active && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-green-500" />}
-      {/* Mini preview rendered in the theme's own colors. */}
-      <div className="flex h-9 flex-col justify-center gap-1 rounded-sm bg-foreground/10 p-1.5">
-        <div className="h-1.5 w-4/5 rounded-full bg-primary" />
-        <div className="h-1.5 w-3/5 rounded-full bg-foreground/40" />
-      </div>
-      <span className="truncate text-[11px] font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
-        {theme.label}
-      </span>
-    </button>
-  );
-}
-
-/**
- * Scrollable grid of live-preview theme swatches. Owns the selected-theme state
- * and drives it through applyTheme; each swatch mirrors the current dark/light.
- */
-function ThemeGrid({ isDark }: { isDark: boolean }) {
+function ThemeGrid() {
   const [theme, setTheme] = useState<string>(() => getInitialTheme());
 
   useEffect(() => {
@@ -199,45 +158,37 @@ function ThemeGrid({ isDark }: { isDark: boolean }) {
       setTheme(getInitialTheme());
     };
     window.addEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
-    return () => window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+    const unsubscribe = subscribeDocumentTheme(({ theme: docTheme }) => {
+      setTheme(docTheme);
+    });
+    return () => {
+      window.removeEventListener(APPEARANCE_CHANGE_EVENT, onAppearanceChange);
+      unsubscribe();
+    };
   }, []);
-
-  function selectTheme(name: string) {
-    applyTheme(name);
-    setTheme(name);
-  }
 
   return (
     <div className="flex flex-col gap-1.5">
       <div className="text-xs font-medium text-muted-foreground">Theme</div>
-      <div className="max-h-64 overflow-y-auto rounded-md border p-2">
-        {/* Neutral --font-sans so swatches whose theme doesn't define one fall back
-            here (not to the active theme's font), preventing font bleed. Each
-            theme's own class overrides this for its swatch. */}
-        <div
-          className="grid grid-cols-2 gap-2"
-          style={
-            {
-              ['--font-sans']: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-            } as CSSProperties
-          }
-        >
-          {THEMES.map((t) => (
-            <ThemeSwatch key={t.name} theme={t} active={theme === t.name} isDark={isDark} onSelect={selectTheme} />
-          ))}
-        </div>
-      </div>
+      <HelicalThemeSelector
+        value={theme}
+        onValueChange={(name) => {
+          applyTheme(name);
+          setTheme(name);
+        }}
+      />
     </div>
   );
 }
 
+// 4. Exported component
 /**
  * ThemeSelector — a button that opens a centered modal with appearance controls:
  * a Light/Dark/System segmented toggle, and a scrollable grid of theme swatches.
  */
 export default function ThemeSelector() {
   const [open, setOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => resolveColorMode(getInitialColorMode()) === 'dark');
+  const [, setIsDark] = useState(() => resolveColorMode(getInitialColorMode()) === 'dark');
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -330,7 +281,7 @@ export default function ThemeSelector() {
 
               <KeybindingPresetToggle />
               <ColorModeToggle onResolvedDarkChange={setIsDark} />
-              <ThemeGrid isDark={isDark} />
+              <ThemeGrid />
             </div>
           </div>,
           document.body,

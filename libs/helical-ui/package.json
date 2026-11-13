@@ -16,6 +16,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./commands": {
+      "types": "./dist/command/index.d.ts",
+      "import": "./dist/command/index.js",
+      "require": "./dist/command/index.cjs"
+    },
     "./theme.css": "./src/theme.css",
     "./themes.css": "./src/themes.css",
     "./components.css": "./src/components.css",

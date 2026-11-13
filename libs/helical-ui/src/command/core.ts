@@ -128,7 +128,22 @@ function matchesCommandToken(node: CommandNode, token: string): boolean {
   return (node.aliases ?? []).some((alias) => alias.toLowerCase() === lower);
 }
 
+function isHotkeyAnchorVisible(el: HTMLElement): boolean {
+  if (el.closest('[hidden]')) return false;
+  const fwWrapper = el.closest<HTMLElement>('[data-fw]');
+  const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
+  if (fwWrapper && activeFw && fwWrapper.getAttribute('data-fw') !== activeFw) {
+    return false;
+  }
+  return true;
+}
+
 // 4. Exported functions
+
+/**
+ * Builds a `@zag-js/collection` `TreeCollection` from an array of `CommandNode` items
+ * or returns an existing `TreeCollection` unchanged.
+ */
 export function createCommandTree(items?: CommandNode[] | TreeCollection<CommandNode>): TreeCollection<CommandNode> {
   if (items instanceof TreeCollection) {
     return items;
@@ -147,6 +162,10 @@ export function createCommandTree(items?: CommandNode[] | TreeCollection<Command
   });
 }
 
+/**
+ * Resolves the active command level, breadcrumbs, and fuzzy-ranked (`fzf`) items
+ * for `CommandPalette` at a given `activePath` and `query`.
+ */
 export function resolveCommandLevel(
   tree: TreeCollection<CommandNode>,
   activePath: string[] = [],
@@ -296,6 +315,10 @@ export function resolveCommandLevel(
   };
 }
 
+/**
+ * Tokenizes a raw `:command` input string and resolves branch breadcrumbs,
+ * `fzf`-ranked child suggestions, exact node matches, and error messages for `CommandMenu`.
+ */
 export function resolveCommandMenuState(
   tree: TreeCollection<CommandNode>,
   rawInput: string = '',
@@ -479,8 +502,9 @@ export function resolveCommandMenuState(
   };
 }
 
-export const resolveColonCommandState = resolveCommandMenuState;
-
+/**
+ * Formats the next `:command` input string when completing or drilling into a suggestion.
+ */
 export function formatCommandMenuCompletionInput(
   completedTokens: string[],
   item: CommandFlatItem,
@@ -490,8 +514,10 @@ export function formatCommandMenuCompletionInput(
   return item.isBranch && appendBranchSpace ? `:${nextTokens} ` : `:${nextTokens}`;
 }
 
-export const formatColonCompletionInput = formatCommandMenuCompletionInput;
-
+/**
+ * Splits a label or command string into highlighted and non-highlighted text segments
+ * based on `fzf` character match positions.
+ */
 export function splitHighlightSegments(text: string, matchPositions?: number[]): CommandHighlightSegment[] {
   if (!text) return [];
   if (!matchPositions || matchPositions.length === 0) {
@@ -521,6 +547,9 @@ export function splitHighlightSegments(text: string, matchPositions?: number[]):
   return segments;
 }
 
+/**
+ * Announces a polite ARIA live-region status message for command navigation and execution.
+ */
 export function announceCommandMessage(message: string): void {
   if (typeof document === 'undefined' || !message) return;
   try {
@@ -533,6 +562,9 @@ export function announceCommandMessage(message: string): void {
   }
 }
 
+/**
+ * Checks whether a `KeyboardEvent` matches a configured command hotkey chord (e.g. `'Mod+k'` or `':'`).
+ */
 export function matchesCommandHotkey(event: KeyboardEvent, hotkey: string): boolean {
   if (!hotkey) return false;
   const trimmed = hotkey.trim();
@@ -554,16 +586,10 @@ export function matchesCommandHotkey(event: KeyboardEvent, hotkey: string): bool
   return false;
 }
 
-function isHotkeyAnchorVisible(el: HTMLElement): boolean {
-  if (el.closest('[hidden]')) return false;
-  const fwWrapper = el.closest<HTMLElement>('[data-fw]');
-  const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
-  if (fwWrapper && activeFw && fwWrapper.getAttribute('data-fw') !== activeFw) {
-    return false;
-  }
-  return true;
-}
-
+/**
+ * Determines whether a specific command anchor element should handle a global hotkey
+ * when multiple demo previews are mounted on the same page.
+ */
 export function shouldHandleCommandHotkey(anchorEl: HTMLElement | null, selector: string): boolean {
   if (!anchorEl || typeof document === 'undefined') return true;
   if (!isHotkeyAnchorVisible(anchorEl)) return false;
@@ -581,6 +607,9 @@ export function shouldHandleCommandHotkey(anchorEl: HTMLElement | null, selector
   return true;
 }
 
+/**
+ * Computes inline CSS grid template properties for a multi-column `CommandMenu` completion list.
+ */
 export function resolveCommandMenuGridStyle(
   columns: CommandMenuColumns = 'auto',
   itemCount: number,
@@ -606,8 +635,9 @@ export function resolveCommandMenuGridStyle(
   };
 }
 
-export const resolveColonCommandGridStyle = resolveCommandMenuGridStyle;
-
+/**
+ * Computes the next highlighted suggestion index for 2D arrow-key navigation in `CommandMenu`.
+ */
 export function resolveCommandMenuGridNavigation(
   columns: CommandMenuColumns = 'auto',
   itemCount: number,
@@ -634,5 +664,3 @@ export function resolveCommandMenuGridNavigation(
   const nextCol = key === 'ArrowRight' ? (col + 1) % totalCols : (col - 1 + totalCols) % totalCols;
   return Math.min(nextCol * rowCount + row, itemCount - 1);
 }
-
-export const resolveColonCommandGridNavigation = resolveCommandMenuGridNavigation;

@@ -2,7 +2,8 @@
 
 // 1. Imports
 import { getContext, setContext } from 'svelte';
-import type { CommandFlatItem, CommandMenuColumns, CommandMenuResolution } from '@cloudvoyant/helical-ui';
+import type { CommandFlatItem, CommandMenuColumns } from '@cloudvoyant/helical-ui';
+import type { CommandMenuResolution } from '@cloudvoyant/helical-ui/commands';
 
 // 2. Module constants & types
 const COMMAND_MENU_CONTEXT_KEY = Symbol.for('helical-ui:command-menu-context');
@@ -30,12 +31,18 @@ export interface CommandMenuContextValue {
 export type ColonCommandContextValue = CommandMenuContextValue;
 
 // 4. Exported functions
+/**
+ * Registers the `CommandMenuContextValue` in Svelte component context.
+ */
 export function setCommandMenuContext(value: CommandMenuContextValue): CommandMenuContextValue {
   return setContext(COMMAND_MENU_CONTEXT_KEY, value);
 }
 
 export const setColonCommandContext = setCommandMenuContext;
 
+/**
+ * Retrieves the active `CommandMenuContextValue` from Svelte component context.
+ */
 export function getCommandMenuContext(): CommandMenuContextValue {
   const ctx = getContext<CommandMenuContextValue | undefined>(COMMAND_MENU_CONTEXT_KEY);
   if (!ctx) {

@@ -2,12 +2,7 @@
 
 // 1. Imports
 import { CornerDownLeft } from 'lucide-react';
-import {
-  cn,
-  commandMenuInputVariants,
-  commandMenuPrefixBase,
-  commandMenuPromptBarVariants,
-} from '@cloudvoyant/helical-ui';
+import { cn, commandMenuStyles } from '@cloudvoyant/helical-ui';
 import { Kbd } from '../kbd';
 import { ListboxInput } from '../listbox';
 import { Row } from '../row';
@@ -21,6 +16,9 @@ export interface CommandMenuPromptBarProps {
 export type ColonCommandPromptBarProps = CommandMenuPromptBarProps;
 
 // 4. Exported component
+/**
+ * Renders the `:` prompt input and keyboard hint bar for `CommandMenu`.
+ */
 export function CommandMenuPromptBar({ className }: CommandMenuPromptBarProps = {}) {
   // --- State ---
   const {
@@ -35,10 +33,10 @@ export function CommandMenuPromptBar({ className }: CommandMenuPromptBarProps = 
 
   // --- Render ---
   return (
-    <div className={cn(commandMenuPromptBarVariants({ size }), className)}>
+    <div className={cn(commandMenuStyles.promptBar({ size }), className)}>
       <span
         data-testid="command-menu-prefix"
-        className={commandMenuPrefixBase}
+        className={commandMenuStyles.prefix}
       >
         :
       </span>
@@ -50,7 +48,7 @@ export function CommandMenuPromptBar({ className }: CommandMenuPromptBarProps = 
         value={currentInput.replace(/^:/, '')}
         onChange={(e) => setInputValue(e.currentTarget.value, null)}
         onKeyDownCapture={handleInputKeyDown}
-        className={commandMenuInputVariants({ size })}
+        className={commandMenuStyles.input({ size })}
       />
       <Row className="shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
         <span className="hidden items-center gap-1 sm:inline-flex">

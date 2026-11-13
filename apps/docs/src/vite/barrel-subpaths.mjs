@@ -7,7 +7,14 @@ const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 
 function resolveLocalModule(dir, relSpec) {
   const base = path.resolve(dir, relSpec);
-  for (const cand of [base, `${base}.ts`, `${base}.tsx`, `${base}.svelte`, path.join(base, 'index.ts')]) {
+  for (const cand of [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.svelte`,
+    `${base}.svelte.ts`,
+    path.join(base, 'index.ts'),
+  ]) {
     if (fs.existsSync(cand) && fs.statSync(cand).isFile()) return cand;
   }
   return base;
@@ -132,6 +139,9 @@ export function helicalBarrelSubpathPlugin() {
     if (exportMaps) return exportMaps;
     exportMaps = {
       '@cloudvoyant/helical-ui': parseBarrel(path.resolve(docsRoot, '../../libs/helical-ui/src/index.ts')),
+      '@cloudvoyant/helical-ui/commands': parseBarrel(
+        path.resolve(docsRoot, '../../libs/helical-ui/src/command/index.ts'),
+      ),
       '@cloudvoyant/helical-react': parseBarrel(path.resolve(docsRoot, '../../libs/helical-react/src/index.ts')),
       '@cloudvoyant/helical-svelte': parseBarrel(path.resolve(docsRoot, '../../libs/helical-svelte/src/index.ts')),
       'lucide-svelte': parseLucideSvelte(path.resolve(docsRoot, 'node_modules/lucide-svelte/dist')),
@@ -163,7 +173,7 @@ export function helicalBarrelSubpathPlugin() {
       let changed = false;
 
       const transformed = code.replace(
-        /^[ \t]*(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui|react|svelte)|lucide-svelte)['"]\s*;?/gm,
+        /^[ \t]*(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui(?:\/commands)?|react|svelte)|lucide-svelte)['"]\s*;?/gm,
         (fullMatch, keyword, typeKw, specList, pkg) => {
           if (typeKw) return fullMatch;
           const pkgMap = maps[pkg];

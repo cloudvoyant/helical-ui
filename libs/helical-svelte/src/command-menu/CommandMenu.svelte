@@ -4,21 +4,21 @@
   import type { Snippet } from 'svelte';
   import { createListCollection } from '@ark-ui/svelte/listbox';
   import {
-    announceCommandMessage,
     cn,
-    commandMenuDialogContentBase,
-    commandMenuPositionerBase,
-    commandMenuVariants,
+    commandMenuStyles,
     createCommandTree,
-    formatCommandMenuCompletionInput,
     matchesCommandHotkey,
-    resolveCommandMenuGridNavigation,
-    resolveCommandMenuState,
-    shouldHandleCommandHotkey,
     type CommandFlatItem,
     type CommandMenuProps as CoreCommandMenuProps,
     type CommandSelectContext,
   } from '@cloudvoyant/helical-ui';
+  import {
+    announceCommandMessage,
+    formatCommandMenuCompletionInput,
+    resolveCommandMenuGridNavigation,
+    resolveCommandMenuState,
+    shouldHandleCommandHotkey,
+  } from '@cloudvoyant/helical-ui/commands';
   import Button from '../Button.svelte';
   import { getOptionalCommandContext } from '../command';
   import {
@@ -39,6 +39,7 @@
   type Props = Omit<CoreCommandMenuProps, 'className'> & {
     class?: string;
     className?: string;
+    trigger?: Snippet;
     children?: Snippet;
   };
 
@@ -62,6 +63,7 @@
     hotkey = ':',
     class: className = '',
     className: reactClassName = '',
+    trigger,
     children,
   }: Props = $props();
 
@@ -79,13 +81,15 @@
   const isStandalone = $derived(
     itemsProp !== undefined || externalCollectionProp !== undefined,
   );
+  const isProviderManaged = $derived(
+    !isStandalone && sharedCommand !== null && sharedCommand !== undefined,
+  );
   const items = $derived(itemsProp ?? sharedCommand?.items);
   const externalCollection = $derived(externalCollectionProp ?? sharedCommand?.collection);
   const sharedOpen = $derived(
-    !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
-      ? sharedCommand.open
+    isProviderManaged
+      ? (sharedCommand!.style === 'menu' || sharedCommand!.style === 'colon') &&
+          sharedCommand!.open
       : undefined,
   );
   const isOpen = $derived(inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen));
@@ -121,21 +125,31 @@
 
   const activeError = $derived(submittedError ?? resolution.error);
   const showTrigger = $derived(
-    children !== undefined || (controlledOpen === undefined && sharedOpen === undefined),
+    trigger !== undefined || (controlledOpen === undefined && !isProviderManaged),
   );
 
   // --- Effects ---
   $effect(() => {
     if (inline || !hotkey || typeof window === 'undefined') return;
+    if (
+      isProviderManaged &&
+      sharedCommand?.style !== 'menu' &&
+      sharedCommand?.style !== 'colon'
+    ) {
+      return;
+    }
     const onWindowKeyDown = (event: KeyboardEvent) => {
       if (!matchesCommandHotkey(event, hotkey)) return;
-      if (!shouldHandleCommandHotkey(anchorEl, '[data-command-menu-anchor="true"]')) {
+      if (
+        !isOpen &&
+        !shouldHandleCommandHotkey(anchorEl, '[data-command-menu-anchor="true"]')
+      ) {
         return;
       }
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      handleOpenChange(true);
+      handleOpenChange(hotkey === ':' ? true : !isOpen);
     };
     window.addEventListener('keydown', onWindowKeyDown, true);
     return () => window.removeEventListener('keydown', onWindowKeyDown, true);
@@ -170,9 +184,8 @@
       uncontrolledOpen = nextOpen;
     }
     if (
-      !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+      isProviderManaged &&
+      (sharedCommand?.style === 'menu' || sharedCommand?.style === 'colon')
     ) {
       sharedCommand.setOpen(nextOpen);
     }
@@ -199,6 +212,8 @@
       return;
     }
 
+    const shouldClose = !inline && item.node.closeOnSelect !== false;
+
     const ctx: CommandSelectContext = {
       value: item.node.value,
       valuePath: item.valuePath,
@@ -212,7 +227,7 @@
     }
     announceCommandMessage(`Executed ${item.fullCommand}`);
 
-    if (!inline && item.node.closeOnSelect !== false) {
+    if (shouldClose) {
       handleOpenChange(false);
     } else {
       setInputValue('');
@@ -435,7 +450,7 @@
     data-command-menu-inline={inline ? 'true' : undefined}
     data-testid={inline ? 'command-menu' : 'command-menu-surface'}
     class={cn(
-      commandMenuVariants({ size }),
+      commandMenuStyles.root({ size }),
       inline ? cn('rounded-lg border', className, reactClassName) : 'max-w-none border-0 shadow-none',
     )}
   >
@@ -450,9 +465,13 @@
       }}
       class="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
     >
-      <CommandMenuList />
-      <CommandMenuPromptBar />
-      <CommandMenuError />
+      {#if children}
+        {@render children()}
+      {:else}
+        <CommandMenuList />
+        <CommandMenuPromptBar />
+        <CommandMenuError />
+      {/if}
     </Listbox>
   </div>
 {/snippet}
@@ -465,12 +484,13 @@
       open={isOpen}
       lazyMount
       unmountOnExit
+      trapFocus={false}
       initialFocusEl={() => getInputElement()}
       onOpenChange={(details) => handleOpenChange(details.open)}
     >
       {#if showTrigger}
-        {#if children}
-          <DialogTrigger asChild={children} />
+        {#if trigger}
+          <DialogTrigger asChild={trigger} />
         {:else}
           <Button variant="outline" onclick={() => handleOpenChange(true)}>
             Open Command Menu {#if hotkey}<Kbd size="sm">{hotkey}</Kbd>{/if}
@@ -479,15 +499,15 @@
       {/if}
       <DialogBackdrop class="bg-black/20" />
       <DialogContent
-        positionerClass={commandMenuPositionerBase}
+        positionerClass={commandMenuStyles.positioner}
         data-command-menu="true"
         data-modal="true"
         data-size={size}
         data-command-menu-columns={String(columns)}
         data-testid="command-menu"
         class={cn(
-          commandMenuDialogContentBase,
-          commandMenuVariants({ size }),
+          commandMenuStyles.dialogContent,
+          commandMenuStyles.root({ size }),
           className,
           reactClassName,
         )}

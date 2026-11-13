@@ -17,10 +17,16 @@ export interface CommandProviderProps extends CommandContextProps {
 const CommandContext = createContext<CommandContextValue | null>(null);
 
 // 3. Local helpers / hooks
+/**
+ * Returns the active `CommandContextValue` when inside a `<CommandProvider>`, or `null` when standalone.
+ */
 export function useOptionalCommand(): CommandContextValue | null {
   return useContext(CommandContext);
 }
 
+/**
+ * Returns the active `CommandContextValue`, throwing if called outside `<CommandProvider>`.
+ */
 export function useCommand(): CommandContextValue {
   const ctx = useContext(CommandContext);
   if (!ctx) {
@@ -30,6 +36,9 @@ export function useCommand(): CommandContextValue {
 }
 
 // 4. Exported component
+/**
+ * Provides shared command tree, open state, and style (`'palette'` | `'menu'`) to child command components.
+ */
 export function CommandProvider({
   items,
   collection,

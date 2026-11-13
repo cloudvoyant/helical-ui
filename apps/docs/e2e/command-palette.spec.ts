@@ -153,6 +153,51 @@ for (const framework of FRAMEWORKS) {
           await expect(palette.getByText('Search Docs')).toBeVisible();
         });
       });
+
+      test.describe('When a leaf command that focuses an element is selected', () => {
+        test.beforeEach(async ({ page }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]').last();
+          await palette.getByTestId('command-palette-input').fill('Open Settings');
+          await page.keyboard.press('Enter');
+        });
+
+        test('it closes the command palette and preserves focus on the target element', async ({
+          page,
+        }) => {
+          const palette = page.locator('[data-testid="command-palette"][data-modal="true"]');
+          await expect(palette).toHaveCount(0);
+          const defaultDemo = island(page, framework, 'default');
+          await expect(defaultDemo.getByRole('button')).toBeFocused();
+        });
+      });
+    });
+
+    test.describe('Given a composed inline command palette', () => {
+      test.describe('When rendered with custom search and fallback parts', () => {
+        test('it displays the custom search placeholder and omits the default footer', async ({
+          page,
+        }) => {
+          const composedDemo = island(page, framework, 'composed');
+          const input = composedDemo.getByTestId('command-palette-input');
+          await expect(input).toHaveAttribute('placeholder', 'Filter editor actions...');
+          await expect(composedDemo.getByText('New File')).toBeVisible();
+          await expect(composedDemo.getByText('Navigate')).toHaveCount(0);
+        });
+      });
+
+      test.describe('When the user filters to zero matching items', () => {
+        test.beforeEach(async ({ page }) => {
+          const composedDemo = island(page, framework, 'composed');
+          await composedDemo.getByTestId('command-palette-input').fill('zzzzzz');
+        });
+
+        test('it renders the custom CommandPaletteFallback content', async ({ page }) => {
+          const composedDemo = island(page, framework, 'composed');
+          const empty = composedDemo.getByTestId('command-palette-empty');
+          await expect(empty).toBeVisible();
+          await expect(empty).toHaveText('No matching editor actions.');
+        });
+      });
     });
   });
 }

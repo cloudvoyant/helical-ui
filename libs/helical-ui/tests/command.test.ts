@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  commandMenuDialogContentBase,
-  commandMenuItemVariants,
-  commandMenuListVariants,
-  commandMenuPositionerBase,
-  commandMenuPromptBarVariants,
+  commandMenuStyles,
+  commandPaletteStyles,
   createCommandTree,
   formatCommandMenuCompletionInput,
   matchesCommandHotkey,
@@ -300,14 +297,15 @@ describe('Given matchesCommandHotkey is called with a KeyboardEvent and hotkey s
 describe('Given CommandMenu bottom-docked positioner, compactness variants, and multi-column list variants', () => {
   describe('When size and columns variants are resolved', () => {
     it('Then docks flush across the bottom edge of the viewport, scales compactness across sm/md/lg, and computes column-first grid styles', () => {
-      expect(commandMenuPositionerBase).toContain('items-end');
-      expect(commandMenuDialogContentBase).toContain('fixed inset-x-0 bottom-0');
-      expect(commandMenuListVariants({ columns: 'auto', size: 'sm' })).toContain('grid-flow-col');
-      expect(commandMenuListVariants({ columns: 'auto', size: 'sm' })).toContain('py-1');
-      expect(commandMenuItemVariants({ size: 'sm' })).toContain('py-0.5');
-      expect(commandMenuItemVariants({ size: 'lg' })).toContain('py-2');
-      expect(commandMenuPromptBarVariants({ size: 'sm' })).toContain('py-1');
-      expect(commandMenuPromptBarVariants({ size: 'lg' })).toContain('py-2.5');
+      expect(commandPaletteStyles.positioner).toContain('items-center');
+      expect(commandMenuStyles.positioner).toContain('items-end');
+      expect(commandMenuStyles.dialogContent).toContain('fixed inset-x-0 bottom-0');
+      expect(commandMenuStyles.list({ columns: 'auto', size: 'sm' })).toContain('grid-flow-col');
+      expect(commandMenuStyles.list({ columns: 'auto', size: 'sm' })).toContain('py-1');
+      expect(commandMenuStyles.item({ size: 'sm' })).toContain('py-0.5');
+      expect(commandMenuStyles.item({ size: 'lg' })).toContain('py-2');
+      expect(commandMenuStyles.promptBar({ size: 'sm' })).toContain('py-1');
+      expect(commandMenuStyles.promptBar({ size: 'lg' })).toContain('py-2.5');
       expect(resolveCommandMenuGridStyle('auto', 6)).toEqual({
         display: 'grid',
         gridAutoFlow: 'column',

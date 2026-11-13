@@ -1,10 +1,8 @@
 <!-- libs/helical-svelte/src/command-menu/CommandMenuList.svelte -->
 <script lang="ts">
   // 1. Imports
-  import {
-    commandMenuListVariants,
-    resolveCommandMenuGridStyle,
-  } from '@cloudvoyant/helical-ui';
+  import { commandMenuStyles } from '@cloudvoyant/helical-ui';
+  import { resolveCommandMenuGridStyle } from '@cloudvoyant/helical-ui/commands';
   import { ListboxContent, ListboxEmpty } from '../listbox';
   import Scroll from '../Scroll.svelte';
   import CommandMenuItem from './CommandMenuItem.svelte';
@@ -31,7 +29,7 @@
       data-columns={String(ctx.columns)}
       data-size={ctx.size}
       style={gridStyleAttr}
-      class={commandMenuListVariants({ columns: ctx.columns, size: ctx.size })}
+      class={commandMenuStyles.list({ columns: ctx.columns, size: ctx.size })}
     >
       {#if !ctx.resolution.hasCommands}
         <ListboxEmpty

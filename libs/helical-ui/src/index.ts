@@ -23,6 +23,9 @@ export {
   dialogFooterStickyBase,
   dialogFullscreenContentBase,
   dialogCloseTriggerBase,
+  dialogStyles,
+  captureDialogFocusTarget,
+  restoreDialogFocusTarget,
 } from './dialog';
 export {
   windowPositionerBase,
@@ -140,7 +143,37 @@ export {
   navbarMobileMenuBase,
   navbarMobileActionsBase,
 } from './navbar';
-export { THEMES, THEME_NAMES, type ThemeMeta } from './themes';
+export {
+  lightSwitchButtonVariants,
+  cycleThemeModeValue,
+  readSystemDarkMode,
+  subscribeSystemDarkMode,
+  readDocumentDarkMode,
+  syncDocumentDarkMode,
+  type ThemeMode,
+  type LightSwitchBaseProps,
+  type LightSwitchButtonVariants,
+} from './light-switch';
+export {
+  THEMES,
+  THEME_NAMES,
+  THEME_CLASS_PREFIX,
+  DEFAULT_THEME,
+  themeSelectorStyles,
+  registerCustomThemes,
+  mergeThemePresets,
+  hasThemeCss,
+  readDocumentTheme,
+  syncDocumentTheme,
+  subscribeDocumentTheme,
+  type ThemeMeta,
+  type ThemeName,
+  type ThemeServiceOptions,
+  type UseThemeOptions,
+  type ThemeController,
+  type ThemeSelectorBaseProps,
+  type ThemeSelectorSwatchVariants,
+} from './themes';
 export { cn } from './cn';
 export {
   fieldRootBase,
@@ -386,6 +419,25 @@ export {
   type ToastActionOptions,
   type ToastVariants,
 } from './toast';
-export * from './command';
+export {
+  createCommandTree,
+  matchesCommandHotkey,
+  commandPaletteStyles,
+  commandMenuStyles,
+  type CommandStyle,
+  type CommandSelectContext,
+  type CommandNode,
+  type CommandBreadcrumb,
+  type CommandFlatItem,
+  type CommandPaletteProps,
+  type CommandMenuColumns,
+  type ColonCommandColumns,
+  type CommandMenuProps,
+  type ColonCommandProps,
+  type CommandContextProps,
+  type CommandContextValue,
+  type CommandPaletteVariants,
+  type CommandMenuVariants,
+} from './command';
 export * from './which-key';
 export * from './editor';

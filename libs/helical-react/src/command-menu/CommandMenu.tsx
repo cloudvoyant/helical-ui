@@ -12,21 +12,21 @@ import {
 } from 'react';
 import { createListCollection } from '@ark-ui/react/listbox';
 import {
-  announceCommandMessage,
   cn,
-  commandMenuDialogContentBase,
-  commandMenuPositionerBase,
-  commandMenuVariants,
+  commandMenuStyles,
   createCommandTree,
-  formatCommandMenuCompletionInput,
   matchesCommandHotkey,
-  resolveCommandMenuGridNavigation,
-  resolveCommandMenuState,
-  shouldHandleCommandHotkey,
   type CommandFlatItem,
   type CommandMenuProps as CoreCommandMenuProps,
   type CommandSelectContext,
 } from '@cloudvoyant/helical-ui';
+import {
+  announceCommandMessage,
+  formatCommandMenuCompletionInput,
+  resolveCommandMenuGridNavigation,
+  resolveCommandMenuState,
+  shouldHandleCommandHotkey,
+} from '@cloudvoyant/helical-ui/commands';
 import { Button } from '../button';
 import { useOptionalCommand } from '../command';
 import {
@@ -45,12 +45,16 @@ import { CommandMenuContext, type CommandMenuContextValue } from './context';
 
 // 2. Module constants & types
 export interface CommandMenuProps extends CoreCommandMenuProps {
+  trigger?: ReactNode;
   children?: ReactNode;
 }
 
 export type ColonCommandProps = CommandMenuProps;
 
 // 4. Exported component
+/**
+ * Renders a bottom-docked `:` command prompt and completion popup with composable subcomponents.
+ */
 export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
   (
     {
@@ -71,6 +75,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       inline = false,
       hotkey = ':',
       className,
+      trigger,
       children,
     },
     ref,
@@ -78,6 +83,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     // --- State ---
     const sharedCommand = useOptionalCommand();
     const isStandalone = itemsProp !== undefined || externalCollectionProp !== undefined;
+    const isProviderManaged =
+      !isStandalone && sharedCommand !== null && sharedCommand !== undefined;
     const items = itemsProp ?? sharedCommand?.items;
     const externalCollection = externalCollectionProp ?? sharedCommand?.collection;
 
@@ -90,12 +97,10 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     const rootRef = useRef<HTMLDivElement | null>(null);
     const anchorRef = useRef<HTMLSpanElement | null>(null);
 
-    const sharedOpen =
-      !isStandalone &&
-      sharedCommand &&
-      (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
-        ? sharedCommand.open
-        : undefined;
+    const sharedOpen = isProviderManaged
+      ? (sharedCommand.style === 'menu' || sharedCommand.style === 'colon') &&
+        sharedCommand.open
+      : undefined;
     const isOpen = inline ? true : (controlledOpen ?? sharedOpen ?? uncontrolledOpen);
     const currentInput = controlledInputValue ?? uncontrolledInput;
 
@@ -145,15 +150,25 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     // --- Effects ---
     useEffect(() => {
       if (inline || !hotkey || typeof window === 'undefined') return;
+      if (
+        isProviderManaged &&
+        sharedCommand?.style !== 'menu' &&
+        sharedCommand?.style !== 'colon'
+      ) {
+        return;
+      }
       const onWindowKeyDown = (event: globalThis.KeyboardEvent) => {
         if (!matchesCommandHotkey(event, hotkey)) return;
-        if (!shouldHandleCommandHotkey(anchorRef.current, '[data-command-menu-anchor="true"]')) {
+        if (
+          !isOpen &&
+          !shouldHandleCommandHotkey(anchorRef.current, '[data-command-menu-anchor="true"]')
+        ) {
           return;
         }
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        handleOpenChange(true);
+        handleOpenChange(hotkey === ':' ? true : !isOpen);
       };
       window.addEventListener('keydown', onWindowKeyDown, true);
       return () => window.removeEventListener('keydown', onWindowKeyDown, true);
@@ -184,9 +199,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
         setUncontrolledOpen(nextOpen);
       }
       if (
-        !isStandalone &&
-        sharedCommand &&
-        (sharedCommand.style === 'menu' || sharedCommand.style === 'colon')
+        isProviderManaged &&
+        (sharedCommand?.style === 'menu' || sharedCommand?.style === 'colon')
       ) {
         sharedCommand.setOpen(nextOpen);
       }
@@ -213,6 +227,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
         return;
       }
 
+      const shouldClose = !inline && item.node.closeOnSelect !== false;
+
       const ctx: CommandSelectContext = {
         value: item.node.value,
         valuePath: item.valuePath,
@@ -226,7 +242,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       }
       announceCommandMessage(`Executed ${item.fullCommand}`);
 
-      if (!inline && item.node.closeOnSelect !== false) {
+      if (shouldClose) {
         handleOpenChange(false);
       } else {
         setInputValue('');
@@ -432,7 +448,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           data-command-menu-inline={inline ? 'true' : undefined}
           data-testid={inline ? 'command-menu' : 'command-menu-surface'}
           className={cn(
-            commandMenuVariants({ size }),
+            commandMenuStyles.root({ size }),
             inline ? cn('rounded-lg border', className) : 'max-w-none border-0 shadow-none',
           )}
         >
@@ -447,9 +463,13 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
             }}
             className="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
           >
-            <CommandMenuList />
-            <CommandMenuPromptBar />
-            <CommandMenuError />
+            {children ?? (
+              <>
+                <CommandMenuList />
+                <CommandMenuPromptBar />
+                <CommandMenuError />
+              </>
+            )}
           </Listbox>
         </div>
       </CommandMenuContext.Provider>
@@ -459,7 +479,8 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       return menuSurface;
     }
 
-    const showTrigger = children !== undefined || (controlledOpen === undefined && sharedOpen === undefined);
+    const showTrigger =
+      trigger !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
       <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
@@ -467,12 +488,13 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           open={isOpen}
           lazyMount
           unmountOnExit
+          trapFocus={false}
           initialFocusEl={() => getInputElement()}
           onOpenChange={(details) => handleOpenChange(details.open)}
         >
           {showTrigger && (
             <DialogTrigger asChild>
-              {children ?? (
+              {trigger ?? (
                 <Button variant="outline">
                   Open Command Menu {hotkey ? <Kbd size="sm">{hotkey}</Kbd> : null}
                 </Button>
@@ -481,15 +503,15 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
           )}
           <DialogBackdrop className="bg-black/20" />
           <DialogContent
-            positionerClassName={commandMenuPositionerBase}
+            positionerClassName={commandMenuStyles.positioner}
             data-command-menu="true"
             data-modal="true"
             data-size={size}
             data-command-menu-columns={String(columns)}
             data-testid="command-menu"
             className={cn(
-              commandMenuDialogContentBase,
-              commandMenuVariants({ size }),
+              commandMenuStyles.dialogContent,
+              commandMenuStyles.root({ size }),
               className,
             )}
           >

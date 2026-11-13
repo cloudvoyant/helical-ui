@@ -1,6 +1,8 @@
 // libs/helical-react/src/dialog.tsx
 // Closely based on: Ark UI dialog (@ark-ui/react/dialog)
-import type { HTMLAttributes } from 'react';
+
+// 1. Imports
+import { useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import {
   DialogRoot as ArkDialogRoot,
   DialogRootProvider as ArkDialogRootProvider,
@@ -24,45 +26,126 @@ import {
 } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import {
-  dialogBackdropBase,
-  dialogPositionerBase,
-  dialogContentBase,
-  dialogTitleBase,
-  dialogDescriptionBase,
-  dialogHeaderBase,
-  dialogFooterBase,
-  dialogHeaderStickyBase,
-  dialogFooterStickyBase,
-  dialogFullscreenContentBase,
-  dialogCloseTriggerBase,
+  captureDialogFocusTarget,
   cn,
+  dialogStyles,
+  restoreDialogFocusTarget,
 } from '@cloudvoyant/helical-ui';
 
-export function Dialog(props: DialogRootProps) {
-  return <ArkDialogRoot {...props} />;
-}
-
-export function DialogProvider(props: DialogRootProviderProps) {
-  return <ArkDialogRootProvider {...props} />;
-}
-
-export function DialogTrigger({ className, ...props }: DialogTriggerProps) {
-  return <ArkDialogTrigger className={cn(className)} {...props} />;
-}
-
-export function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
-  return (
-    <Portal>
-      <ArkDialogBackdrop className={cn(dialogBackdropBase, className)} {...props} />
-    </Portal>
-  );
-}
-
+// 2. Module constants & types
 export type DialogContentPropsWithPositioner = DialogContentProps & {
   positionerClassName?: string;
   fullscreen?: boolean;
 };
 
+export type DialogHeaderProps = HTMLAttributes<HTMLDivElement> & { sticky?: boolean };
+
+export type DialogFooterProps = HTMLAttributes<HTMLDivElement> & { sticky?: boolean };
+
+// 4. Exported components
+/**
+ * Modal dialog root that tracks and restores focus when opened via trigger, hotkey, or controlled state.
+ */
+export function Dialog({
+  open: controlledOpen,
+  defaultOpen = false,
+  restoreFocus = true,
+  finalFocusEl,
+  onOpenChange,
+  ...props
+}: DialogRootProps) {
+  // --- State ---
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
+  const isOpen = controlledOpen ?? uncontrolledOpen;
+
+  if (isOpen && !wasOpenRef.current) {
+    const captured = captureDialogFocusTarget();
+    if (captured) {
+      previousFocusRef.current = captured;
+    }
+  }
+
+  // --- Effects ---
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      if (!previousFocusRef.current) {
+        previousFocusRef.current = captureDialogFocusTarget();
+      }
+      wasOpenRef.current = true;
+    } else if (!isOpen && wasOpenRef.current) {
+      wasOpenRef.current = false;
+      const target = (finalFocusEl?.() as HTMLElement | null | undefined) ?? previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (restoreFocus) {
+        restoreDialogFocusTarget(target);
+      }
+    }
+  }, [isOpen, restoreFocus, finalFocusEl]);
+
+  // --- Methods ---
+  const handleOpenChange: DialogRootProps['onOpenChange'] = (details) => {
+    if (details.open && !isOpen) {
+      const captured = captureDialogFocusTarget();
+      if (captured) {
+        previousFocusRef.current = captured;
+      }
+    }
+    if (controlledOpen === undefined) {
+      setUncontrolledOpen(details.open);
+    }
+    if (!details.open && wasOpenRef.current) {
+      wasOpenRef.current = false;
+      const target = (finalFocusEl?.() as HTMLElement | null | undefined) ?? previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (restoreFocus) {
+        restoreDialogFocusTarget(target);
+      }
+    }
+    onOpenChange?.(details);
+  };
+
+  // --- Render ---
+  return (
+    <ArkDialogRoot
+      open={isOpen}
+      restoreFocus={false}
+      finalFocusEl={finalFocusEl}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Provides an externally created `useDialog` machine instance to child dialog parts.
+ */
+export function DialogProvider(props: DialogRootProviderProps) {
+  return <ArkDialogRootProvider {...props} />;
+}
+
+/**
+ * Button or element that opens the dialog when activated.
+ */
+export function DialogTrigger({ className, ...props }: DialogTriggerProps) {
+  return <ArkDialogTrigger className={cn(className)} {...props} />;
+}
+
+/**
+ * Portaled backdrop overlay rendered behind an open dialog.
+ */
+export function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
+  return (
+    <Portal>
+      <ArkDialogBackdrop className={cn(dialogStyles.backdrop, className)} {...props} />
+    </Portal>
+  );
+}
+
+/**
+ * Portaled dialog positioner and content container.
+ */
 export function DialogContent({
   positionerClassName,
   fullscreen,
@@ -71,9 +154,15 @@ export function DialogContent({
 }: DialogContentPropsWithPositioner) {
   return (
     <Portal>
-      <ArkDialogPositioner className={cn(dialogPositionerBase, fullscreen && 'p-0', positionerClassName)}>
+      <ArkDialogPositioner
+        className={cn(dialogStyles.positioner, fullscreen && 'p-0', positionerClassName)}
+      >
         <ArkDialogContent
-          className={cn(dialogContentBase, fullscreen && dialogFullscreenContentBase, className)}
+          className={cn(
+            dialogStyles.content,
+            fullscreen && dialogStyles.fullscreenContent,
+            className,
+          )}
           {...props}
         />
       </ArkDialogPositioner>
@@ -81,28 +170,55 @@ export function DialogContent({
   );
 }
 
+/**
+ * Accessible heading title for a dialog.
+ */
 export function DialogTitle({ className, ...props }: DialogTitleProps) {
-  return <ArkDialogTitle className={cn(dialogTitleBase, className)} {...props} />;
+  return <ArkDialogTitle className={cn(dialogStyles.title, className)} {...props} />;
 }
 
+/**
+ * Accessible description paragraph for a dialog.
+ */
 export function DialogDescription({ className, ...props }: DialogDescriptionProps) {
-  return <ArkDialogDescription className={cn(dialogDescriptionBase, className)} {...props} />;
+  return <ArkDialogDescription className={cn(dialogStyles.description, className)} {...props} />;
 }
 
-export type DialogHeaderProps = HTMLAttributes<HTMLDivElement> & { sticky?: boolean };
-
+/**
+ * Header layout container for a dialog's title and description.
+ */
 export function DialogHeader({ sticky, className, ...props }: DialogHeaderProps) {
-  return <div className={cn(dialogHeaderBase, sticky && dialogHeaderStickyBase, className)} {...props} />;
+  return (
+    <div
+      className={cn(dialogStyles.header, sticky && dialogStyles.headerSticky, className)}
+      {...props}
+    />
+  );
 }
 
-export type DialogFooterProps = HTMLAttributes<HTMLDivElement> & { sticky?: boolean };
-
+/**
+ * Footer layout container for dialog action buttons.
+ */
 export function DialogFooter({ sticky, className, ...props }: DialogFooterProps) {
-  return <div className={cn(dialogFooterBase, sticky && dialogFooterStickyBase, className)} {...props} />;
+  return (
+    <div
+      className={cn(dialogStyles.footer, sticky && dialogStyles.footerSticky, className)}
+      {...props}
+    />
+  );
 }
 
+/**
+ * Close trigger button positioned in the top-right corner of the dialog.
+ */
 export function DialogDismiss({ className, ...props }: DialogCloseTriggerProps) {
-  return <ArkDialogCloseTrigger aria-label="Close" className={cn(dialogCloseTriggerBase, className)} {...props} />;
+  return (
+    <ArkDialogCloseTrigger
+      aria-label="Close"
+      className={cn(dialogStyles.closeTrigger, className)}
+      {...props}
+    />
+  );
 }
 
 export { useDialog, useDialogContext };

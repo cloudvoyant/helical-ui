@@ -74,5 +74,10 @@ export type {
   CommandNode,
   CommandSelectContext,
   CommandStyle,
+  LightSwitchBaseProps,
+  LightSwitchButtonVariants,
 } from '@cloudvoyant/helical-ui';
 export * from './which-key';
+export { default as LightSwitch } from './LightSwitch.svelte';
+export type { LightSwitchProps } from './LightSwitch.svelte';
+export * from './theme';

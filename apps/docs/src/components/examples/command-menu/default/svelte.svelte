@@ -42,6 +42,18 @@
     { value: 'bindings', label: 'Explore Keybindings', command: 'bindings', shortcut: '?' },
     { value: 'settings', label: 'Open Settings', command: 'settings' },
   ];
+
+  // --- State ---
+  let containerEl = $state<HTMLDivElement | null>(null);
 </script>
 
-<CommandMenu items={COMMANDS} />
+<div bind:this={containerEl} class="contents">
+  <CommandMenu
+    items={COMMANDS}
+    onSelectCommand={(ctx) => {
+      if (ctx.value === 'settings') {
+        containerEl?.querySelector<HTMLElement>('button')?.focus();
+      }
+    }}
+  />
+</div>

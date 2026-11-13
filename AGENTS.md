@@ -15,6 +15,7 @@
 - Split multi-concern component modules in `libs/helical-ui/src/` into a `<component>/` directory with separate `types.ts`, `core.ts`, `styles.ts`, and `index.ts` files rather than a single monolithic file.
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
+- Keep main component types and public utilities on the `@cloudvoyant/helical-ui` barrel root; expose only internal component helpers that consumers are discouraged from calling directly via subpath exports (e.g., `@cloudvoyant/helical-ui/commands`).
 
 ### Repository layout
 
@@ -52,7 +53,7 @@ flowchart LR
 
 ### File layout
 
-Order every component file from top to bottom, and use explicit section headers inside stateful components (`// --- State ---`, `// --- Effects ---`, `// --- Methods ---`, `// --- Helpers ---`, `// --- Render ---`) in that exact order (only include `// Source:` when the file is a near-direct copy of an upstream reference):
+Order every module and component file from top to bottom (`1. Imports`, `2. Module constants & types`, `3. Local helpers / hooks`, `4. Exported functions / components`), and use explicit section headers inside stateful components (`// --- State ---`, `// --- Effects ---`, `// --- Methods ---`, `// --- Helpers ---`, `// --- Render ---`) in that exact order (only include `// Source:` when the file is a near-direct copy of an upstream reference):
 
 ```tsx
 // 1. Imports
@@ -93,7 +94,9 @@ export const badgeVariants = cva('inline-flex items-center', {
 });
 ```
 
+- Prioritize typing and autocomplete ergonomics for consumers; export multi-part component styles as a grouped object (e.g., `commandPaletteStyles`, `commandMenuStyles`, `themeSelectorStyles`) rather than flat individual style constants.
 - [Proposed] Keep inline comments terse and last-resort; express intent through self-descriptive identifiers and move rationale into `docs/architecture/components/<component>.md`.
+- Document all exported public functions, classes, and public methods with TSDoc comments.
 - [Proposed] Document complex UI components with `difflab templates scaffold ui-component-architecture`, using Mermaid diagrams for state transitions and data flow.
 - [Proposed] Keep `Behavior` and `Public API` sections in `docs/architecture/components/<component>.md` terse and in plain English; explain component wiring and runtime mechanics with Mermaid diagrams under `Design` and `Implementation` rather than prose paragraphs.
 - [Proposed] Prefer Tailwind utilities and `cva` variants in `libs/helical-ui/src/<component>.ts` over raw rules in [components.css](libs/helical-ui/src/components.css), reserving `components.css` for `@keyframes` or third-party selector overrides.
@@ -101,7 +104,9 @@ export const badgeVariants = cva('inline-flex items-center', {
 ### React and Svelte
 
 - Keep wrappers thin, maintain prop parity across React and Svelte 5 runes (`$props`, `$derived`, `$state`), and compose layouts with helical-ui primitives (`Container`, `Row`, `Col`, `Stack`, `HStack`, `VStack`, `Center`):
+- [Proposed] Provide identically typed hooks (e.g., `useTheme`) across `@cloudvoyant/helical-react` and `@cloudvoyant/helical-svelte` backed by shared state in `@cloudvoyant/helical-ui`, and pass configuration such as custom themes to hooks or providers rather than picker components.
 - [Proposed] Support uncontrolled usage (internal state fallback when `open` or `value` is omitted) on interactive overlay and menu components so consumers do not have to wire external state for basic usage.
+- [Proposed] Expose composable subcomponents and shared context hooks for multi-part interactive components while rendering a default composition when children are omitted.
 - Keep documentation examples in `apps/docs/src/components/examples/` self-contained with hardcoded sample data and minimal UI; omit `data-testid` attributes, docs-shell state subscriptions, status readouts used only to prove effects, and explanatory prose that belongs in the surrounding MDX page.
 
 ```tsx
@@ -131,6 +136,7 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 | E2E (`playwright`) | `apps/docs/e2e/<component>.spec.ts` | ARIA state, keyboard navigation, and parity across React & Svelte islands |
 
 - Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`) with shared setup/actions in `test.beforeEach`, and focused outcome assertions in `test('it ...')`.
+- [Proposed] Prefer Playwright E2E tests on the demo site over mocked DOM (`vi.stubGlobal`) unit tests for browser-dependent behaviors like focus management, media queries, and document class synchronization.
 - Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):

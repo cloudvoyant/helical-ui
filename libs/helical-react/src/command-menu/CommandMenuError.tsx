@@ -2,7 +2,7 @@
 
 // 1. Imports
 import { AlertCircle } from 'lucide-react';
-import { cn, commandMenuErrorBase } from '@cloudvoyant/helical-ui';
+import { cn, commandMenuStyles } from '@cloudvoyant/helical-ui';
 import { Row } from '../row';
 import { useCommandMenuContext } from './context';
 
@@ -14,6 +14,9 @@ export interface CommandMenuErrorProps {
 export type ColonCommandErrorProps = CommandMenuErrorProps;
 
 // 4. Exported component
+/**
+ * Renders the inline command error banner for `CommandMenu` when an error is active.
+ */
 export function CommandMenuError({ className }: CommandMenuErrorProps = {}) {
   // --- State ---
   const { activeError, resolution } = useCommandMenuContext();
@@ -27,7 +30,7 @@ export function CommandMenuError({ className }: CommandMenuErrorProps = {}) {
     <div
       role="alert"
       data-testid="command-menu-error"
-      className={cn(commandMenuErrorBase, className)}
+      className={cn(commandMenuStyles.error, className)}
     >
       <Row className="items-center gap-1.5">
         <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />

@@ -117,6 +117,26 @@ for (const framework of FRAMEWORKS) {
           await expect(page.getByRole('dialog', { name: 'Nested Modal Layer' })).toBeVisible();
         });
       });
+
+      test.describe('When a command opens the Dialog with WhichKey enabled', () => {
+        test.beforeEach(async ({ page }) => {
+          const demo = island(page, framework, 'modal-interaction');
+          await demo.getByRole('button', { name: 'Run Command' }).click();
+          const menu = page.locator('[data-testid="command-menu"][data-modal="true"]').last();
+          await expect(menu).toBeVisible();
+          const input = menu.getByTestId('command-menu-input');
+          await expect(input).toBeFocused();
+          await input.press('Enter');
+        });
+
+        test('it closes the command menu and retains focus inside the newly opened Dialog', async ({
+          page,
+        }) => {
+          const dialog = page.getByRole('dialog', { name: 'Nested Modal Layer' });
+          await expect(dialog).toBeVisible();
+          await expect(dialog.locator('button').first()).toBeFocused();
+        });
+      });
     });
 
     test.describe('Given WhichKeyExplorer', () => {

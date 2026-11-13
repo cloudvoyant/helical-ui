@@ -31,6 +31,10 @@ export default defineConfig({
           replacement: new URL('../../libs/helical-ui/src/index.ts', import.meta.url).pathname,
         },
         {
+          find: /^@cloudvoyant\/helical-ui\/commands?$/,
+          replacement: new URL('../../libs/helical-ui/src/command/index.ts', import.meta.url).pathname,
+        },
+        {
           find: /^@cloudvoyant\/helical-react$/,
           replacement: new URL('../../libs/helical-react/src/index.ts', import.meta.url).pathname,
         },

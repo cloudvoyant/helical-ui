@@ -2,11 +2,7 @@
 <script lang="ts">
   // 1. Imports
   import { CornerDownLeft } from 'lucide-svelte';
-  import {
-    commandMenuInputVariants,
-    commandMenuPrefixBase,
-    commandMenuPromptBarVariants,
-  } from '@cloudvoyant/helical-ui';
+  import { commandMenuStyles } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import { ListboxInput } from '../listbox';
   import Row from '../Row.svelte';
@@ -16,10 +12,10 @@
   const ctx = getCommandMenuContext();
 </script>
 
-<div class={commandMenuPromptBarVariants({ size: ctx.size })}>
+<div class={commandMenuStyles.promptBar({ size: ctx.size })}>
   <span
     data-testid="command-menu-prefix"
-    class={commandMenuPrefixBase}
+    class={commandMenuStyles.prefix}
   >
     :
   </span>
@@ -33,7 +29,7 @@
       ctx.setInputValue((e.currentTarget as HTMLInputElement).value, null);
     }}
     onkeydowncapture={ctx.handleInputKeyDown}
-    class={commandMenuInputVariants({ size: ctx.size })}
+    class={commandMenuStyles.input({ size: ctx.size })}
   />
   <Row class="shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
     <span class="hidden items-center gap-1 sm:inline-flex">

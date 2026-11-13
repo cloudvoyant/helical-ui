@@ -1,11 +1,8 @@
 // libs/helical-react/src/command-menu/CommandMenuList.tsx
 
 // 1. Imports
-import {
-  cn,
-  commandMenuListVariants,
-  resolveCommandMenuGridStyle,
-} from '@cloudvoyant/helical-ui';
+import { cn, commandMenuStyles } from '@cloudvoyant/helical-ui';
+import { resolveCommandMenuGridStyle } from '@cloudvoyant/helical-ui/commands';
 import { ListboxContent, ListboxEmpty } from '../listbox';
 import { Scroll } from '../scroll';
 import { CommandMenuItem } from './CommandMenuItem';
@@ -19,6 +16,9 @@ export interface CommandMenuListProps {
 export type ColonCommandListProps = CommandMenuListProps;
 
 // 4. Exported component
+/**
+ * Renders the scrollable multi-column completion grid or empty state for `CommandMenu`.
+ */
 export function CommandMenuList({ className }: CommandMenuListProps = {}) {
   // --- State ---
   const {
@@ -39,7 +39,7 @@ export function CommandMenuList({ className }: CommandMenuListProps = {}) {
         data-columns={String(columns)}
         data-size={size}
         style={resolveCommandMenuGridStyle(columns, resolution.suggestions.length)}
-        className={cn(commandMenuListVariants({ columns, size }), className)}
+        className={cn(commandMenuStyles.list({ columns, size }), className)}
       >
         {!resolution.hasCommands ? (
           <ListboxEmpty
