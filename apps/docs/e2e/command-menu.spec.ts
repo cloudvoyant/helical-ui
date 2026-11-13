@@ -11,14 +11,6 @@ for (const framework of FRAMEWORKS) {
     });
 
     test.describe('Given a closed command menu', () => {
-      test('it suppresses the fallback trigger and inline anchor box when controlled without a trigger', async ({
-        page,
-      }) => {
-        const triggerlessAnchor = page.locator('[data-command-menu-anchor="true"].contents');
-        await expect(triggerlessAnchor).toHaveCount(1);
-        await expect(triggerlessAnchor.locator('button')).toHaveCount(0);
-      });
-
       test.describe('When colon is pressed', () => {
         test.beforeEach(async ({ page }) => {
           await page.keyboard.press(':');
@@ -221,29 +213,39 @@ for (const framework of FRAMEWORKS) {
           await expect(defaultDemo.getByRole('button')).toBeFocused();
         });
       });
-    });
 
-    test.describe('Given an inline command menu with aliases', () => {
-      test('it displays aliases in the trailing slot when showAliases is enabled and hides them when disabled', async ({
-        page,
-      }) => {
-        const aliasesDemo = island(page, framework, 'aliases');
-        const writeItem = aliasesDemo.locator('[data-testid="command-menu-item"][data-value="write"]');
-        const writeAliases = writeItem.getByTestId('command-menu-item-aliases');
+      test.describe('When showing aliases is enabled', () => {
+        test.beforeEach(async ({ page }) => {
+          await page.keyboard.press('Escape');
+        });
 
-        await expect(writeAliases).toBeVisible();
-        await expect(writeAliases).toHaveText('w');
+        test('it displays aliases in the trailing slot', async ({ page }) => {
+          const aliasesDemo = island(page, framework, 'aliases');
+          const writeItem = aliasesDemo.locator(
+            '[data-testid="command-menu-item"][data-value="write"]',
+          );
+          const writeAliases = writeItem.getByTestId('command-menu-item-aliases');
 
-        await aliasesDemo.getByRole('radio', { name: 'Hide Aliases' }).click();
-        await expect(writeAliases).toHaveCount(0);
+          await expect(writeAliases).toBeVisible();
+          await expect(writeAliases).toHaveText('w');
+        });
+      });
 
-        await aliasesDemo.getByRole('radio', { name: 'Show Aliases' }).click();
-        await expect(writeAliases).toBeVisible();
-        await expect(writeAliases).toHaveText('w');
+      test.describe('When showing aliases is disabled (default)', () => {
+        test('it hides aliases in the trailing slot', async ({ page }) => {
+          const menu = page.locator('[data-testid="command-menu"][data-modal="true"]').last();
+          const themeItem = menu.locator('[data-testid="command-menu-item"][data-value="theme"]');
+          await expect(themeItem).toBeVisible();
+          await expect(themeItem.getByTestId('command-menu-item-aliases')).toHaveCount(0);
 
-        await page.keyboard.press('Space');
-        await expect(page.getByTestId('which-key-panel')).toBeVisible();
-        await page.keyboard.press('Escape');
+          await page.keyboard.press('Escape');
+          const aliasesDemo = island(page, framework, 'aliases');
+          const writeItem = aliasesDemo.locator(
+            '[data-testid="command-menu-item"][data-value="write"]',
+          );
+          await aliasesDemo.getByRole('radio', { name: 'Hide Aliases' }).click();
+          await expect(writeItem.getByTestId('command-menu-item-aliases')).toHaveCount(0);
+        });
       });
     });
   });

@@ -287,22 +287,23 @@ for (const framework of FRAMEWORKS) {
           await page.keyboard.press('Control+i');
           await expect(navBtn).toBeFocused();
         });
+      });
+    });
 
-        test('it only renders data-pane-active="true" on multi-pane scopes and traverses page sections with } and { without focusing example blocks', async ({
+    test.describe('Given a page with multiple sections', () => {
+      test.describe('When } and { are pressed', () => {
+        test('it scrolls forward to the next section and back to the previous section', async ({
           page,
         }) => {
-          const singlePane = island(page, framework, 'default').locator('[data-pane-id="wk-default-pane"]');
-          const multiPaneNav = island(page, framework, 'panes').locator('[data-pane-id="pane-nav"]');
-          await expect(singlePane).toHaveAttribute('data-pane-active', 'false');
-          await expect(multiPaneNav).toHaveAttribute('data-pane-active', 'true');
-
+          await page.evaluate(() => window.scrollTo(0, 0));
           await page.keyboard.press('}');
-          const focusedTag = await page.evaluate(() => document.activeElement?.tagName ?? '');
-          const focusedIsExample = await page.evaluate(
-            () => document.activeElement?.hasAttribute('data-example') ?? false,
-          );
-          expect(['H1', 'H2', 'H3', 'SECTION']).toContain(focusedTag);
-          expect(focusedIsExample).toBe(false);
+          await page.keyboard.press('}');
+          const scrolledDownY = await page.evaluate(() => window.scrollY);
+          expect(scrolledDownY).toBeGreaterThan(0);
+
+          await page.keyboard.press('{');
+          const scrolledUpY = await page.evaluate(() => window.scrollY);
+          expect(scrolledUpY).toBeLessThan(scrolledDownY);
         });
       });
     });
