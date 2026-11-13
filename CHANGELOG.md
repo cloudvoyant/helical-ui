@@ -1,3 +1,10 @@
+# [0.24.0](https://github.com/cloudvoyant/helical-ui/compare/v0.23.1...v0.24.0) (2026-11-13)
+
+
+### Features
+
+* **command-menu:** fix provider-managed trigger box and add showAliases option (CLO-218) ([#39](https://github.com/cloudvoyant/helical-ui/issues/39)) ([8e8c576](https://github.com/cloudvoyant/helical-ui/commit/8e8c57626b37318d4fcea3d3d9923632cf926b68))
+
 ## [0.23.1](https://github.com/cloudvoyant/helical-ui/compare/v0.23.0...v0.23.1) (2026-11-13)
 
 
