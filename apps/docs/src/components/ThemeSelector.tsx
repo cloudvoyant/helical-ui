@@ -3,6 +3,7 @@
 // live-preview theme swatches. Ported from diffbook's settings-dialog as a
 // self-contained component (no shadcn Dialog dependency yet). Each swatch
 // applies its own `theme-{name}` class so its preview renders in that theme.
+// 1. Imports
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Sun, Moon, Monitor, X, type LucideIcon } from 'lucide-react';
@@ -18,6 +19,7 @@ import {
   type ColorMode,
 } from '../lib/theme';
 
+// 2. Module constants & types
 const MODES: { value: ColorMode; label: string; Icon: LucideIcon }[] = [
   { value: 'light', label: 'Light', Icon: Sun },
   { value: 'dark', label: 'Dark', Icon: Moon },
@@ -30,6 +32,7 @@ const KEYBINDING_PRESETS: { value: KeybindingPreset; label: string }[] = [
   { value: 'kakoune', label: 'Kakoune' },
 ];
 
+// 3. Local helpers / hooks
 function KeybindingPresetToggle() {
   const { preset, setPreset } = useWhichKey();
 
@@ -80,13 +83,10 @@ function KeybindingPresetToggle() {
  * theme previews can mirror it.
  */
 function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDark: boolean) => void }) {
+  // --- State ---
   const [mode, setMode] = useState<ColorMode>(() => getInitialColorMode());
 
-  function selectMode(m: ColorMode) {
-    applyColorMode(m);
-    setMode(m);
-  }
-
+  // --- Effects ---
   useEffect(() => {
     const onAppearanceChange = () => {
       const next = getInitialColorMode();
@@ -105,6 +105,14 @@ function ColorModeToggle({ onResolvedDarkChange }: { onResolvedDarkChange: (isDa
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, [mode, onResolvedDarkChange]);
+
+  // --- Methods ---
+  function selectMode(m: ColorMode) {
+    applyColorMode(m);
+    setMode(m);
+  }
+
+  // --- Render ---
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -173,6 +181,7 @@ function ThemeGrid() {
   );
 }
 
+// 4. Exported component
 /**
  * ThemeSelector — a button that opens a centered modal with appearance controls:
  * a Light/Dark/System segmented toggle, and a scrollable grid of theme swatches.

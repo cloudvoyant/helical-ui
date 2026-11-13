@@ -29,6 +29,9 @@ const MODAL_COMMANDS: CommandNode[] = [
 ];
 
 // 4. Exported component
+/**
+ * Demonstrates `WhichKey` focus-layer interaction across `Dialog` and `CommandMenu` modals.
+ */
 export default function ReactWhichKeyModalInteraction() {
   // --- State ---
   const [dialogOpen, setDialogOpen] = useState(false);

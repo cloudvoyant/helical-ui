@@ -1,4 +1,6 @@
 // libs/helical-svelte/src/theme/theme-service.svelte.ts
+
+// 1. Imports
 import {
   DEFAULT_THEME,
   THEMES,
@@ -19,6 +21,7 @@ import {
   type UseThemeOptions,
 } from '@cloudvoyant/helical-ui';
 
+// 4. Exported classes & functions
 /**
  * Reactive Svelte 5 runes theme controller synchronized with `document.documentElement`
  * and the shared `@cloudvoyant/helical-ui` theme registry.

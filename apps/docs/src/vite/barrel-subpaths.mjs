@@ -173,7 +173,7 @@ export function helicalBarrelSubpathPlugin() {
       let changed = false;
 
       const transformed = code.replace(
-        /^[ \t]*(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui(?:\/commands?)?|react|svelte)|lucide-svelte)['"]\s*;?/gm,
+        /^[ \t]*(import|export)\s+(type\s+)?\{([^{}]*)\}\s+from\s+['"](@cloudvoyant\/helical-(?:ui(?:\/commands)?|react|svelte)|lucide-svelte)['"]\s*;?/gm,
         (fullMatch, keyword, typeKw, specList, pkg) => {
           if (typeKw) return fullMatch;
           const pkgMap = maps[pkg];

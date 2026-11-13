@@ -45,6 +45,9 @@ const COMMANDS: CommandNode[] = [
 ];
 
 // 4. Exported component
+/**
+ * Default interactive `CommandMenu` example with nested subcommands and command aliases.
+ */
 export default function ReactCommandMenuDefault() {
   // --- State ---
   const containerRef = useRef<HTMLDivElement | null>(null);

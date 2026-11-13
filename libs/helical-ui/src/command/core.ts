@@ -128,6 +128,16 @@ function matchesCommandToken(node: CommandNode, token: string): boolean {
   return (node.aliases ?? []).some((alias) => alias.toLowerCase() === lower);
 }
 
+function isHotkeyAnchorVisible(el: HTMLElement): boolean {
+  if (el.closest('[hidden]')) return false;
+  const fwWrapper = el.closest<HTMLElement>('[data-fw]');
+  const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
+  if (fwWrapper && activeFw && fwWrapper.getAttribute('data-fw') !== activeFw) {
+    return false;
+  }
+  return true;
+}
+
 // 4. Exported functions
 
 /**
@@ -574,16 +584,6 @@ export function matchesCommandHotkey(event: KeyboardEvent, hotkey: string): bool
     return (event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k';
   }
   return false;
-}
-
-function isHotkeyAnchorVisible(el: HTMLElement): boolean {
-  if (el.closest('[hidden]')) return false;
-  const fwWrapper = el.closest<HTMLElement>('[data-fw]');
-  const activeFw = el.ownerDocument?.documentElement?.getAttribute('data-framework');
-  if (fwWrapper && activeFw && fwWrapper.getAttribute('data-fw') !== activeFw) {
-    return false;
-  }
-  return true;
 }
 
 /**

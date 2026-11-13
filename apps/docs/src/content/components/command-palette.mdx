@@ -14,7 +14,7 @@ import Examples from '../../components/Examples.astro';
 
 ## Examples
 
-<Examples component="command-palette" exclude="default" />
+<Examples component="command-palette" exclude="default" order={['composed', 'empty']} />
 
 ## API Reference
 
@@ -38,3 +38,10 @@ import Examples from '../../components/Examples.astro';
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Width variant for the palette surface. |
 | `inline` | `boolean` | `false` | Renders the command palette inline inside its container instead of a modal `Dialog`. |
 | `hotkey` | `string \| false` | `'Mod+k'` | Global shortcut chord (e.g. `'Mod+k'`) to toggle the palette, or `false` to disable. |
+| `trigger` | `ReactNode \| Snippet` | — | Custom modal trigger element rendered inside `DialogTrigger` when `inline` is `false`. |
+| `children` | `ReactNode \| Snippet` | — | Custom composition of `CommandPalette` parts; renders `CommandPaletteSearch`, `CommandPaletteResults`, and `CommandPaletteFooter` when omitted. |
+
+### Subcomponents & Shared Context
+
+- `CommandPaletteSearch`, `CommandPaletteResults`, `CommandPaletteFallback`, `CommandPaletteItem`, `CommandPaletteFooter`, `useCommandPaletteContext` / `getCommandPaletteContext` — modular subcomponents composing `CommandPalette`.
+- `CommandProvider` & `useCommand` / `getCommandContext` — shared command context provider that supplies `items`, `collection`, `open`, `style` (`'palette' | 'menu'`), `openPalette()`, `openMenu()`, and `onSelectCommand` to both `CommandPalette` and `CommandMenu`.

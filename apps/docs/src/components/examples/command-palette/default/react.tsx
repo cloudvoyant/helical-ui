@@ -42,6 +42,9 @@ const COMMANDS: CommandNode[] = [
 ];
 
 // 4. Exported component
+/**
+ * Default interactive `CommandPalette` example with nested appearance and preference submenus.
+ */
 export default function ReactCommandPaletteDefault() {
   // --- State ---
   const containerRef = useRef<HTMLDivElement | null>(null);

@@ -171,5 +171,33 @@ for (const framework of FRAMEWORKS) {
         });
       });
     });
+
+    test.describe('Given a composed inline command palette', () => {
+      test.describe('When rendered with custom search and fallback parts', () => {
+        test('it displays the custom search placeholder and omits the default footer', async ({
+          page,
+        }) => {
+          const composedDemo = island(page, framework, 'composed');
+          const input = composedDemo.getByTestId('command-palette-input');
+          await expect(input).toHaveAttribute('placeholder', 'Filter editor actions...');
+          await expect(composedDemo.getByText('New File')).toBeVisible();
+          await expect(composedDemo.getByText('Navigate')).toHaveCount(0);
+        });
+      });
+
+      test.describe('When the user filters to zero matching items', () => {
+        test.beforeEach(async ({ page }) => {
+          const composedDemo = island(page, framework, 'composed');
+          await composedDemo.getByTestId('command-palette-input').fill('zzzzzz');
+        });
+
+        test('it renders the custom CommandPaletteFallback content', async ({ page }) => {
+          const composedDemo = island(page, framework, 'composed');
+          const empty = composedDemo.getByTestId('command-palette-empty');
+          await expect(empty).toBeVisible();
+          await expect(empty).toHaveText('No matching editor actions.');
+        });
+      });
+    });
   });
 }

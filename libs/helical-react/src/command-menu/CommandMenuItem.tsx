@@ -57,6 +57,9 @@ function renderFuzzyText(
 }
 
 // 4. Exported component
+/**
+ * Renders a selectable completion row inside `CommandMenuList`.
+ */
 export function CommandMenuItem({ item }: CommandMenuItemProps) {
   // --- State ---
   const {

@@ -1,5 +1,7 @@
 // libs/helical-ui/src/dialog.ts
 // Closely based on: Ark UI dialog (https://ark-ui.com/docs/components/dialog, @ark-ui/react/dialog).
+
+// 2. Module constants & types
 export const dialogBackdropBase = 'bg-black/50';
 
 export const dialogPositionerBase =
@@ -39,6 +41,7 @@ export const dialogStyles = {
   closeTrigger: dialogCloseTriggerBase,
 } as const;
 
+// 4. Exported functions
 /**
  * Captures the currently focused DOM element before a dialog opens, excluding
  * `document.body`, `document.documentElement`, and any element inside `excludeRoot`.

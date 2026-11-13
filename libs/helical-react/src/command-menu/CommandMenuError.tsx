@@ -14,6 +14,9 @@ export interface CommandMenuErrorProps {
 export type ColonCommandErrorProps = CommandMenuErrorProps;
 
 // 4. Exported component
+/**
+ * Renders the inline command error banner for `CommandMenu` when an error is active.
+ */
 export function CommandMenuError({ className }: CommandMenuErrorProps = {}) {
   // --- State ---
   const { activeError, resolution } = useCommandMenuContext();

@@ -11,6 +11,7 @@
     open = $bindable(undefined),
     defaultOpen = false,
     restoreFocus = true,
+    finalFocusEl,
     onOpenChange,
     ...rest
   }: DialogRootProps = $props();
@@ -32,7 +33,7 @@
       wasOpen = true;
     } else if (!isOpen && wasOpen) {
       wasOpen = false;
-      const target = previousFocusEl;
+      const target = (finalFocusEl?.() as HTMLElement | null | undefined) ?? previousFocusEl;
       previousFocusEl = null;
       if (restoreFocus) {
         restoreDialogFocusTarget(target);
@@ -55,7 +56,7 @@
     }
     if (!details.open && wasOpen) {
       wasOpen = false;
-      const target = previousFocusEl;
+      const target = (finalFocusEl?.() as HTMLElement | null | undefined) ?? previousFocusEl;
       previousFocusEl = null;
       if (restoreFocus) {
         restoreDialogFocusTarget(target);
@@ -65,6 +66,12 @@
   }
 </script>
 
-<DialogRoot open={isOpen} restoreFocus={false} onOpenChange={handleOpenChange} {...rest}>
+<DialogRoot
+  open={isOpen}
+  restoreFocus={false}
+  {finalFocusEl}
+  onOpenChange={handleOpenChange}
+  {...rest}
+>
   {@render children?.()}
 </DialogRoot>

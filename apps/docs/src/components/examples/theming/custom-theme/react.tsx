@@ -33,6 +33,9 @@ const CUSTOM_THEMES: ThemeMeta[] = [
 ];
 
 // 4. Exported component
+/**
+ * Demonstrates registering custom color themes through `useTheme` for `ThemeSelector` and `LightSwitch`.
+ */
 export default function ThemingCustomTheme() {
   // --- State ---
   useTheme({ customThemes: CUSTOM_THEMES });

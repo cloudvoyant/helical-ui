@@ -16,6 +16,9 @@ export interface CommandMenuListProps {
 export type ColonCommandListProps = CommandMenuListProps;
 
 // 4. Exported component
+/**
+ * Renders the scrollable multi-column completion grid or empty state for `CommandMenu`.
+ */
 export function CommandMenuList({ className }: CommandMenuListProps = {}) {
   // --- State ---
   const {

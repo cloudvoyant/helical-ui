@@ -4,6 +4,9 @@
 import { HStack, LightSwitch, ThemeSelector, VStack } from '@cloudvoyant/helical-react';
 
 // 4. Exported component
+/**
+ * Default appearance controls example pairing `LightSwitch` and `ThemeSelector`.
+ */
 export default function ThemingDefault() {
   // --- Render ---
   return (

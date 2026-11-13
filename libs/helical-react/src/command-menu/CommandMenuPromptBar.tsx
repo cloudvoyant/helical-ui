@@ -16,6 +16,9 @@ export interface CommandMenuPromptBarProps {
 export type ColonCommandPromptBarProps = CommandMenuPromptBarProps;
 
 // 4. Exported component
+/**
+ * Renders the `:` prompt input and keyboard hint bar for `CommandMenu`.
+ */
 export function CommandMenuPromptBar({ className }: CommandMenuPromptBarProps = {}) {
   // --- State ---
   const {

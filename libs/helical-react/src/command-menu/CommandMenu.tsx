@@ -45,12 +45,16 @@ import { CommandMenuContext, type CommandMenuContextValue } from './context';
 
 // 2. Module constants & types
 export interface CommandMenuProps extends CoreCommandMenuProps {
+  trigger?: ReactNode;
   children?: ReactNode;
 }
 
 export type ColonCommandProps = CommandMenuProps;
 
 // 4. Exported component
+/**
+ * Renders a bottom-docked `:` command prompt and completion popup with composable subcomponents.
+ */
 export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
   (
     {
@@ -71,6 +75,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       inline = false,
       hotkey = ':',
       className,
+      trigger,
       children,
     },
     ref,
@@ -458,9 +463,13 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
             }}
             className="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
           >
-            <CommandMenuList />
-            <CommandMenuPromptBar />
-            <CommandMenuError />
+            {children ?? (
+              <>
+                <CommandMenuList />
+                <CommandMenuPromptBar />
+                <CommandMenuError />
+              </>
+            )}
           </Listbox>
         </div>
       </CommandMenuContext.Provider>
@@ -471,7 +480,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
     }
 
     const showTrigger =
-      children !== undefined || (controlledOpen === undefined && !isProviderManaged);
+      trigger !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
       <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
@@ -485,7 +494,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
         >
           {showTrigger && (
             <DialogTrigger asChild>
-              {children ?? (
+              {trigger ?? (
                 <Button variant="outline">
                   Open Command Menu {hotkey ? <Kbd size="sm">{hotkey}</Kbd> : null}
                 </Button>

@@ -1,7 +1,9 @@
 // libs/helical-ui/src/light-switch.ts
-// Shared types, variants, and DOM/media-query helpers for LightSwitch.
+
+// 1. Imports
 import { cva, type VariantProps } from 'class-variance-authority';
 
+// 2. Module constants & types
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface LightSwitchBaseProps {
@@ -16,6 +18,7 @@ const DEFAULT_THEME = 'helical-ui';
 export const lightSwitchButtonVariants = cva('ml-auto h-[26px] w-[26px] p-1');
 export type LightSwitchButtonVariants = VariantProps<typeof lightSwitchButtonVariants>;
 
+// 4. Exported functions
 /**
  * Cycles a color-mode preference through `'system' -> 'light' -> 'dark' -> 'system'`.
  */

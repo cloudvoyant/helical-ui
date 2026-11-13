@@ -39,6 +39,7 @@
   type Props = Omit<CoreCommandMenuProps, 'className'> & {
     class?: string;
     className?: string;
+    trigger?: Snippet;
     children?: Snippet;
   };
 
@@ -62,6 +63,7 @@
     hotkey = ':',
     class: className = '',
     className: reactClassName = '',
+    trigger,
     children,
   }: Props = $props();
 
@@ -123,7 +125,7 @@
 
   const activeError = $derived(submittedError ?? resolution.error);
   const showTrigger = $derived(
-    children !== undefined || (controlledOpen === undefined && !isProviderManaged),
+    trigger !== undefined || (controlledOpen === undefined && !isProviderManaged),
   );
 
   // --- Effects ---
@@ -463,9 +465,13 @@
       }}
       class="flex w-full flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none"
     >
-      <CommandMenuList />
-      <CommandMenuPromptBar />
-      <CommandMenuError />
+      {#if children}
+        {@render children()}
+      {:else}
+        <CommandMenuList />
+        <CommandMenuPromptBar />
+        <CommandMenuError />
+      {/if}
     </Listbox>
   </div>
 {/snippet}
@@ -483,8 +489,8 @@
       onOpenChange={(details) => handleOpenChange(details.open)}
     >
       {#if showTrigger}
-        {#if children}
-          <DialogTrigger asChild={children} />
+        {#if trigger}
+          <DialogTrigger asChild={trigger} />
         {:else}
           <Button variant="outline" onclick={() => handleOpenChange(true)}>
             Open Command Menu {#if hotkey}<Kbd size="sm">{hotkey}</Kbd>{/if}

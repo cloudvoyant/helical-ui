@@ -349,7 +349,23 @@ export {
   type CreateToasterReturn,
   type ToastOptions,
 } from './toast';
-export { CommandPalette, type CommandPaletteProps } from './command-palette';
+export {
+  CommandPalette,
+  CommandPaletteFallback,
+  CommandPaletteFooter,
+  CommandPaletteItem,
+  CommandPaletteResults,
+  CommandPaletteSearch,
+  CommandPaletteContext,
+  useCommandPaletteContext,
+  type CommandPaletteProps,
+  type CommandPaletteFallbackProps,
+  type CommandPaletteFooterProps,
+  type CommandPaletteItemProps,
+  type CommandPaletteResultsProps,
+  type CommandPaletteSearchProps,
+  type CommandPaletteContextValue,
+} from './command-palette';
 export {
   CommandMenu,
   CommandMenuError,
