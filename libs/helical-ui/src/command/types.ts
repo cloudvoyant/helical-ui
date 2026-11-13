@@ -135,6 +135,8 @@ export interface CommandMenuProps {
   noCommandsText?: string;
   /** Number of completion columns above the prompt bar. @default 'auto' */
   columns?: CommandMenuColumns;
+  /** Whether to display command aliases in the trailing slot of completion items. @default false */
+  showAliases?: boolean;
   /** Whether to display keyboard shortcut badges next to completion items. @default false */
   showShortcuts?: boolean;
   /** Compactness variant for the completion grid and prompt bar. @default 'md' */

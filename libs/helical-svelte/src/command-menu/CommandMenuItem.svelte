@@ -57,8 +57,16 @@
       {/if}
     </Row>
   </ListboxItemText>
-  {#if Boolean(ctx.showShortcuts && item.shortcut) || item.isBranch}
+  {#if Boolean(ctx.showAliases && item.aliases.length > 0) || Boolean(ctx.showShortcuts && item.shortcut) || item.isBranch}
     <Row class="shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+      {#if Boolean(ctx.showAliases && item.aliases.length > 0)}
+        <span
+          data-testid="command-menu-item-aliases"
+          class="font-mono text-xs text-muted-foreground"
+        >
+          {item.aliases.join(', ')}
+        </span>
+      {/if}
       {#if Boolean(ctx.showShortcuts && item.shortcut)}
         <Kbd size="sm" hotkey={item.shortcut} />
       {/if}

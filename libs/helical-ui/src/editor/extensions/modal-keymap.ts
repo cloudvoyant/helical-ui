@@ -592,8 +592,6 @@ function createModalTargetForEditor(editor: Editor, options: ModalKeymapOptions)
           }
         } else if (targetBlock.isAtom && NodeSelection.isSelectable(targetBlock.node)) {
           tr = tr.setSelection(NodeSelection.create(doc, targetBlock.pos));
-        } else if (isSelectionFirst) {
-          tr = tr.setSelection(TextSelection.create(doc, targetBlock.start, targetBlock.end));
         } else {
           tr = tr.setSelection(TextSelection.create(doc, targetBlock.start));
         }

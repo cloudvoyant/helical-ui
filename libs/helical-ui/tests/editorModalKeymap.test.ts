@@ -88,14 +88,17 @@ describe('Given a Tiptap/ProseMirror Editor instance built with buildExtensions 
       target.move('lineSelect', { preset: 'helix', mode: 'normal', count: 1 });
       expect(getSelectedText(editor)).toBe('Helix Modal Title\nFirst line of prose.');
 
-      // Act & Assert: } (paragraphForward) and { (paragraphBackward) jump between paragraphs
+      // Act & Assert: } (paragraphForward) and { (paragraphBackward) jump between paragraphs without selecting the whole paragraph in normal mode
       target.move('docStart', { preset: 'helix', mode: 'normal', count: 1 });
       target.move('paragraphForward', { preset: 'helix', mode: 'normal', count: 1 });
-      expect(getSelectedText(editor)).toBe('First line of prose.');
+      expect(editor.state.selection.empty).toBe(true);
+      expect(editor.state.selection.$head.parent.textContent).toBe('First line of prose.');
       target.move('paragraphForward', { preset: 'helix', mode: 'normal', count: 1 });
-      expect(getSelectedText(editor)).toBe('Second line below.');
+      expect(editor.state.selection.empty).toBe(true);
+      expect(editor.state.selection.$head.parent.textContent).toBe('Second line below.');
       target.move('paragraphBackward', { preset: 'helix', mode: 'normal', count: 1 });
-      expect(getSelectedText(editor)).toBe('First line of prose.');
+      expect(editor.state.selection.empty).toBe(true);
+      expect(editor.state.selection.$head.parent.textContent).toBe('First line of prose.');
     });
   });
 

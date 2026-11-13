@@ -137,6 +137,8 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 
 - Organize Playwright E2E specs in `apps/docs/e2e/` under `test.describe('<Component> · ${framework}')` using meaningful state/configuration contexts for `Given` (`test.describe('Given ...')`), single user actions for `When` (`test.describe('When ...')`) with shared setup/actions in `test.beforeEach`, and focused outcome assertions in `test('it ...')`.
 - [Proposed] Prefer Playwright E2E tests on the demo site over mocked DOM (`vi.stubGlobal`) unit tests for browser-dependent behaviors like focus management, media queries, and document class synchronization.
+- [Proposed] Assert user-observable outcomes in Playwright E2E specs rather than internal DOM wrapper classes or state invariants, and keep pure invariant checks in unit tests.
+- [Proposed] Label default prop states with `(default)` in BDD `Given` and `When` titles when testing configurable options.
 - Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):

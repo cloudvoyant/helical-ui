@@ -2,11 +2,12 @@
 // Framework-neutral modal keybinding controller wrapping @tanstack/hotkeys and @zag-js/* primitives.
 import { isModifierKey, normalizeKeyName, parseKeyboardEvent } from '@tanstack/hotkeys';
 import { trackDismissableBranch } from '@zag-js/dismissable';
-import { getFirstFocusable, getFocusables, isEditableElement, isInView } from '@zag-js/dom-query';
+import { getFocusables, isEditableElement, isInView } from '@zag-js/dom-query';
 import { setInteractionModality, trackInteractionModality } from '@zag-js/focus-visible';
 import { createLiveRegion, type LiveRegion } from '@zag-js/live-region';
 import {
   buildWhichKeyTree,
+  collectVisitedProxies,
   createJumplist,
   DEFAULT_JUMP_ALPHABET,
   findDirectionalPane,
@@ -823,6 +824,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }> = [];
   let statusMessage = '';
   let programmaticFocusDepth = 0;
+  let lastEnterActivatedButton: Element | null = null;
   let liveRegion: LiveRegion | null = null;
   let detachCleanups: Array<() => void> = [];
 
@@ -922,9 +924,10 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function syncPaneActiveAttributes(): void {
+    const hasMultiplePanes = getOrderedPanes().length > 1;
     for (const pane of panes.values()) {
       if (pane.element && typeof pane.element.setAttribute === 'function') {
-        pane.element.setAttribute('data-pane-active', pane.id === activePaneId ? 'true' : 'false');
+        pane.element.setAttribute('data-pane-active', hasMultiplePanes && pane.id === activePaneId ? 'true' : 'false');
       }
     }
   }
@@ -1790,20 +1793,70 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   }
 
   function stepSection(delta: number): boolean {
-    const container = getActiveContainer();
+    const doc = resolveDoc();
+    const ownScope = options.getScopeElement?.() ?? null;
+    const container =
+      !ownScope && panes.has('docs-main') && panes.get('docs-main')?.element
+        ? panes.get('docs-main')!.element!
+        : getActiveContainer();
     if (!container) return false;
-    const sections = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        '[data-page-section], [data-slot="page-section"], section[id], .docs-prose :is(h2, h3)',
-      ),
+    const selector = ownScope
+      ? '[data-page-section], [data-slot="page-section"], section[id], .docs-prose :is(h1, h2, h3)'
+      : 'h1:not([data-demo] *), [data-page-section]:not([data-demo] *), [data-slot="page-section"]:not([data-demo] *), section[id]:not([data-demo] *), .docs-prose :is(h1, h2, h3):not([data-demo] *)';
+    const rawSections = Array.from(container.querySelectorAll<HTMLElement>(selector));
+    const sections = rawSections.filter(
+      (el) =>
+        !rawSections.some(
+          (other) =>
+            other !== el &&
+            (other.hasAttribute?.('data-page-section') ||
+              other.getAttribute?.('data-slot') === 'page-section' ||
+              other.tagName === 'SECTION') &&
+            other.contains(el),
+        ),
     );
     if (sections.length === 0) {
-      return stepFocusInPane(delta);
+      if (ownScope && doc) {
+        const rootCtrl = rootControllerByDoc.get(doc);
+        if (rootCtrl && rootCtrl !== controllerApi) {
+          return rootCtrl.executeCommand(delta >= 0 ? 'motion.paragraphForward' : 'motion.paragraphBackward', {
+            count: Math.abs(delta),
+          });
+        }
+      }
+      return false;
     }
 
-    const doc = resolveDoc();
     const activeEl = doc?.activeElement as HTMLElement | null;
-    const currentIdx = activeEl ? sections.findIndex((s) => s === activeEl || s.contains(activeEl)) : -1;
+    let currentIdx = activeEl ? sections.findIndex((s) => s === activeEl || s.contains(activeEl)) : -1;
+    if (
+      currentIdx === -1 &&
+      activeEl &&
+      activeEl !== doc?.body &&
+      activeEl !== doc?.documentElement &&
+      container.contains(activeEl)
+    ) {
+      for (let i = sections.length - 1; i >= 0; i -= 1) {
+        const sec = sections[i]!;
+        if (typeof sec.compareDocumentPosition === 'function' && Boolean(sec.compareDocumentPosition(activeEl) & 4)) {
+          currentIdx = i;
+          break;
+        }
+      }
+    }
+    if (currentIdx === -1 && typeof sections[0]?.getBoundingClientRect === 'function') {
+      const firstRect = sections[0].getBoundingClientRect();
+      const lastRect = sections[sections.length - 1]!.getBoundingClientRect();
+      if (firstRect.height > 0 || lastRect.top !== firstRect.top) {
+        const viewportAnchor = 140;
+        for (let i = sections.length - 1; i >= 0; i -= 1) {
+          if (sections[i]!.getBoundingClientRect().top <= viewportAnchor) {
+            currentIdx = i;
+            break;
+          }
+        }
+      }
+    }
     const nextIdx =
       currentIdx === -1
         ? delta >= 0
@@ -1814,27 +1867,29 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     if (!targetSection) return false;
 
     recordCurrentLocation();
-    if (typeof targetSection.scrollIntoView === 'function') {
+    if (!ownScope && doc) {
+      lastInteractedScopeByDoc.set(doc, null);
+    }
+    if (nextIdx === 0 && delta < 0 && !ownScope && doc?.defaultView && !isScrollableContainer(container, doc)) {
+      try {
+        doc.defaultView.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      } catch {
+        doc.defaultView.scrollTo(0, 0);
+      }
+    } else if (typeof targetSection.scrollIntoView === 'function') {
       try {
         targetSection.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
       } catch {
         // Ignore
       }
     }
-    const innerFocusable =
-      getPaneFocusableItems(targetSection, options.getScopeElement?.())[0] ??
-      getFirstFocusable(targetSection, { includeContainer: false });
-    if (innerFocusable instanceof HTMLElement) {
-      focusElementInActivePane(innerFocusable);
-    } else {
-      runProgrammaticFocus(() => {
-        if (targetSection.tabIndex < 0) {
-          targetSection.tabIndex = -1;
-        }
-        targetSection.style.outline = 'none';
-        targetSection.focus({ preventScroll: true });
-      });
-    }
+    runProgrammaticFocus(() => {
+      if (targetSection.tabIndex < 0) {
+        targetSection.tabIndex = -1;
+      }
+      targetSection.style.outline = 'none';
+      targetSection.focus({ preventScroll: true });
+    });
     recordCurrentLocation();
     emit();
     return true;
@@ -2356,12 +2411,17 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
   ): { handled: boolean; matchedAnyNode: boolean } {
     const layers = getOrderedActiveLayers(event, true);
     const mergedTrie = buildMergedTrie();
+    const visitedProxies = collectVisitedProxies(mergedTrie, activePath);
     let matchedAnyNode = false;
 
     for (const layer of layers) {
       const parentNode = resolveNode(layer.nodes, activePath, mode, mergedTrie);
       if (!parentNode) continue;
-      const children = getNodeChildren(parentNode, mergedTrie);
+      const children = getNodeChildren(parentNode, mergedTrie, visitedProxies);
+      const childVisitedProxies = new Set(visitedProxies);
+      if (parentNode.proxy && parentNode.proxy.length > 0) {
+        childVisitedProxies.add(parentNode.proxy.join('>'));
+      }
 
       for (const candidate of chordCandidates) {
         const child = children[candidate];
@@ -2371,7 +2431,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         const ctx = createCommandContext(event);
         if (child.when && !child.when(ctx)) continue;
 
-        if (!child.action && !child.commandId && isGroupNode(child, mergedTrie)) {
+        if (!child.action && !child.commandId && isGroupNode(child, mergedTrie, childVisitedProxies)) {
           activePath = [...activePath, candidate];
           if (child.sticky || child.loop) {
             sticky = true;
@@ -2680,6 +2740,7 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     // 4. When a prefix menu (Space, g, z/v, m, Ctrl-w, [/]) is currently open:
     if (activePath.length > 0) {
+      lastEnterActivatedButton = null;
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
@@ -2702,8 +2763,14 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       if (handled) {
         return true;
       }
+      const wasSilentPrefix = leaderOnly && activePath[0] !== leaderKey;
       if (!sticky) {
         closePrefix();
+      }
+      if (wasSilentPrefix && chordCandidates.includes(leaderKey)) {
+        if (evaluateLayersAtRoot(chordCandidates, event, { insertModeOnly: false, includePreset: true })) {
+          return true;
+        }
       }
       if (!matchedAnyNode) {
         event.preventDefault();
@@ -2716,26 +2783,45 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
     // 5. At root of normal / select mode:
     const chordCandidates = eventToChordKeys(event);
 
-    // Preserve native Space key toggling on focused checkboxes, switches, radios, and component demo buttons.
+    // Preserve native Space key toggling on focused checkboxes, switches, and buttons immediately following Enter activation.
     if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && targetEl) {
-      const role = targetEl.getAttribute('role');
+      const role = targetEl.getAttribute?.('role') ?? null;
       const isToggleControl =
-        (targetEl instanceof HTMLInputElement && (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
+        (typeof HTMLInputElement !== 'undefined' &&
+          targetEl instanceof HTMLInputElement &&
+          (targetEl.type === 'checkbox' || targetEl.type === 'radio')) ||
         role === 'checkbox' ||
-        role === 'switch' ||
-        role === 'radio';
+        role === 'switch';
       if (isToggleControl) {
+        lastEnterActivatedButton = null;
         return false;
       }
 
       const isButtonControl = targetEl.tagName === 'BUTTON' || role === 'button';
-      if (isButtonControl) {
-        const previewAncestor = targetEl.closest('[data-example-preview]');
+      if (isButtonControl && lastEnterActivatedButton === targetEl) {
+        lastEnterActivatedButton = null;
+        const previewAncestor = targetEl.closest?.('[data-example-preview]') ?? null;
         const ownScope = options.getScopeElement?.() ?? null;
         if (previewAncestor && (!ownScope || !previewAncestor.contains(ownScope))) {
           return false;
         }
       }
+    }
+
+    if (
+      event.key === 'Enter' &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      targetEl &&
+      (targetEl.tagName === 'BUTTON' || targetEl.getAttribute?.('role') === 'button') &&
+      targetEl.getAttribute?.('data-part') !== 'trigger' &&
+      !targetEl.hasAttribute?.('aria-haspopup') &&
+      targetEl.closest?.('[data-example-preview]')
+    ) {
+      lastEnterActivatedButton = targetEl;
+    } else {
+      lastEnterActivatedButton = null;
     }
 
     // Evaluate numeric count prefix [1-9] (or 0 when countBuffer is non-empty) unless overridden by a registered layer
@@ -2792,8 +2878,8 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         return true;
       }
       const parentExample =
-        targetEl instanceof HTMLElement && !targetEl.hasAttribute('data-example')
-          ? targetEl.closest<HTMLElement>('[data-example]')
+        isHTMLElementLike(targetEl) && !targetEl.hasAttribute?.('data-example')
+          ? (targetEl.closest?.('[data-example]') as HTMLElement | null)
           : null;
       const hasOpenFloatingSurface = Boolean(
         doc?.querySelector(
@@ -2820,8 +2906,8 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
       !event.ctrlKey &&
       !event.metaKey &&
       !event.altKey &&
-      targetEl instanceof HTMLElement &&
-      targetEl.hasAttribute('data-example')
+      isHTMLElementLike(targetEl) &&
+      targetEl.hasAttribute?.('data-example')
     ) {
       event.preventDefault();
       event.stopPropagation();
@@ -2969,17 +3055,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
 
     const onPointerDown = (e: Event) => {
       if (!isControllerEnabled()) return;
+      lastEnterActivatedButton = null;
       const targetNode = e.target instanceof Element ? e.target : null;
       if (!targetNode) return;
 
-      if (
-        !targetNode.closest(
+      const isInsideOverlay = Boolean(
+        targetNode.closest(
           '[data-which-key-root], [data-which-key-explorer], [data-which-key-jump-overlay], [data-scope="dialog"]',
-        )
-      ) {
+        ),
+      );
+      if (!isInsideOverlay) {
         const clickedScope = (targetNode.closest('[data-which-key-scope]') as HTMLElement | null) ?? null;
         if (!clickedScope || isScopeElementActive(clickedScope, doc)) {
           lastInteractedScopeByDoc.set(doc, clickedScope);
+        }
+        if (activePath.length > 0 || countBuffer.length > 0) {
+          closePrefix();
         }
       }
 
@@ -3004,11 +3095,22 @@ export function createWhichKeyController(options: WhichKeyControllerOptions = {}
         (mode === 'normal' || mode === 'select')
       ) {
         setMode('insert');
+      } else if (
+        mode === 'insert' &&
+        !isInsideOverlay &&
+        !isTextEntryElement(targetNode) &&
+        !getModalEditor(targetNode) &&
+        !targetNode.closest(
+          '[data-scope="editor"], [data-editor-toolbar], .ProseMirror, [data-editor-overlay], [data-slash-menu-surface], [data-mention-menu-surface], [data-editor-slash-menu], [data-editor-mention-menu], [data-scope="select"], [data-scope="menu"], [data-scope="popover"], [data-scope="combobox"]',
+        )
+      ) {
+        setMode('normal');
       }
     };
 
     const onFocusIn = (e: FocusEvent) => {
       if (!isControllerEnabled()) return;
+      lastEnterActivatedButton = null;
       const targetNode = e.target instanceof HTMLElement ? e.target : null;
       if (!targetNode) return;
 

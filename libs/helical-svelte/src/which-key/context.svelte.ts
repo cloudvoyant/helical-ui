@@ -316,7 +316,7 @@ export function useOptionalPaneRegistration(
       const opts = getOptions();
       if (!ctx || opts.paneDisabled) return false;
       const resolvedId = opts.paneId ?? fallbackId;
-      return ctx.state.activePaneId === resolvedId;
+      return ctx.state.panes.length > 1 && ctx.state.activePaneId === resolvedId;
     },
     get dataAttributes(): {
       'data-pane-id'?: string;
@@ -337,7 +337,7 @@ export function useOptionalPaneRegistration(
             }
           : {};
       }
-      const isActive = ctx.state.activePaneId === resolvedId;
+      const isActive = ctx.state.panes.length > 1 && ctx.state.activePaneId === resolvedId;
       return {
         'data-pane-id': resolvedId,
         'data-pane-title': resolvedTitle,

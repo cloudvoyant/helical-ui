@@ -213,6 +213,40 @@ for (const framework of FRAMEWORKS) {
           await expect(defaultDemo.getByRole('button')).toBeFocused();
         });
       });
+
+      test.describe('When showing aliases is enabled', () => {
+        test.beforeEach(async ({ page }) => {
+          await page.keyboard.press('Escape');
+        });
+
+        test('it displays aliases in the trailing slot', async ({ page }) => {
+          const aliasesDemo = island(page, framework, 'aliases');
+          const writeItem = aliasesDemo.locator(
+            '[data-testid="command-menu-item"][data-value="write"]',
+          );
+          const writeAliases = writeItem.getByTestId('command-menu-item-aliases');
+
+          await expect(writeAliases).toBeVisible();
+          await expect(writeAliases).toHaveText('w');
+        });
+      });
+
+      test.describe('When showing aliases is disabled (default)', () => {
+        test('it hides aliases in the trailing slot', async ({ page }) => {
+          const menu = page.locator('[data-testid="command-menu"][data-modal="true"]').last();
+          const themeItem = menu.locator('[data-testid="command-menu-item"][data-value="theme"]');
+          await expect(themeItem).toBeVisible();
+          await expect(themeItem.getByTestId('command-menu-item-aliases')).toHaveCount(0);
+
+          await page.keyboard.press('Escape');
+          const aliasesDemo = island(page, framework, 'aliases');
+          const writeItem = aliasesDemo.locator(
+            '[data-testid="command-menu-item"][data-value="write"]',
+          );
+          await aliasesDemo.getByRole('radio', { name: 'Hide Aliases' }).click();
+          await expect(writeItem.getByTestId('command-menu-item-aliases')).toHaveCount(0);
+        });
+      });
     });
   });
 }

@@ -412,7 +412,11 @@
 {#if inline}
   {@render paletteSurface()}
 {:else}
-  <span bind:this={anchorEl} data-command-palette-anchor="true" class="inline-flex">
+  <span
+    bind:this={anchorEl}
+    data-command-palette-anchor="true"
+    class={showTrigger ? 'inline-flex' : 'contents'}
+  >
     <Dialog
       open={isOpen}
       lazyMount

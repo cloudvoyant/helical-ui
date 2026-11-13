@@ -70,6 +70,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       emptyText = 'No matching commands.',
       noCommandsText = 'No commands registered.',
       columns = 'auto',
+      showAliases = false,
       showShortcuts = false,
       size = 'md',
       inline = false,
@@ -417,6 +418,7 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       activeError,
       columns,
       size,
+      showAliases,
       showShortcuts,
       inline,
       placeholder,
@@ -483,7 +485,11 @@ export const CommandMenu = forwardRef<HTMLDivElement, CommandMenuProps>(
       trigger !== undefined || (controlledOpen === undefined && !isProviderManaged);
 
     return (
-      <span ref={anchorRef} data-command-menu-anchor="true" className="inline-flex">
+      <span
+        ref={anchorRef}
+        data-command-menu-anchor="true"
+        className={showTrigger ? 'inline-flex' : 'contents'}
+      >
         <Dialog
           open={isOpen}
           lazyMount

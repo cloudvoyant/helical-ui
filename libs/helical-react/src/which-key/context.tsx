@@ -361,10 +361,14 @@ export function useOptionalPaneRegistration(
   const elementRef = useRef<HTMLElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
-  const activePaneId = useSyncExternalStore(
+  const isActive = useSyncExternalStore(
     controller ? controller.subscribe : () => () => {},
-    () => (controller ? controller.getState().activePaneId : null),
-    () => null,
+    () => {
+      if (!controller) return false;
+      const state = controller.getState();
+      return state.panes.length > 1 && state.activePaneId === resolvedId;
+    },
+    () => false,
   );
 
   const setRef: RefCallback<HTMLElement> = useCallback((node) => {
@@ -423,7 +427,6 @@ export function useOptionalPaneRegistration(
     };
   }
 
-  const isActive = activePaneId === resolvedId;
   return {
     ref: setRef,
     paneId: resolvedId,

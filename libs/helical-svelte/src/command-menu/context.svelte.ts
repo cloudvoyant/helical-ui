@@ -16,6 +16,7 @@ export interface CommandMenuContextValue {
   readonly activeError: string | null;
   readonly columns: CommandMenuColumns;
   readonly size: 'sm' | 'md' | 'lg';
+  readonly showAliases: boolean;
   readonly showShortcuts: boolean;
   readonly inline: boolean;
   readonly placeholder: string;

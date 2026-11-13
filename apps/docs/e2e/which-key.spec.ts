@@ -37,7 +37,7 @@ for (const framework of FRAMEWORKS) {
           await expect(gotoItem.locator('svg')).toBeVisible();
         });
 
-        test('it drills into a submenu ("Space » w") and steps back on Backspace', async ({
+        test('it drills into a submenu ("Space » w"), steps back on Backspace, and closes on unbound key s without chaining', async ({
           page,
         }) => {
           await page.keyboard.press('w');
@@ -45,10 +45,16 @@ for (const framework of FRAMEWORKS) {
           const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space » w');
+          await expect(panel.locator('[data-testid="which-key-item"][data-key="s"]')).toHaveCount(0);
 
           await page.keyboard.press('Backspace');
           await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space');
           await expect(panel.getByTestId('which-key-breadcrumb')).not.toContainText('Space » w');
+
+          await page.keyboard.press('w');
+          await expect(panel.getByTestId('which-key-breadcrumb')).toContainText('Space » w');
+          await page.keyboard.press('s');
+          await expect(panel).toBeHidden();
         });
       });
 
@@ -222,7 +228,13 @@ for (const framework of FRAMEWORKS) {
           page,
         }) => {
           const demo = island(page, framework, 'presets');
+          const panel = page.getByTestId('which-key-panel');
           await demo.getByRole('radio', { name: 'VIM' }).click();
+          await page.keyboard.press('Space');
+          await expect(panel).toBeVisible();
+          await page.keyboard.press('Escape');
+          await expect(panel).toBeHidden();
+
           await demo.getByRole('button', { name: 'Alpha Item' }).focus();
 
           await page.keyboard.press('Shift+G');
@@ -233,7 +245,6 @@ for (const framework of FRAMEWORKS) {
           await demo.getByRole('radio', { name: 'KAKOUNE' }).click();
           await demo.getByRole('button', { name: 'Alpha Item' }).focus();
           await page.keyboard.press('Shift+V');
-          const panel = page.getByTestId('which-key-panel');
           await expect(panel).toBeVisible();
           await expect(panel).toHaveAttribute('data-sticky', 'true');
           await page.keyboard.press('Escape');
@@ -275,6 +286,24 @@ for (const framework of FRAMEWORKS) {
 
           await page.keyboard.press('Control+i');
           await expect(navBtn).toBeFocused();
+        });
+      });
+    });
+
+    test.describe('Given a page with multiple sections', () => {
+      test.describe('When } and { are pressed', () => {
+        test('it scrolls forward to the next section and back to the previous section', async ({
+          page,
+        }) => {
+          await page.evaluate(() => window.scrollTo(0, 0));
+          await page.keyboard.press('}');
+          await page.keyboard.press('}');
+          const scrolledDownY = await page.evaluate(() => window.scrollY);
+          expect(scrolledDownY).toBeGreaterThan(0);
+
+          await page.keyboard.press('{');
+          const scrolledUpY = await page.evaluate(() => window.scrollY);
+          expect(scrolledUpY).toBeLessThan(scrolledDownY);
         });
       });
     });

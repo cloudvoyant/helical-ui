@@ -102,10 +102,10 @@ export function getNodeChildren(
   visitedProxies: Set<string> = new Set(),
 ): Record<string, WhichKeyNode> {
   let proxyChildren: Record<string, WhichKeyNode> = {};
+  const nextVisited = new Set(visitedProxies);
   if (node.proxy && node.proxy.length > 0) {
     const proxyKey = node.proxy.join('>');
     if (!visitedProxies.has(proxyKey)) {
-      const nextVisited = new Set(visitedProxies);
       nextVisited.add(proxyKey);
       const target = resolveNodeInternal(rootTrie, node.proxy, undefined, nextVisited, rootTrie);
       if (target) {
@@ -114,11 +114,53 @@ export function getNodeChildren(
     }
   }
   const expandedChildren = node.expand ? node.expand() : {};
-  return {
+  const combined: Record<string, WhichKeyNode> = {
     ...proxyChildren,
     ...expandedChildren,
     ...(node.children ?? {}),
   };
+
+  if (nextVisited.size > 0) {
+    for (const [childKey, childNode] of Object.entries(combined)) {
+      if (
+        childNode.proxy &&
+        childNode.proxy.length > 0 &&
+        nextVisited.has(childNode.proxy.join('>')) &&
+        !childNode.action &&
+        !childNode.commandId &&
+        !childNode.children &&
+        !childNode.expand
+      ) {
+        delete combined[childKey];
+      }
+    }
+  }
+
+  return combined;
+}
+
+export function collectVisitedProxies(
+  rootTrie: Record<string, WhichKeyNode>,
+  path: string[],
+  proxyRootTrie: Record<string, WhichKeyNode> = rootTrie,
+): Set<string> {
+  const visited = new Set<string>();
+  let currentMap: Record<string, WhichKeyNode> = rootTrie;
+  for (let i = 0; i < path.length; i += 1) {
+    const step = path[i];
+    if (!step) break;
+    const stepPathKey = path.slice(0, i + 1).join('>');
+    visited.add(stepPathKey);
+    const candidate = currentMap[step];
+    if (!candidate) break;
+    if (i < path.length - 1) {
+      currentMap = getNodeChildren(candidate, proxyRootTrie, visited);
+      if (candidate.proxy && candidate.proxy.length > 0) {
+        visited.add(candidate.proxy.join('>'));
+      }
+    }
+  }
+  return visited;
 }
 
 function resolveNodeInternal(
@@ -131,6 +173,7 @@ function resolveNodeInternal(
   if (path.length === 0) return null;
   let currentMap: Record<string, WhichKeyNode> = rootTrie;
   let currentNode: WhichKeyNode | null = null;
+  const pathVisited = new Set(visitedProxies);
 
   for (let i = 0; i < path.length; i += 1) {
     const step = path[i];
@@ -138,9 +181,24 @@ function resolveNodeInternal(
     const candidate: WhichKeyNode | undefined = currentMap[step];
     if (!candidate) return null;
     if (mode && !nodeMatchesMode(candidate, mode)) return null;
+    if (
+      candidate.proxy &&
+      candidate.proxy.length > 0 &&
+      pathVisited.has(candidate.proxy.join('>')) &&
+      !candidate.action &&
+      !candidate.commandId &&
+      !candidate.children &&
+      !candidate.expand
+    ) {
+      return null;
+    }
     currentNode = candidate;
     if (i < path.length - 1) {
-      currentMap = getNodeChildren(candidate, proxyRootTrie, visitedProxies);
+      pathVisited.add(path.slice(0, i + 1).join('>'));
+      currentMap = getNodeChildren(candidate, proxyRootTrie, pathVisited);
+      if (candidate.proxy && candidate.proxy.length > 0) {
+        pathVisited.add(candidate.proxy.join('>'));
+      }
     }
   }
 
@@ -156,8 +214,12 @@ export function resolveNode(
   return resolveNodeInternal(rootTrie, path, mode, new Set(), proxyRootTrie);
 }
 
-export function isGroupNode(node: WhichKeyNode, rootTrie: Record<string, WhichKeyNode>): boolean {
-  const children = getNodeChildren(node, rootTrie);
+export function isGroupNode(
+  node: WhichKeyNode,
+  rootTrie: Record<string, WhichKeyNode>,
+  visitedProxies: Set<string> = new Set(),
+): boolean {
+  const children = getNodeChildren(node, rootTrie, visitedProxies);
   return Object.keys(children).length > 0;
 }
 
@@ -197,7 +259,8 @@ export function buildWhichKeyTree(
     };
   }
 
-  const childrenMap = getNodeChildren(node, rootTrie);
+  const visitedProxies = collectVisitedProxies(rootTrie, activePath);
+  const childrenMap = getNodeChildren(node, rootTrie, visitedProxies);
   const items = Object.values(childrenMap).filter((item) => !item.hidden && nodeMatchesMode(item, mode));
 
   let sticky = Boolean(node.sticky || node.loop);
