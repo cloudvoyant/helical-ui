@@ -1,3 +1,10 @@
+## [0.23.1](https://github.com/cloudvoyant/helical-ui/compare/v0.23.0...v0.23.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **command:** retain focus on select and export ThemeService ([#40](https://github.com/cloudvoyant/helical-ui/issues/40)) ([903687d](https://github.com/cloudvoyant/helical-ui/commit/903687d3e4576934cdcadf1d298f38fdb94ccfea))
+
 # [0.23.0](https://github.com/cloudvoyant/helical-ui/compare/v0.22.0...v0.23.0) (2026-11-08)
 
 
