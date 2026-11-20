@@ -35,12 +35,36 @@ export default defineConfig({
           replacement: new URL('../../libs/helical-ui/src/command/index.ts', import.meta.url).pathname,
         },
         {
+          find: /^@cloudvoyant\/helical-ui\/editor$/,
+          replacement: new URL('../../libs/helical-ui/src/editor/index.ts', import.meta.url).pathname,
+        },
+        {
+          find: /^@cloudvoyant\/helical-ui\/(chart|mermaid|code-block|latex|manim)$/,
+          replacement: `${new URL('../../libs/helical-ui/src/', import.meta.url).pathname}$1.ts`,
+        },
+        {
           find: /^@cloudvoyant\/helical-react$/,
           replacement: new URL('../../libs/helical-react/src/index.ts', import.meta.url).pathname,
         },
         {
+          find: /^@cloudvoyant\/helical-react\/editor$/,
+          replacement: new URL('../../libs/helical-react/src/editor/index.ts', import.meta.url).pathname,
+        },
+        {
+          find: /^@cloudvoyant\/helical-react\/(chart|mermaid|code-block|latex|manim)$/,
+          replacement: `${new URL('../../libs/helical-react/src/', import.meta.url).pathname}$1.tsx`,
+        },
+        {
           find: /^@cloudvoyant\/helical-svelte$/,
           replacement: new URL('../../libs/helical-svelte/src/index.ts', import.meta.url).pathname,
+        },
+        {
+          find: /^@cloudvoyant\/helical-svelte\/(editor|code-block)$/,
+          replacement: `${new URL('../../libs/helical-svelte/src/', import.meta.url).pathname}$1/index.ts`,
+        },
+        {
+          find: /^@cloudvoyant\/helical-svelte\/(chart|mermaid|latex|manim)$/,
+          replacement: `${new URL('../../libs/helical-svelte/src/', import.meta.url).pathname}$1.ts`,
         },
       ],
     },

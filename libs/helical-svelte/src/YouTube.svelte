@@ -2,7 +2,7 @@
 <!-- Closely based on: diffbook YouTube, mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
-  import { Play } from 'lucide-svelte';
+  import Play from 'lucide-svelte/icons/play';
   import { setContext } from 'svelte';
   import {
     youtubeRootBase,

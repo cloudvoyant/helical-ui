@@ -2,7 +2,8 @@
 <script lang="ts">
   // 1. Imports
   import { Highlight } from '@ark-ui/svelte/highlight';
-  import { Check, ChevronRight } from 'lucide-svelte';
+  import Check from 'lucide-svelte/icons/check';
+  import ChevronRight from 'lucide-svelte/icons/chevron-right';
   import { commandMenuStyles, type CommandFlatItem } from '@cloudvoyant/helical-ui';
   import { splitHighlightSegments } from '@cloudvoyant/helical-ui/commands';
   import Kbd from '../Kbd.svelte';

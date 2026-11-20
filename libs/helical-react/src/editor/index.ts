@@ -10,4 +10,4 @@ export type {
   UrlMentionAttributes,
   LinkPreviewAttributes,
   LinkPreviewFetcher,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/editor';

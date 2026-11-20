@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/manim/default/react.tsx
-import { Manim } from '@cloudvoyant/helical-react';
+import { Manim } from '@cloudvoyant/helical-react/manim';
 
 export default function ReactManimDefault() {
   return (

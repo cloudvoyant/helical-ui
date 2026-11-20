@@ -13,7 +13,7 @@
     type EditorCounts,
     type ImageUploadResult,
     type LinkPreviewAttributes,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/editor';
   import BubbleMenuContent from './BubbleMenu.svelte';
   import SlashMenu from './SlashMenu.svelte';
   import BookmarkInput from './BookmarkInput.svelte';

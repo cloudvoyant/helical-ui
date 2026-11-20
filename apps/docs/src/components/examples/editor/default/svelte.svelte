@@ -1,6 +1,7 @@
 <!-- apps/docs/src/components/examples/editor/default/svelte.svelte -->
 <script lang="ts">
-  import { Editor, Prose } from '@cloudvoyant/helical-svelte';
+  import { Editor } from '@cloudvoyant/helical-svelte/editor';
+  import { Prose } from '@cloudvoyant/helical-svelte';
 
   const seed = JSON.stringify({
     type: 'doc',

@@ -1,7 +1,7 @@
 <!-- apps/docs/src/components/examples/editor/link-editing/svelte.svelte -->
 <!-- Chat-style input (no Prose) demonstrating paste-a-URL and inline link editing. -->
 <script lang="ts">
-  import { Editor } from '@cloudvoyant/helical-svelte';
+  import { Editor } from '@cloudvoyant/helical-svelte/editor';
 
   const seed = JSON.stringify({
     type: 'doc',

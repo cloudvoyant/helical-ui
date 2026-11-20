@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/code-block/multi-file/react.tsx
-import { MultiFileCodeBlock } from '@cloudvoyant/helical-react';
+import { MultiFileCodeBlock } from '@cloudvoyant/helical-react/code-block';
 
 export default function ReactCodeBlockMultiFile() {
   return (

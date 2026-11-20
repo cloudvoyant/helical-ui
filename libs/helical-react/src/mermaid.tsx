@@ -3,6 +3,7 @@
 // apps/book/src/components/article-body.tsx client renderer)
 import { useEffect, useState } from 'react';
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
+import { cn } from '@cloudvoyant/helical-ui';
 import {
   mermaidRootBase,
   mermaidSourceBase,
@@ -10,9 +11,8 @@ import {
   mermaidLoadingBase,
   renderMermaidSource,
   mermaidSvgAspectRatio,
-  cn,
-} from '@cloudvoyant/helical-ui';
-import type { MermaidProps as MermaidPropsBase } from '@cloudvoyant/helical-ui';
+  type MermaidProps as MermaidPropsBase,
+} from '@cloudvoyant/helical-ui/mermaid';
 
 export type MermaidProps = HTMLArkProps<'div'> & MermaidPropsBase;
 

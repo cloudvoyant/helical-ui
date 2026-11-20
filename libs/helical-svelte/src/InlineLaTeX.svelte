@@ -2,7 +2,8 @@
 <!-- Inline LaTeX equation (displayMode: false), mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
-  import { latexRootBase, latexInlineBase, latexErrorBase, toLaTeX, cn } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { latexRootBase, latexInlineBase, latexErrorBase, toLaTeX } from '@cloudvoyant/helical-ui/latex';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

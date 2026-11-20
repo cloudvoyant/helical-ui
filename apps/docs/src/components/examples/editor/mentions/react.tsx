@@ -1,7 +1,7 @@
 // apps/docs/src/components/examples/editor/mentions/react.tsx
 // Minimal, no Prose wrapper — a chat-style input with @user mentions. The mention source is a
 // static in-memory list, demonstrating the injected `mentionSource` seam.
-import { Editor } from '@cloudvoyant/helical-react';
+import { Editor } from '@cloudvoyant/helical-react/editor';
 import type { MentionItem } from '@cloudvoyant/helical-ui';
 
 const PEOPLE: MentionItem[] = [

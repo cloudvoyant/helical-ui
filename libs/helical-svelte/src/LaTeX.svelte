@@ -2,7 +2,8 @@
 <!-- Closely based on: diffbook's KaTeX pipeline; block component, mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
-  import { latexRootBase, latexDisplayBase, latexErrorBase, toLaTeX, cn } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { latexRootBase, latexDisplayBase, latexErrorBase, toLaTeX } from '@cloudvoyant/helical-ui/latex';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

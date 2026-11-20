@@ -246,7 +246,6 @@ export {
   type TagInputContextProps,
 } from './tags-input';
 export { useMediaQuery } from './use-media-query';
-export { Mermaid, type MermaidProps } from './mermaid';
 export { CopyButton, type CopyButtonProps } from './clipboard';
 export {
   RadioGroup,
@@ -259,24 +258,6 @@ export { Notice, type NoticeProps } from './notice';
 export { Figure, type FigureProps } from './figure';
 export { Reveal, type RevealProps } from './reveal';
 export { PrevNext, type PrevNextProps } from './prevnext';
-export { LaTeX, InlineLaTeX, type LaTeXProps, type InlineLaTeXProps } from './latex';
-export {
-  CodeBlock,
-  CodeBlockHeader,
-  CodeBlockTitle,
-  CodeBlockContent,
-  CodeBlockCopyButton,
-  MultiFileCodeBlock,
-  LanguageTabsCodeBlock,
-  type CodeBlockProps,
-  type CodeBlockHeaderProps,
-  type CodeBlockTitleProps,
-  type CodeBlockContentProps,
-  type CodeBlockCopyButtonProps,
-  type MultiFileCodeBlockProps,
-  type LanguageTabsCodeBlockProps,
-} from './code-block';
-export { Manim, type ManimProps } from './manim';
 export {
   YouTube,
   YoutubeTimestamps,
@@ -285,7 +266,6 @@ export {
   type YoutubeTimestampsProps,
   type YoutubeTimestampAtProps,
 } from './youtube';
-export { Chart, type ChartProps } from './chart';
 export {
   SingleChoiceQuestion,
   MultipleChoiceQuestion,
@@ -406,7 +386,6 @@ export type {
   CommandStyle,
 } from '@cloudvoyant/helical-ui';
 export * from './which-key';
-export * from './editor';
 export { LightSwitch, type LightSwitchProps } from './light-switch';
 export { ThemeSelector, type ThemeSelectorProps } from './theme-selector';
 export { useTheme, type ThemeController, type UseThemeOptions } from './use-theme';

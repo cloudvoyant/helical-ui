@@ -255,16 +255,7 @@ export {
   tagsInputClearTriggerBase,
   type TagsInputProps,
 } from './tags-input';
-export {
-  mermaidRootBase,
-  mermaidSourceBase,
-  mermaidSvgBase,
-  mermaidLoadingBase,
-  renderMermaidSource,
-  mermaidSvgAspectRatio,
-  resolveMermaidThemeVariables,
-  type MermaidProps,
-} from './mermaid';
+export type { MermaidProps } from './mermaid';
 export { clipboardTriggerBase } from './clipboard';
 export { radioGroupRootBase, radioGroupItemControlBase, radioGroupItemTextBase } from './radio-group';
 export {
@@ -285,37 +276,9 @@ export {
   prevNextSpacerBase,
   type PrevNextProps,
 } from './prevnext';
-export { latexRootBase, latexDisplayBase, latexInlineBase, latexErrorBase, toLaTeX, type LaTeXProps } from './latex';
-export {
-  codeBlockRootBase,
-  codeBlockHeaderBase,
-  codeBlockHeaderInfoBase,
-  codeBlockTitleBase,
-  codeBlockBodyBase,
-  codeBlockBodyScrollableBase,
-  codeBlockContentBase,
-  codeBlockLineNumbersBase,
-  codeBlockHighlightBase,
-  codeBlockLoadingBase,
-  codeBlockSpinnerBase,
-  codeBlockCopyFloatBase,
-  injectCodeBlockStyles,
-  renderCodeToHtml,
-  type FileEntry,
-  type LanguageTab,
-  type CodeBlockProps,
-} from './code-block';
-export {
-  manimRootBase,
-  manimContainerBase,
-  manimPlaceholderBase,
-  manimPlaceholderLabelBase,
-  manimErrorBase,
-  manimCaptionBase,
-  type ManimProps,
-  type ManimRecordingScene,
-  type ManimModule,
-} from './manim';
+export type { LaTeXProps } from './latex';
+export type { FileEntry, LanguageTab, CodeBlockProps } from './code-block';
+export type { ManimProps, ManimRecordingScene, ManimModule } from './manim';
 export {
   youtubeRootBase,
   youtubeTitleBase,
@@ -337,16 +300,7 @@ export {
   type YouTubeChapter,
   type YouTubeProps,
 } from './youtube';
-export {
-  chartRootBase,
-  chartPlaceholderBase,
-  chartPlaceholderLabelBase,
-  defaultChartColor,
-  buildChartDefinition,
-  renderChartSvgString,
-  type ChartSeries,
-  type ChartProps,
-} from './chart';
+export type { ChartSeries, ChartProps } from './chart';
 export {
   questionCardBase,
   questionPromptBase,
@@ -440,4 +394,25 @@ export {
   type CommandMenuVariants,
 } from './command';
 export * from './which-key';
-export * from './editor';
+export type {
+  BuildExtensionsOptions,
+  EditorCounts,
+  EditorNodeViews,
+  EditorSeams,
+  ImageUploadResult,
+  LinkPreviewAttributes,
+  LinkPreviewFetcher,
+  MentionItem,
+  MentionListElement,
+  ModalKeymapOptions,
+  ModalKeymapPluginState,
+  ModalKeymapStorage,
+  NodeViewFactory,
+  NoticeAttributes,
+  NoticeVariant,
+  OverlayPlacementOptions,
+  OverlayPosition,
+  SecondaryCursorRange,
+  SlashCommandItem,
+  UrlMentionAttributes,
+} from './editor';

@@ -2,7 +2,7 @@
 <!-- Closely based on: Shark UI toast (@ark-ui/svelte/toast), mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { ToastCloseTrigger as ArkToastCloseTrigger, type ToastCloseTriggerProps } from '@ark-ui/svelte/toast';
-  import { X } from 'lucide-svelte';
+  import X from 'lucide-svelte/icons/x';
   import { cn, toastCloseTriggerBase } from '@cloudvoyant/helical-ui';
 
   type Props = ToastCloseTriggerProps & { class?: string; className?: string };

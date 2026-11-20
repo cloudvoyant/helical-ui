@@ -1,6 +1,7 @@
 <!-- libs/helical-svelte/src/code-block/CodeRenderer.svelte -->
 <!-- Shared shiki renderer for the code-block family, mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     codeBlockBodyBase,
     codeBlockBodyScrollableBase,
@@ -11,8 +12,7 @@
     codeBlockSpinnerBase,
     injectCodeBlockStyles,
     renderCodeToHtml,
-    cn,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/code-block';
 
   type Props = {
     code: string;

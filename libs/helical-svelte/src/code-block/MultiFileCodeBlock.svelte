@@ -4,8 +4,8 @@
   import { Ark } from '@ark-ui/svelte/factory';
   import CopyButton from '../CopyButton.svelte';
   import CodeRenderer from './CodeRenderer.svelte';
-  import { codeBlockRootBase, cn } from '@cloudvoyant/helical-ui';
-  import type { FileEntry } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { codeBlockRootBase, type FileEntry } from '@cloudvoyant/helical-ui/code-block';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

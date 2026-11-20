@@ -1,5 +1,5 @@
 // apps/docs/src/components/examples/chart/line/react.tsx
-import { Chart } from '@cloudvoyant/helical-react';
+import { Chart } from '@cloudvoyant/helical-react/chart';
 
 const data = [
   { name: 'Jan', sales: 400, costs: 240 },

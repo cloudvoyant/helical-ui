@@ -15,6 +15,7 @@ import {
   SelectItemText,
   SelectItemIndicator,
 } from './select';
+import { cn } from '@cloudvoyant/helical-ui';
 import {
   codeBlockRootBase,
   codeBlockHeaderBase,
@@ -29,9 +30,10 @@ import {
   codeBlockCopyFloatBase,
   injectCodeBlockStyles,
   renderCodeToHtml,
-  cn,
-} from '@cloudvoyant/helical-ui';
-import type { CodeBlockProps as CodeBlockPropsBase, FileEntry, LanguageTab } from '@cloudvoyant/helical-ui';
+  type CodeBlockProps as CodeBlockPropsBase,
+  type FileEntry,
+  type LanguageTab,
+} from '@cloudvoyant/helical-ui/code-block';
 
 /* ------------------------------------------------------------------ */
 /*  Context — lets the composite parts read the block's props           */

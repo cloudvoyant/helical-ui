@@ -17,12 +17,12 @@
   import CodeBlockHeader from './CodeBlockHeader.svelte';
   import CodeBlockTitle from './CodeBlockTitle.svelte';
   import CodeRenderer from './CodeRenderer.svelte';
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     codeBlockRootBase,
     codeBlockCopyFloatBase,
-    cn,
-  } from '@cloudvoyant/helical-ui';
-  import type { LanguageTab } from '@cloudvoyant/helical-ui';
+    type LanguageTab,
+  } from '@cloudvoyant/helical-ui/code-block';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

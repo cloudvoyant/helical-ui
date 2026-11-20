@@ -67,9 +67,9 @@ sequenceDiagram
 
 | Package | Entry / Subpaths | Packaging Tool | `sideEffects` | Output Contract |
 | :--- | :--- | :--- | :--- | :--- |
-| `@cloudvoyant/helical-ui` | `.`, `./theme.css`, `./themes.css`, `./components.css` | `tsup` | `["*.css"]` | ESM + CJS + `.d.ts` + raw CSS |
-| `@cloudvoyant/helical-react` | `.` | `tsup` | `false` | ESM + CJS + `.d.ts` |
-| `@cloudvoyant/helical-svelte` | `.` | `@sveltejs/package` | `false` | ESM + `.svelte` + `.d.ts` |
+| `@cloudvoyant/helical-ui` | `.`, `./commands`, `./{editor,chart,mermaid,code-block,latex,manim}`, `./{theme,themes,components}.css` | `tsup` | `["*.css"]` | ESM + CJS + `.d.ts` + raw CSS |
+| `@cloudvoyant/helical-react` | `.`, `./{editor,chart,mermaid,code-block,latex,manim}` | `tsup` | `false` | ESM + CJS + `.d.ts` |
+| `@cloudvoyant/helical-svelte` | `.`, per-component subpaths (`./which-key`, `./sidebar`, `./command*`, `./layout`, …), `./{editor,chart,mermaid,code-block,latex,manim}` | `@sveltejs/package` | `false` | ESM + `.svelte` + `.d.ts` |
 
 ## Implementation
 

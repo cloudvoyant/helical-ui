@@ -6,7 +6,8 @@
   import CodeBlockTitle from './CodeBlockTitle.svelte';
   import CodeBlockContent from './CodeBlockContent.svelte';
   import CodeBlockCopyButton from './CodeBlockCopyButton.svelte';
-  import { codeBlockRootBase, cn } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { codeBlockRootBase } from '@cloudvoyant/helical-ui/code-block';
   import { setContext } from 'svelte';
   import { CODE_BLOCK_KEY, type CodeBlockContextValue } from './CodeBlockContext.svelte';
   import type { HTMLAttributes } from 'svelte/elements';

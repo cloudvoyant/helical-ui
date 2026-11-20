@@ -34,7 +34,7 @@ While the diagram renders, a centered spinner with an "Rendering diagram" label 
 For content rendered at build time — MDX pages, static exports, or server components — pass a pre-rendered SVG string through the `svg` prop:
 
 <Code
-  code={`import { Mermaid } from '@cloudvoyant/helical-react';
+  code={`import { Mermaid } from '@cloudvoyant/helical-react/mermaid';
 
 <Mermaid
   code="flowchart LR\\n  A --> B"
@@ -61,7 +61,7 @@ flowchart LR
 A component map (`helical-ui-mdx`) routes `code.language-mermaid` to the `Mermaid` component so the fence renders as a diagram; the same source is usable via the JSX `code` prop directly when you prefer an explicit component:
 
 <Code
-  code={`import { Mermaid } from '@cloudvoyant/helical-react';
+  code={`import { Mermaid } from '@cloudvoyant/helical-react/mermaid';
 
 <Mermaid
   client:load

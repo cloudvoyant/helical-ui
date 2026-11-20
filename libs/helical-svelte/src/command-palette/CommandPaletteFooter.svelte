@@ -1,6 +1,6 @@
 <script lang="ts">
   // 1. Imports
-  import { CornerDownLeft } from 'lucide-svelte';
+  import CornerDownLeft from 'lucide-svelte/icons/corner-down-left';
   import { cn, commandPaletteStyles } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import Row from '../Row.svelte';

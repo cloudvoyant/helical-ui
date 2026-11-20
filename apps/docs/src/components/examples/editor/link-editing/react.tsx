@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/editor/link-editing/react.tsx
 // Chat-style input (no Prose) demonstrating paste-a-URL and inline link editing.
-import { Editor } from '@cloudvoyant/helical-react';
+import { Editor } from '@cloudvoyant/helical-react/editor';
 
 const seed = JSON.stringify({
   type: 'doc',

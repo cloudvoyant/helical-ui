@@ -17,7 +17,7 @@ Chart renders line, bar, area, and pie charts with [TanStack Charts](https://tan
 Render the chart to an SVG string on the server and pass it through `svg` — the chart paints immediately with no client JavaScript:
 
 ```tsx
-import { renderChartSvgString } from '@cloudvoyant/helical-ui';
+import { renderChartSvgString } from '@cloudvoyant/helical-ui/chart';
 
 const svg = renderChartSvgString(
   { type: 'pie', data, series: [{ key: 'value' }], nameKey: 'name' },

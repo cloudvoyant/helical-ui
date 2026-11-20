@@ -1,6 +1,6 @@
 <script lang="ts">
   // 1. Imports
-  import { Search } from 'lucide-svelte';
+  import Search from 'lucide-svelte/icons/search';
   import { cn, commandPaletteStyles } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import { ListboxInput } from '../listbox';

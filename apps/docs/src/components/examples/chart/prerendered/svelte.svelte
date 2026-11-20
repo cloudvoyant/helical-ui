@@ -1,7 +1,7 @@
 <!-- apps/docs/src/components/examples/chart/prerendered/svelte.svelte -->
 <script lang="ts">
-  import { Chart } from '@cloudvoyant/helical-svelte';
-  import { renderChartSvgString } from '@cloudvoyant/helical-ui';
+  import { Chart } from '@cloudvoyant/helical-svelte/chart';
+  import { renderChartSvgString } from '@cloudvoyant/helical-ui/chart';
 
   const data = [
     { name: 'React', value: 40 },

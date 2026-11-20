@@ -2,7 +2,7 @@
 <!-- Minimal, no Prose wrapper — a chat-style input with @user mentions, backed by the -->
 <!-- injected mentionSource seam (a static in-memory list here). -->
 <script lang="ts">
-  import { Editor } from '@cloudvoyant/helical-svelte';
+  import { Editor } from '@cloudvoyant/helical-svelte/editor';
   import type { MentionItem } from '@cloudvoyant/helical-ui';
 
   const PEOPLE: MentionItem[] = [

@@ -7,3 +7,13 @@ export {
   useCommand,
   useOptionalCommand,
 } from './context.svelte';
+export type {
+  CommandContextProps,
+  CommandContextValue,
+  CommandFlatItem,
+  CommandMenuColumns,
+  ColonCommandColumns,
+  CommandNode,
+  CommandSelectContext,
+  CommandStyle,
+} from '@cloudvoyant/helical-ui';

@@ -13,7 +13,9 @@
     type LightSwitchBaseProps,
     type ThemeMode,
   } from '@cloudvoyant/helical-ui';
-  import { Monitor, Moon, Sun } from 'lucide-svelte';
+  import Monitor from 'lucide-svelte/icons/monitor';
+  import Moon from 'lucide-svelte/icons/moon';
+  import Sun from 'lucide-svelte/icons/sun';
   import Button from './Button.svelte';
 
   // 2. Module constants & types

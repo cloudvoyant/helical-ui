@@ -1,7 +1,7 @@
 <!-- libs/helical-svelte/src/command-menu/CommandMenuError.svelte -->
 <script lang="ts">
   // 1. Imports
-  import { AlertCircle } from 'lucide-svelte';
+  import AlertCircle from 'lucide-svelte/icons/circle-alert';
   import { commandMenuStyles } from '@cloudvoyant/helical-ui';
   import Row from '../Row.svelte';
   import { getCommandMenuContext } from './context.svelte';

@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/code-block/default/svelte.svelte -->
 <script lang="ts">
-  import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent, CodeBlockCopyButton } from '@cloudvoyant/helical-svelte';
+  import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockContent, CodeBlockCopyButton } from '@cloudvoyant/helical-svelte/code-block';
 
   const code = `export function greet(name: string): string {
   return \`Hello, \${name}!\`;

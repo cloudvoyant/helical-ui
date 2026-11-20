@@ -3,7 +3,8 @@
      mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Chart as TanStackChart } from '@tanstack/charts/svelte';
-  import { chartRootBase, cn, buildChartDefinition } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { chartRootBase, buildChartDefinition } from '@cloudvoyant/helical-ui/chart';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

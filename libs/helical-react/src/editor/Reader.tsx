@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { generateHTML } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/core';
-import { buildExtensions, type EditorNodeViews } from '@cloudvoyant/helical-ui';
+import { buildExtensions, type EditorNodeViews } from '@cloudvoyant/helical-ui/editor';
 
 const noopNodeView = () => () => ({}) as never;
 const inertNodeViews: EditorNodeViews = {

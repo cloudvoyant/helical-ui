@@ -3,8 +3,8 @@
 // exposes `onKeyDown` for the suggestion bridge. Keyboard nav mirrors the Svelte version.
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
-import { Listbox, ListboxContent, ListboxItem, ListboxItemText } from '..';
-import type { SlashCommandItem } from '@cloudvoyant/helical-ui';
+import { Listbox, ListboxContent, ListboxItem, ListboxItemText } from '../listbox';
+import type { SlashCommandItem } from '@cloudvoyant/helical-ui/editor';
 import {
   Bookmark,
   Code,

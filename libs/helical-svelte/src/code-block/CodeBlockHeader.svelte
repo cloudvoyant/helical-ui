@@ -1,7 +1,8 @@
 <!-- libs/helical-svelte/src/code-block/CodeBlockHeader.svelte -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
-  import { codeBlockHeaderBase, cn } from '@cloudvoyant/helical-ui';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { codeBlockHeaderBase } from '@cloudvoyant/helical-ui/code-block';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
 

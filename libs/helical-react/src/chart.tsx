@@ -3,8 +3,8 @@
 // rebuilt on TanStack Charts: the definition is shared with the Svelte adapter.
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
 import { Chart as TanStackChart } from '@tanstack/charts/react';
-import { chartRootBase, buildChartDefinition, cn } from '@cloudvoyant/helical-ui';
-import type { ChartProps as ChartPropsBase } from '@cloudvoyant/helical-ui';
+import { cn } from '@cloudvoyant/helical-ui';
+import { chartRootBase, buildChartDefinition, type ChartProps as ChartPropsBase } from '@cloudvoyant/helical-ui/chart';
 
 export type ChartProps = HTMLArkProps<'div'> &
   ChartPropsBase & {

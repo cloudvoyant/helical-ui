@@ -10,8 +10,26 @@
       "@/*": ["src/*"],
       "@cloudvoyant/helical-ui": ["../../libs/helical-ui/src/index.ts"],
       "@cloudvoyant/helical-ui/commands": ["../../libs/helical-ui/src/command/index.ts"],
+      "@cloudvoyant/helical-ui/editor": ["../../libs/helical-ui/src/editor/index.ts"],
+      "@cloudvoyant/helical-ui/chart": ["../../libs/helical-ui/src/chart.ts"],
+      "@cloudvoyant/helical-ui/mermaid": ["../../libs/helical-ui/src/mermaid.ts"],
+      "@cloudvoyant/helical-ui/code-block": ["../../libs/helical-ui/src/code-block.ts"],
+      "@cloudvoyant/helical-ui/latex": ["../../libs/helical-ui/src/latex.ts"],
+      "@cloudvoyant/helical-ui/manim": ["../../libs/helical-ui/src/manim.ts"],
       "@cloudvoyant/helical-react": ["../../libs/helical-react/src/index.ts"],
-      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"]
+      "@cloudvoyant/helical-react/editor": ["../../libs/helical-react/src/editor/index.ts"],
+      "@cloudvoyant/helical-react/chart": ["../../libs/helical-react/src/chart.tsx"],
+      "@cloudvoyant/helical-react/mermaid": ["../../libs/helical-react/src/mermaid.tsx"],
+      "@cloudvoyant/helical-react/code-block": ["../../libs/helical-react/src/code-block.tsx"],
+      "@cloudvoyant/helical-react/latex": ["../../libs/helical-react/src/latex.tsx"],
+      "@cloudvoyant/helical-react/manim": ["../../libs/helical-react/src/manim.tsx"],
+      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"],
+      "@cloudvoyant/helical-svelte/editor": ["../../libs/helical-svelte/src/editor/index.ts"],
+      "@cloudvoyant/helical-svelte/chart": ["../../libs/helical-svelte/src/chart.ts"],
+      "@cloudvoyant/helical-svelte/mermaid": ["../../libs/helical-svelte/src/mermaid.ts"],
+      "@cloudvoyant/helical-svelte/code-block": ["../../libs/helical-svelte/src/code-block/index.ts"],
+      "@cloudvoyant/helical-svelte/latex": ["../../libs/helical-svelte/src/latex.ts"],
+      "@cloudvoyant/helical-svelte/manim": ["../../libs/helical-svelte/src/manim.ts"]
     }
   }
 }
