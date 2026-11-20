@@ -2,8 +2,15 @@
 // Closely based on: diffbook's KaTeX pipeline; block + inline components. Inline rendering can
 // also use `toLaTeX` directly — see the LaTeX docs.
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
-import { latexRootBase, latexDisplayBase, latexInlineBase, latexErrorBase, toLaTeX, cn } from '@cloudvoyant/helical-ui';
-import type { LaTeXProps as LaTeXPropsBase } from '@cloudvoyant/helical-ui';
+import { cn } from '@cloudvoyant/helical-ui';
+import {
+  latexRootBase,
+  latexDisplayBase,
+  latexInlineBase,
+  latexErrorBase,
+  toLaTeX,
+  type LaTeXProps as LaTeXPropsBase,
+} from '@cloudvoyant/helical-ui/latex';
 
 export type LaTeXProps = HTMLArkProps<'div'> & LaTeXPropsBase;
 

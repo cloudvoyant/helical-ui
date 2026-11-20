@@ -16,7 +16,9 @@
     FileUploadItemDeleteTrigger,
     type FileUploadFileChangeDetails,
   } from '@ark-ui/svelte/file-upload';
-  import { ImagePlus, Trash2, Upload } from 'lucide-svelte';
+  import ImagePlus from 'lucide-svelte/icons/image-plus';
+  import Trash2 from 'lucide-svelte/icons/trash-2';
+  import Upload from 'lucide-svelte/icons/upload';
 
   interface Props {
     file: File | null;

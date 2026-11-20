@@ -1,7 +1,15 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: [
+    'src/index.ts',
+    'src/manim.tsx',
+    'src/chart.tsx',
+    'src/mermaid.tsx',
+    'src/latex.tsx',
+    'src/code-block.tsx',
+    'src/editor/index.ts',
+  ],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
@@ -10,12 +18,12 @@ export default defineConfig({
     'react-dom',
     'react/jsx-runtime',
     '@ark-ui/react',
-    '@cloudvoyant/helical-ui',
+    /^@cloudvoyant\/helical-ui(?:\/.*)?$/,
     'mermaid',
     'katex',
-    'shiki',
+    /^shiki(?:\/.*)?$/,
     'recharts',
     'manim-web',
-    '@tanstack/charts',
+    /^@tanstack\/charts(?:\/.*)?$/,
   ],
 });

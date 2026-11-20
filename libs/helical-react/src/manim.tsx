@@ -4,6 +4,7 @@
 // `manim-web` is imported lazily on mount.
 import { useEffect, useRef, useState } from 'react';
 import { ark, type HTMLArkProps } from '@ark-ui/react/factory';
+import { cn } from '@cloudvoyant/helical-ui';
 import {
   manimRootBase,
   manimContainerBase,
@@ -11,9 +12,10 @@ import {
   manimPlaceholderLabelBase,
   manimErrorBase,
   manimCaptionBase,
-  cn,
-} from '@cloudvoyant/helical-ui';
-import type { ManimProps as ManimPropsBase, ManimRecordingScene, ManimModule } from '@cloudvoyant/helical-ui';
+  type ManimProps as ManimPropsBase,
+  type ManimRecordingScene,
+  type ManimModule,
+} from '@cloudvoyant/helical-ui/manim';
 
 interface ManimPlayer {
   sequence(builder: (scene: ManimRecordingScene) => Promise<void>): Promise<void>;

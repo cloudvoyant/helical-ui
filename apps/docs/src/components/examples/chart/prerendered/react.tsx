@@ -1,6 +1,6 @@
 // apps/docs/src/components/examples/chart/prerendered/react.tsx
-import { Chart } from '@cloudvoyant/helical-react';
-import { renderChartSvgString } from '@cloudvoyant/helical-ui';
+import { Chart } from '@cloudvoyant/helical-react/chart';
+import { renderChartSvgString } from '@cloudvoyant/helical-ui/chart';
 
 const data = [
   { name: 'React', value: 40 },

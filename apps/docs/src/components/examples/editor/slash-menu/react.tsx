@@ -1,5 +1,6 @@
 // apps/docs/src/components/examples/editor/slash-menu/react.tsx
-import { Editor, Prose } from '@cloudvoyant/helical-react';
+import { Editor } from '@cloudvoyant/helical-react/editor';
+import { Prose } from '@cloudvoyant/helical-react';
 
 const seed = JSON.stringify({
   type: 'doc',

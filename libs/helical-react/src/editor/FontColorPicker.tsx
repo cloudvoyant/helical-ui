@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Palette, Highlighter } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '..';
+import { Popover, PopoverTrigger, PopoverContent } from '../popover';
 import { cn } from '@cloudvoyant/helical-ui';
 
 const COLORS = ['yellow', 'orange', 'red', 'fuchsia', 'violet', 'blue', 'cyan', 'green', 'slate'] as const;

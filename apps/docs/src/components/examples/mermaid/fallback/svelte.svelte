@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/mermaid/fallback/svelte.svelte -->
 <script lang="ts">
-  import { Mermaid } from '@cloudvoyant/helical-svelte';
+  import { Mermaid } from '@cloudvoyant/helical-svelte/mermaid';
 
   const code = 'This is not a valid mermaid diagram.';
 </script>

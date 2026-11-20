@@ -5,7 +5,7 @@ import {
   CodeBlockTitle,
   CodeBlockContent,
   CodeBlockCopyButton,
-} from '@cloudvoyant/helical-react';
+} from '@cloudvoyant/helical-react/code-block';
 
 const code = `export function greet(name: string): string {
   return \`Hello, \${name}!\`;

@@ -3,13 +3,11 @@
   import type { Editor } from '@tiptap/core';
   import FontColorPicker from './FontColorPicker.svelte';
   import LinkEditPopover from './LinkEditPopover.svelte';
-  import {
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    AlignJustify,
-    Link2,
-  } from 'lucide-svelte';
+  import AlignLeft from 'lucide-svelte/icons/text-align-start';
+  import AlignCenter from 'lucide-svelte/icons/text-align-center';
+  import AlignRight from 'lucide-svelte/icons/text-align-end';
+  import AlignJustify from 'lucide-svelte/icons/text-align-justify';
+  import Link2 from 'lucide-svelte/icons/link-2';
 
   interface Props {
     editor: Editor;

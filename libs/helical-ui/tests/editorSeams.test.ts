@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { Editor, getSchema } from '@tiptap/core';
+import { defaultListboxFilter } from '@cloudvoyant/helical-ui';
 import {
   buildExtensions,
   createInternalMention,
   createLinkPreview,
   createUrlMention,
-  defaultListboxFilter,
   slashCommands,
   type MentionItem,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/editor';
 
 // Node views are never instantiated by these assertions (no DOM node views are created), so
 // inert factories are sufficient and keep the test framework-free.

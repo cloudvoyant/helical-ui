@@ -3,11 +3,8 @@
 // control as the static multi-language CodeBlock.
 import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from '@tiptap/react';
 import { ChevronsUpDown, Check } from 'lucide-react';
+import { CodeBlock, CodeBlockHeader, CodeBlockTitle, CodeBlockCopyButton } from '../code-block';
 import {
-  CodeBlock,
-  CodeBlockHeader,
-  CodeBlockTitle,
-  CodeBlockCopyButton,
   Select,
   SelectTrigger,
   SelectValue,
@@ -16,8 +13,9 @@ import {
   SelectItem,
   SelectItemText,
   SelectItemIndicator,
-} from '..';
-import { cn, codeBlockBodyBase, codeBlockContentBase, type SelectItemData } from '@cloudvoyant/helical-ui';
+} from '../select';
+import { cn, type SelectItemData } from '@cloudvoyant/helical-ui';
+import { codeBlockBodyBase, codeBlockContentBase } from '@cloudvoyant/helical-ui/code-block';
 
 const LANGUAGES: SelectItemData[] = [
   { value: 'javascript', label: 'JavaScript' },

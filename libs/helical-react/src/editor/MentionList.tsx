@@ -3,8 +3,8 @@
 // Listbox and exposes `onKeyDown` for the suggestion bridge.
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
-import { Listbox, ListboxContent, ListboxItem, ListboxItemText } from '..';
-import type { MentionItem } from '@cloudvoyant/helical-ui';
+import { Listbox, ListboxContent, ListboxItem, ListboxItemText } from '../listbox';
+import type { MentionItem } from '@cloudvoyant/helical-ui/editor';
 
 export interface MentionListHandle {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;

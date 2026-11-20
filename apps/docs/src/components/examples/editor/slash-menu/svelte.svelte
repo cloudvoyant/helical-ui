@@ -1,6 +1,7 @@
 <!-- apps/docs/src/components/examples/editor/slash-menu/svelte.svelte -->
 <script lang="ts">
-  import { Editor, Prose } from '@cloudvoyant/helical-svelte';
+  import { Editor } from '@cloudvoyant/helical-svelte/editor';
+  import { Prose } from '@cloudvoyant/helical-svelte';
 
   const editorProps = {
     fetchLinkPreview: async (url: string) => ({

@@ -16,10 +16,10 @@ import {
   AlignRight,
   AlignJustify,
 } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '..';
+import { ToggleGroup, ToggleGroupItem } from '../toggle-group';
 import { FontColorPicker } from './FontColorPicker';
 import { LinkEditPopover } from './LinkEditPopover';
-import { findEditorScrollContainer } from '@cloudvoyant/helical-ui';
+import { findEditorScrollContainer } from '@cloudvoyant/helical-ui/editor';
 
 export interface BubbleMenuProps {
   editor: Editor;

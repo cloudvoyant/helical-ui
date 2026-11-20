@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Editor } from '@tiptap/core';
-  import { Trash2, Globe, ExternalLink } from 'lucide-svelte';
+  import Trash2 from 'lucide-svelte/icons/trash-2';
+  import Globe from 'lucide-svelte/icons/globe';
+  import ExternalLink from 'lucide-svelte/icons/external-link';
 
   interface Props {
     editor: Editor;

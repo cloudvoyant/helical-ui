@@ -3,7 +3,7 @@
   // 1. Imports
   import { Portal } from '@ark-ui/svelte/portal';
   import { Presence } from '@ark-ui/svelte/presence';
-  import { ChevronRight } from 'lucide-svelte';
+  import ChevronRight from 'lucide-svelte/icons/chevron-right';
   import {
     cn,
     formatWhichKeyLabel,

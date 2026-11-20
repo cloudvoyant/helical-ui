@@ -1,7 +1,8 @@
 <!-- libs/helical-svelte/src/editor/YouTubeInput.svelte -->
 <script lang="ts">
   import type { Editor } from '@tiptap/core';
-  import { Play, X } from 'lucide-svelte';
+  import Play from 'lucide-svelte/icons/play';
+  import X from 'lucide-svelte/icons/x';
 
   let { editor, position, onClose }: { editor: Editor; position: number; onClose: () => void } = $props();
   let url = $state('');

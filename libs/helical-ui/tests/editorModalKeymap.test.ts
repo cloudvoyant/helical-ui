@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Editor } from '@tiptap/core';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
-import { buildExtensions, getEditorModalTarget, modalKeymapPluginKey } from '@cloudvoyant/helical-ui';
+import { buildExtensions, getEditorModalTarget, modalKeymapPluginKey } from '@cloudvoyant/helical-ui/editor';
 
 // =============================================================================
 // Setup & Helpers

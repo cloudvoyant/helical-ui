@@ -1,6 +1,6 @@
 <script lang="ts">
   import { generateHTML } from '@tiptap/core';
-  import { buildExtensions, type EditorNodeViews } from '@cloudvoyant/helical-ui';
+  import { buildExtensions, type EditorNodeViews } from '@cloudvoyant/helical-ui/editor';
 
   // The Reader renders static HTML via generateHTML, which only ever calls renderHTML — node
   // views are never instantiated, so inert factories are correct here.

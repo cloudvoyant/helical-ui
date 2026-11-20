@@ -1,6 +1,6 @@
 <!-- apps/docs/src/components/examples/mermaid/colors/svelte.svelte -->
 <script lang="ts">
-  import { Mermaid } from '@cloudvoyant/helical-svelte';
+  import { Mermaid } from '@cloudvoyant/helical-svelte/mermaid';
 
   const code = `flowchart LR
   classDef success fill:#16a34a,stroke:#16a34a,color:#ffffff,stroke-width:2px

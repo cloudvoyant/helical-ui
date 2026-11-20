@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Editor } from '@tiptap/core';
-  import type { ImageUploadResult } from '@cloudvoyant/helical-ui';
-  import { X } from 'lucide-svelte';
+  import type { ImageUploadResult } from '@cloudvoyant/helical-ui/editor';
+  import X from 'lucide-svelte/icons/x';
   import ImageFileUpload from './ImageFileUpload.svelte';
 
   interface Props {

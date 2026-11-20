@@ -14,8 +14,10 @@
     SelectItemText,
     SelectItemIndicator,
   } from '../select';
-  import { cn, codeBlockBodyBase, codeBlockContentBase } from '@cloudvoyant/helical-ui';
-  import { ChevronsUpDown, Check } from 'lucide-svelte';
+  import { cn } from '@cloudvoyant/helical-ui';
+  import { codeBlockBodyBase, codeBlockContentBase } from '@cloudvoyant/helical-ui/code-block';
+  import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
+  import Check from 'lucide-svelte/icons/check';
 
   let { node, editor, updateAttributes }: NodeViewProps = $props();
 

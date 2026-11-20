@@ -16,6 +16,7 @@
 - [Proposed] Compose or reuse shared prop interfaces from `libs/helical-ui` across components instead of duplicating equivalent prop definitions per component.
 - [Proposed] Put shared controller synchronization, persistence, and DOM discovery in `libs/helical-ui` and framework hooks rather than app-level shell components.
 - Keep main component types and public utilities on the `@cloudvoyant/helical-ui` barrel root; expose only internal component helpers that consumers are discouraged from calling directly via subpath exports (e.g., `@cloudvoyant/helical-ui/commands`).
+- [Proposed] Use package `exports` wildcards (`./*`) and a workspace custom condition (`@cloudvoyant/source` via `tsconfig.base.json` `customConditions` and Vite `resolve.conditions`) instead of enumerating per-component subpaths, `tsconfig.json` `paths`, or Vite `resolve.alias` entries manually.
 
 ### Repository layout
 
@@ -108,6 +109,7 @@ export const badgeVariants = cva('inline-flex items-center', {
 - [Proposed] Support uncontrolled usage (internal state fallback when `open` or `value` is omitted) on interactive overlay and menu components so consumers do not have to wire external state for basic usage.
 - [Proposed] Expose composable subcomponents and shared context hooks for multi-part interactive components while rendering a default composition when children are omitted.
 - Keep documentation examples in `apps/docs/src/components/examples/` self-contained with hardcoded sample data and minimal UI; omit `data-testid` attributes, docs-shell state subscriptions, status readouts used only to prove effects, and explanatory prose that belongs in the surrounding MDX page.
+- [Proposed] Import Lucide icons in `libs/helical-svelte/src/` from canonical `'lucide-svelte/icons/<kebab-name>'` subpaths rather than the root `'lucide-svelte'` barrel.
 
 ```tsx
 // React (libs/helical-react/src/<component>/Root.tsx)
@@ -140,6 +142,7 @@ export const Widget = forwardRef<HTMLDivElement, WidgetProps>(
 - [Proposed] Assert user-observable outcomes in Playwright E2E specs rather than internal DOM wrapper classes or state invariants, and keep pure invariant checks in unit tests.
 - [Proposed] Label default prop states with `(default)` in BDD `Given` and `When` titles when testing configurable options.
 - Keep component E2E specs focused on component behavior rather than docs shell integration; exclude any agent-debugging docs-shell specs from CI E2E runs.
+- [Proposed] Avoid static config/manifest unit tests (such as asserting `package.json` `exports` or `peerDependencies` keys or regex-scanning `dist/` files); keep tests focused on runtime behavior.
 
 Validate before committing (see [docs/development-guide.md](docs/development-guide.md)):
 

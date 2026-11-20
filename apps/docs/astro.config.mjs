@@ -21,28 +21,13 @@ export default defineConfig({
   vite: {
     plugins: [helicalMdxDemoPlugin(), helicalBarrelSubpathPlugin(), tailwindcss()],
     resolve: {
-      alias: [
-        // Serve workspace packages from source in dev so edits to libs/* hot-reload
-        // instead of requiring a rebuild (the package exports map points at dist/).
-        // Exact-match anchors keep subpath imports (@cloudvoyant/helical-ui/theme.css, ...)
-        // resolving through the exports map, not through the JS alias.
-        {
-          find: /^@cloudvoyant\/helical-ui$/,
-          replacement: new URL('../../libs/helical-ui/src/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-ui\/commands?$/,
-          replacement: new URL('../../libs/helical-ui/src/command/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-react$/,
-          replacement: new URL('../../libs/helical-react/src/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-svelte$/,
-          replacement: new URL('../../libs/helical-svelte/src/index.ts', import.meta.url).pathname,
-        },
-      ],
+      // Resolve workspace packages from source via the `@cloudvoyant/source` export condition.
+      conditions: ['@cloudvoyant/source', 'module', 'browser', 'development|production'],
+    },
+    ssr: {
+      resolve: {
+        conditions: ['@cloudvoyant/source', 'module', 'node', 'development|production'],
+      },
     },
     optimizeDeps: {
       entries: [

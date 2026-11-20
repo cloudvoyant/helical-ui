@@ -5,13 +5,10 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
+    "customConditions": ["@cloudvoyant/source"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@cloudvoyant/helical-ui": ["../../libs/helical-ui/src/index.ts"],
-      "@cloudvoyant/helical-ui/commands": ["../../libs/helical-ui/src/command/index.ts"],
-      "@cloudvoyant/helical-react": ["../../libs/helical-react/src/index.ts"],
-      "@cloudvoyant/helical-svelte": ["../../libs/helical-svelte/src/index.ts"]
+      "@/*": ["src/*"]
     }
   }
 }

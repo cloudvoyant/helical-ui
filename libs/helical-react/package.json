@@ -10,9 +10,22 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "@cloudvoyant/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./editor": {
+      "@cloudvoyant/source": "./src/editor/index.ts",
+      "types": "./dist/editor/index.d.ts",
+      "import": "./dist/editor/index.js",
+      "require": "./dist/editor/index.cjs"
+    },
+    "./*": {
+      "@cloudvoyant/source": "./src/*.tsx",
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.cjs"
     },
     "./package.json": "./package.json"
   },

@@ -6,7 +6,7 @@ import {
   placeEditorOverlayAt,
   type OverlayPlacementOptions,
   type OverlayPosition,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/editor';
 
 export interface CursorOverlayProps extends OverlayPlacementOptions {
   editor: Editor;

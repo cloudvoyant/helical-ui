@@ -12,18 +12,30 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "@cloudvoyant/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./commands": {
+      "@cloudvoyant/source": "./src/command/index.ts",
       "types": "./dist/command/index.d.ts",
       "import": "./dist/command/index.js",
       "require": "./dist/command/index.cjs"
     },
-    "./theme.css": "./src/theme.css",
-    "./themes.css": "./src/themes.css",
-    "./components.css": "./src/components.css",
+    "./editor": {
+      "@cloudvoyant/source": "./src/editor/index.ts",
+      "types": "./dist/editor/index.d.ts",
+      "import": "./dist/editor/index.js",
+      "require": "./dist/editor/index.cjs"
+    },
+    "./*.css": "./src/*.css",
+    "./*": {
+      "@cloudvoyant/source": "./src/*.ts",
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -79,10 +91,14 @@
     "tailwind-merge": "catalog:"
   },
   "peerDependencies": {
+    "manim-web": "catalog:",
     "mermaid": "catalog:",
     "shiki": "catalog:"
   },
   "peerDependenciesMeta": {
+    "manim-web": {
+      "optional": true
+    },
     "mermaid": {
       "optional": true
     },

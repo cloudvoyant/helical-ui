@@ -1,21 +1,19 @@
 <script lang="ts">
-  import type { SlashCommandItem } from '@cloudvoyant/helical-ui';
+  import type { SlashCommandItem } from '@cloudvoyant/helical-ui/editor';
   import { onMount, tick } from 'svelte';
-  import {
-    Bookmark,
-    Code,
-    Heading1,
-    Heading2,
-    Heading3,
-    Heading4,
-    Image,
-    List,
-    ListOrdered,
-    ListTodo,
-    MessageSquareWarning,
-    Minus,
-    Quote,
-  } from 'lucide-svelte';
+  import Bookmark from 'lucide-svelte/icons/bookmark';
+  import Code from 'lucide-svelte/icons/code';
+  import Heading1 from 'lucide-svelte/icons/heading-1';
+  import Heading2 from 'lucide-svelte/icons/heading-2';
+  import Heading3 from 'lucide-svelte/icons/heading-3';
+  import Heading4 from 'lucide-svelte/icons/heading-4';
+  import Image from 'lucide-svelte/icons/image';
+  import List from 'lucide-svelte/icons/list';
+  import ListOrdered from 'lucide-svelte/icons/list-ordered';
+  import ListTodo from 'lucide-svelte/icons/list-todo';
+  import MessageSquareWarning from 'lucide-svelte/icons/message-square-warning';
+  import Minus from 'lucide-svelte/icons/minus';
+  import Quote from 'lucide-svelte/icons/quote';
   import type { Component } from 'svelte';
 
   const SLASH_MENU_ICONS: Record<string, typeof Heading1 | undefined> = {

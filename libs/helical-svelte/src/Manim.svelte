@@ -3,6 +3,7 @@
      mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     manimRootBase,
     manimContainerBase,
@@ -10,9 +11,9 @@
     manimPlaceholderLabelBase,
     manimErrorBase,
     manimCaptionBase,
-    cn,
-  } from '@cloudvoyant/helical-ui';
-  import type { ManimRecordingScene, ManimModule } from '@cloudvoyant/helical-ui';
+    type ManimRecordingScene,
+    type ManimModule,
+  } from '@cloudvoyant/helical-ui/manim';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Status = 'loading' | 'ready' | 'error';

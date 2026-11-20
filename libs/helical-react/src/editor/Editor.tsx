@@ -24,7 +24,7 @@ import {
   type ImageUploadResult,
   type LinkPreviewFetcher,
   type SlashCommandItem,
-} from '@cloudvoyant/helical-ui';
+} from '@cloudvoyant/helical-ui/editor';
 import { ImageNodeView } from './ImageNodeView';
 import { UrlMentionPill } from './UrlMentionPill';
 import { LinkPreviewCard } from './LinkPreviewCard';

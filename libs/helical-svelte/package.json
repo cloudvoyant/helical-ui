@@ -11,9 +11,16 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "@cloudvoyant/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "svelte": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./*": {
+      "@cloudvoyant/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "svelte": "./dist/*/index.js",
+      "default": "./dist/*/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -32,10 +39,14 @@
   },
   "peerDependencies": {
     "svelte": "catalog:",
+    "manim-web": "catalog:",
     "mermaid": "catalog:",
     "shiki": "catalog:"
   },
   "peerDependenciesMeta": {
+    "manim-web": {
+      "optional": true
+    },
     "mermaid": {
       "optional": true
     },

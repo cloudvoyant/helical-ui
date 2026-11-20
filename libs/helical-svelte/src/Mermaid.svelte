@@ -3,6 +3,7 @@
      apps/book/src/components/article-body.tsx client renderer), mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import { Ark } from '@ark-ui/svelte/factory';
+  import { cn } from '@cloudvoyant/helical-ui';
   import {
     mermaidRootBase,
     mermaidSourceBase,
@@ -10,8 +11,7 @@
     mermaidLoadingBase,
     renderMermaidSource,
     mermaidSvgAspectRatio,
-    cn,
-  } from '@cloudvoyant/helical-ui';
+  } from '@cloudvoyant/helical-ui/mermaid';
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = {

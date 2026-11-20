@@ -1,7 +1,8 @@
 // apps/docs/src/components/examples/editor/heading-enforcement/react.tsx
 // The H1 title is enforced by the titleHeading ProseMirror plugin: it is auto-created when
 // missing and restored when the first node is changed, so it cannot be deleted or demoted.
-import { Editor, Prose } from '@cloudvoyant/helical-react';
+import { Editor } from '@cloudvoyant/helical-react/editor';
+import { Prose } from '@cloudvoyant/helical-react';
 
 const seed = JSON.stringify({
   type: 'doc',

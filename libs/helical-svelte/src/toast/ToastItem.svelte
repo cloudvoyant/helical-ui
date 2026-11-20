@@ -2,7 +2,11 @@
 <!-- Closely based on: Shark UI toast (@ark-ui/svelte/toast), mirrored from @cloudvoyant/helical-react -->
 <script lang="ts">
   import type { ToastOptions, ToastRootProps } from '@ark-ui/svelte/toast';
-  import { CircleAlert, CircleCheck, Info, Loader2, TriangleAlert } from 'lucide-svelte';
+  import CircleAlert from 'lucide-svelte/icons/circle-alert';
+  import CircleCheck from 'lucide-svelte/icons/circle-check';
+  import Info from 'lucide-svelte/icons/info';
+  import Loader2 from 'lucide-svelte/icons/loader-circle';
+  import TriangleAlert from 'lucide-svelte/icons/triangle-alert';
   import { toastIconBase } from '@cloudvoyant/helical-ui';
   import Col from '../Col.svelte';
   import Row from '../Row.svelte';

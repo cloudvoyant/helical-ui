@@ -1,7 +1,7 @@
 <!-- libs/helical-svelte/src/command-menu/CommandMenuPromptBar.svelte -->
 <script lang="ts">
   // 1. Imports
-  import { CornerDownLeft } from 'lucide-svelte';
+  import CornerDownLeft from 'lucide-svelte/icons/corner-down-left';
   import { commandMenuStyles } from '@cloudvoyant/helical-ui';
   import Kbd from '../Kbd.svelte';
   import { ListboxInput } from '../listbox';
