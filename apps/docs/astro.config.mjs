@@ -1,5 +1,4 @@
 // apps/docs/astro.config.mjs
-import fs from 'node:fs';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
@@ -7,19 +6,6 @@ import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import { helicalMdxDemoPlugin } from './src/vite/mdx-demo-islands.mjs';
 import { helicalBarrelSubpathPlugin } from './src/vite/barrel-subpaths.mjs';
-
-const helicalSveltePkg = JSON.parse(
-  fs.readFileSync(new URL('../../libs/helical-svelte/package.json', import.meta.url), 'utf8'),
-);
-const helicalSvelteSubpathAliases = Object.entries(helicalSveltePkg.exports ?? {})
-  .filter(([subpath, target]) => subpath.startsWith('./') && subpath !== './package.json' && typeof target === 'object')
-  .map(([subpath, target]) => ({
-    find: new RegExp(`^@cloudvoyant/helical-svelte/${subpath.slice(2).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
-    replacement: new URL(
-      `../../libs/helical-svelte/${target.svelte.replace(/^\.\/dist\//, 'src/').replace(/\.js$/, '.ts')}`,
-      import.meta.url,
-    ).pathname,
-  }));
 
 export default defineConfig({
   site: 'https://cloudvoyant.github.io',
@@ -35,45 +21,13 @@ export default defineConfig({
   vite: {
     plugins: [helicalMdxDemoPlugin(), helicalBarrelSubpathPlugin(), tailwindcss()],
     resolve: {
-      alias: [
-        // Serve workspace packages from source in dev so edits to libs/* hot-reload
-        // instead of requiring a rebuild (the package exports map points at dist/).
-        // Exact-match anchors keep subpath imports (@cloudvoyant/helical-ui/theme.css, ...)
-        // resolving through the exports map, not through the JS alias.
-        {
-          find: /^@cloudvoyant\/helical-ui$/,
-          replacement: new URL('../../libs/helical-ui/src/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-ui\/commands?$/,
-          replacement: new URL('../../libs/helical-ui/src/command/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-ui\/editor$/,
-          replacement: new URL('../../libs/helical-ui/src/editor/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-ui\/(chart|mermaid|code-block|latex|manim)$/,
-          replacement: `${new URL('../../libs/helical-ui/src/', import.meta.url).pathname}$1.ts`,
-        },
-        {
-          find: /^@cloudvoyant\/helical-react$/,
-          replacement: new URL('../../libs/helical-react/src/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-react\/editor$/,
-          replacement: new URL('../../libs/helical-react/src/editor/index.ts', import.meta.url).pathname,
-        },
-        {
-          find: /^@cloudvoyant\/helical-react\/(chart|mermaid|code-block|latex|manim)$/,
-          replacement: `${new URL('../../libs/helical-react/src/', import.meta.url).pathname}$1.tsx`,
-        },
-        {
-          find: /^@cloudvoyant\/helical-svelte$/,
-          replacement: new URL('../../libs/helical-svelte/src/index.ts', import.meta.url).pathname,
-        },
-        ...helicalSvelteSubpathAliases,
-      ],
+      // Resolve workspace packages from source via the `@cloudvoyant/source` export condition.
+      conditions: ['@cloudvoyant/source', 'module', 'browser', 'development|production'],
+    },
+    ssr: {
+      resolve: {
+        conditions: ['@cloudvoyant/source', 'module', 'node', 'development|production'],
+      },
     },
     optimizeDeps: {
       entries: [

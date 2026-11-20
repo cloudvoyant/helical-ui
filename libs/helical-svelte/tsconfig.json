@@ -2,18 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["svelte", "node"],
-    "baseUrl": ".",
-    "paths": {
-      "@cloudvoyant/helical-ui": ["../helical-ui/src/index.ts"],
-      "@cloudvoyant/helical-ui/commands": ["../helical-ui/src/command/index.ts"],
-      "@cloudvoyant/helical-ui/editor": ["../helical-ui/src/editor/index.ts"],
-      "@cloudvoyant/helical-ui/chart": ["../helical-ui/src/chart.ts"],
-      "@cloudvoyant/helical-ui/mermaid": ["../helical-ui/src/mermaid.ts"],
-      "@cloudvoyant/helical-ui/code-block": ["../helical-ui/src/code-block.ts"],
-      "@cloudvoyant/helical-ui/latex": ["../helical-ui/src/latex.ts"],
-      "@cloudvoyant/helical-ui/manim": ["../helical-ui/src/manim.ts"]
-    }
+    "types": ["svelte"]
   },
   "include": ["src", "tests"]
 }

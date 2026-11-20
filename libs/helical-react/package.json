@@ -10,39 +10,22 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "@cloudvoyant/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./manim": {
-      "types": "./dist/manim.d.ts",
-      "import": "./dist/manim.js",
-      "require": "./dist/manim.cjs"
-    },
-    "./chart": {
-      "types": "./dist/chart.d.ts",
-      "import": "./dist/chart.js",
-      "require": "./dist/chart.cjs"
-    },
-    "./mermaid": {
-      "types": "./dist/mermaid.d.ts",
-      "import": "./dist/mermaid.js",
-      "require": "./dist/mermaid.cjs"
-    },
-    "./latex": {
-      "types": "./dist/latex.d.ts",
-      "import": "./dist/latex.js",
-      "require": "./dist/latex.cjs"
-    },
-    "./code-block": {
-      "types": "./dist/code-block.d.ts",
-      "import": "./dist/code-block.js",
-      "require": "./dist/code-block.cjs"
-    },
     "./editor": {
+      "@cloudvoyant/source": "./src/editor/index.ts",
       "types": "./dist/editor/index.d.ts",
       "import": "./dist/editor/index.js",
       "require": "./dist/editor/index.cjs"
+    },
+    "./*": {
+      "@cloudvoyant/source": "./src/*.tsx",
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.cjs"
     },
     "./package.json": "./package.json"
   },

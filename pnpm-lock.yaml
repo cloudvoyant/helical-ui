@@ -473,9 +473,6 @@ importers:
       '@types/katex':
         specifier: 'catalog:'
         version: 0.16.8
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.1
       katex:
         specifier: 'catalog:'
         version: 0.16.47
@@ -500,9 +497,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 2.1.9(@types/node@22.20.1)(lightningcss@1.33.0)
 
   libs/helical-ui:
     dependencies:
