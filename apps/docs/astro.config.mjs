@@ -1,4 +1,5 @@
 // apps/docs/astro.config.mjs
+import fs from 'node:fs';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
@@ -6,6 +7,19 @@ import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import { helicalMdxDemoPlugin } from './src/vite/mdx-demo-islands.mjs';
 import { helicalBarrelSubpathPlugin } from './src/vite/barrel-subpaths.mjs';
+
+const helicalSveltePkg = JSON.parse(
+  fs.readFileSync(new URL('../../libs/helical-svelte/package.json', import.meta.url), 'utf8'),
+);
+const helicalSvelteSubpathAliases = Object.entries(helicalSveltePkg.exports ?? {})
+  .filter(([subpath, target]) => subpath.startsWith('./') && subpath !== './package.json' && typeof target === 'object')
+  .map(([subpath, target]) => ({
+    find: new RegExp(`^@cloudvoyant/helical-svelte/${subpath.slice(2).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
+    replacement: new URL(
+      `../../libs/helical-svelte/${target.svelte.replace(/^\.\/dist\//, 'src/').replace(/\.js$/, '.ts')}`,
+      import.meta.url,
+    ).pathname,
+  }));
 
 export default defineConfig({
   site: 'https://cloudvoyant.github.io',
@@ -58,14 +72,7 @@ export default defineConfig({
           find: /^@cloudvoyant\/helical-svelte$/,
           replacement: new URL('../../libs/helical-svelte/src/index.ts', import.meta.url).pathname,
         },
-        {
-          find: /^@cloudvoyant\/helical-svelte\/(editor|code-block)$/,
-          replacement: `${new URL('../../libs/helical-svelte/src/', import.meta.url).pathname}$1/index.ts`,
-        },
-        {
-          find: /^@cloudvoyant\/helical-svelte\/(chart|mermaid|latex|manim)$/,
-          replacement: `${new URL('../../libs/helical-svelte/src/', import.meta.url).pathname}$1.ts`,
-        },
+        ...helicalSvelteSubpathAliases,
       ],
     },
     optimizeDeps: {

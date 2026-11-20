@@ -20,12 +20,35 @@ const FORBIDDEN_ROOT_IMPORT_PATTERNS = [
   /['"]lowlight(?:\/[^'"]*)?['"]/,
 ];
 
+function collectRelativeEsmGraph(entryFile: string): string[] {
+  const visited = new Set<string>();
+  const queue = [entryFile];
+  while (queue.length > 0) {
+    const file = queue.pop()!;
+    if (visited.has(file)) continue;
+    visited.add(file);
+    const content = fs.readFileSync(file, 'utf8');
+    for (const match of content.matchAll(/(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"](\.[^'"]+)['"]/g)) {
+      const target = path.resolve(path.dirname(file), match[1]!);
+      if (fs.existsSync(target) && fs.statSync(target).isFile()) {
+        queue.push(target);
+      }
+    }
+  }
+  return [...visited];
+}
+
 describe('given built @cloudvoyant/helical-ui dist artifacts', () => {
-  it('when inspecting dist/index.js and dist/index.cjs, then zero heavy optional dependencies are imported', () => {
-    for (const file of ['dist/index.js', 'dist/index.cjs']) {
-      const content = fs.readFileSync(path.join(pkgRoot, file), 'utf8');
+  it('when inspecting dist/index.js (including relative chunks) and dist/index.cjs, then zero heavy optional dependencies are imported', () => {
+    const filesToCheck = [
+      ...collectRelativeEsmGraph(path.join(pkgRoot, 'dist/index.js')),
+      path.join(pkgRoot, 'dist/index.cjs'),
+    ];
+    for (const file of filesToCheck) {
+      const content = fs.readFileSync(file, 'utf8');
+      const rel = path.relative(pkgRoot, file);
       for (const pattern of FORBIDDEN_ROOT_IMPORT_PATTERNS) {
-        expect(content, `${file} must not reference ${pattern}`).not.toMatch(pattern);
+        expect(content, `${rel} must not reference ${pattern}`).not.toMatch(pattern);
       }
     }
   });
