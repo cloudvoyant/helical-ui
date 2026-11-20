@@ -1,3 +1,13 @@
+# [0.25.0](https://github.com/cloudvoyant/helical-ui/compare/v0.24.0...v0.25.0) (2026-11-20)
+
+
+* fix!(svelte,ui): split subpath exports and lucide imports ([#41](https://github.com/cloudvoyant/helical-ui/issues/41)) ([a899598](https://github.com/cloudvoyant/helical-ui/commit/a8995982b8af7f036d287df2a5b152b15b37d483))
+
+
+### BREAKING CHANGES
+
+* Heavy optional-dependency components (Manim, Chart, Mermaid, LaTeX, InlineLaTeX, CodeBlock family, Editor/Reader/CursorOverlay) and their runtime helpers in @cloudvoyant/helical-ui are now exported from dedicated subpaths (./manim, ./chart, ./mermaid, ./latex, ./code-block, ./editor) instead of the root barrel.
+
 # [0.24.0](https://github.com/cloudvoyant/helical-ui/compare/v0.23.1...v0.24.0) (2026-11-13)
 
 
