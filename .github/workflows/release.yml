@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      publish_existing:
+        description: 'Skip semantic-release and publish the current version in version.txt'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -13,7 +20,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]') && github.event.before != '0000000000000000000000000000000000000000'"
+    if: "github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[skip ci]') && github.event.before != '0000000000000000000000000000000000000000')"
 
     steps:
       - name: Checkout code
@@ -41,19 +48,59 @@ jobs:
       - name: Run tests
         run: mise run test
 
+      - name: Resolve existing version
+        id: existing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_existing
+        run: |
+          VERSION="$(tr -d '[:space:]' < version.txt)"
+          echo "new_release_published=true" >> "$GITHUB_OUTPUT"
+          echo "new_release_version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Create new version
         id: upversion
+        if: "!(github.event_name == 'workflow_dispatch' && inputs.publish_existing)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CI: true
-        run: mise run upversion -- --ci
+        run: |
+          BEFORE_VERSION="$(tr -d '[:space:]' < version.txt)"
+          set +e
+          mise run upversion -- --ci
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            AFTER_VERSION="$(tr -d '[:space:]' < version.txt)"
+            NOTE_REF="refs/notes/semantic-release-v${AFTER_VERSION}"
+            if [ "$BEFORE_VERSION" != "$AFTER_VERSION" ] \
+              && git show-ref --verify --quiet "$NOTE_REF" \
+              && git ls-remote --tags origin "refs/tags/v${AFTER_VERSION}" | grep -q .; then
+              echo "::warning::semantic-release failed after pushing v${AFTER_VERSION}; retrying ${NOTE_REF} push"
+              PUSHED=false
+              for attempt in 1 2 3; do
+                sleep 5
+                if git push origin "$NOTE_REF"; then
+                  PUSHED=true
+                  break
+                fi
+                echo "::warning::${NOTE_REF} push attempt $attempt failed"
+              done
+              if [ "$PUSHED" != "true" ]; then
+                echo "::error::Failed to push ${NOTE_REF} after 3 retries"
+                exit "$STATUS"
+              fi
+              echo "new_release_published=true" >> "$GITHUB_OUTPUT"
+              echo "new_release_version=${AFTER_VERSION}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$STATUS"
+          fi
 
       - name: Build packages
-        if: steps.upversion.outputs.new_release_published == 'true'
+        if: steps.upversion.outputs.new_release_published == 'true' || steps.existing.outputs.new_release_published == 'true'
         run: mise run build
 
       - name: Publish packages to npm
-        if: steps.upversion.outputs.new_release_published == 'true'
+        if: steps.upversion.outputs.new_release_published == 'true' || steps.existing.outputs.new_release_published == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -69,9 +116,9 @@ jobs:
           exit 1
 
       - name: Create GitHub Release
-        if: steps.upversion.outputs.new_release_published == 'true'
+        if: steps.upversion.outputs.new_release_published == 'true' || steps.existing.outputs.new_release_published == 'true'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: v${{ steps.upversion.outputs.new_release_version }}
+          tag_name: v${{ steps.upversion.outputs.new_release_version || steps.existing.outputs.new_release_version }}
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
