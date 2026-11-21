@@ -1,3 +1,10 @@
+## [0.25.1](https://github.com/cloudvoyant/helical-ui/compare/v0.25.0...v0.25.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **release:** retry note push and add dispatch recovery ([#42](https://github.com/cloudvoyant/helical-ui/issues/42)) ([c3ad14f](https://github.com/cloudvoyant/helical-ui/commit/c3ad14f9f92b9a32ada17bd61e0ea7688e61a45f))
+
 # [0.25.0](https://github.com/cloudvoyant/helical-ui/compare/v0.24.0...v0.25.0) (2026-11-20)
 
 
